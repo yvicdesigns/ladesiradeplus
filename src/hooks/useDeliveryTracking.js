@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useToast } from '@/components/ui/use-toast';
-import { createDeliveryTracking } from '@/services/deliveryService';
+import { createDeliveryTracking } from '@/services/DeliveryService';
 import { logger } from '@/lib/logger';
 
 export const useDeliveryTracking = (orderId) => {
