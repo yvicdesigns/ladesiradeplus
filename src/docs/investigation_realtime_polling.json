@@ -1,0 +1,172 @@
+{
+  "investigation": {
+    "timestamp": "2026-03-11T00:00:00Z",
+    "pollingFiles": [
+      {
+        "file": "src/hooks/useConnectionStatus.js",
+        "type": "setInterval",
+        "frequency": "30s (default)",
+        "updates": "Connection status (isOnline, error)",
+        "context": "Custom Hook"
+      },
+      {
+        "file": "src/lib/PollingService.js",
+        "type": "setInterval",
+        "frequency": "Dynamic (parameter)",
+        "updates": "Generic task executor",
+        "context": "Core Service"
+      },
+      {
+        "file": "src/lib/RealtimeHealthCheck.js",
+        "type": "setInterval",
+        "frequency": "1s (Heartbeat)",
+        "updates": "Realtime connection health score and latency",
+        "context": "Core Service"
+      },
+      {
+        "file": "src/pages/AdminDashboard.jsx",
+        "type": "setInterval",
+        "frequency": "300s (5 minutes)",
+        "updates": "Dashboard Analytics (Revenue, Order counts)",
+        "context": "Admin Page"
+      },
+      {
+        "file": "src/hooks/useRealtimeWithFallback.js",
+        "type": "PollingService (Fallback)",
+        "frequency": "Adaptive (default 3s, min 2s)",
+        "updates": "Generic data fetch fallback",
+        "context": "Custom Hook (Core)"
+      }
+    ],
+    "webSocketFiles": [
+      {
+        "file": "src/components/AdminClientsContent.jsx",
+        "technology": "Supabase Realtime",
+        "channel": "public:customers:admin_list",
+        "updates": "Clients list (local state)",
+        "context": "Admin Component"
+      },
+      {
+        "file": "src/components/LiveFeed.jsx",
+        "technology": "Supabase Realtime",
+        "channel": "live_feed_orders, live_feed_reservations",
+        "updates": "Activity feed UI",
+        "context": "Admin Component"
+      },
+      {
+        "file": "src/hooks/useAdminNotifications.js",
+        "technology": "Supabase Realtime",
+        "channel": "admin_notifications",
+        "updates": "Admin unread notifications",
+        "context": "Custom Hook"
+      },
+      {
+        "file": "src/hooks/useDeliveryOrders.js",
+        "technology": "Supabase Realtime",
+        "channel": "admin_delivery_orders_sub",
+        "updates": "Delivery orders list",
+        "context": "Custom Hook"
+      },
+      {
+        "file": "src/hooks/useNewOrderNotificationBadge.jsx",
+        "technology": "Supabase Realtime",
+        "channel": "badge-count-delivery-*",
+        "updates": "Delivery orders unread badge",
+        "context": "Custom Hook"
+      },
+      {
+        "file": "src/hooks/useNewRestaurantOrderNotificationBadge.jsx",
+        "technology": "Supabase Realtime",
+        "channel": "badge-restaurant-*",
+        "updates": "Restaurant orders unread badge",
+        "context": "Custom Hook"
+      },
+      {
+        "file": "src/hooks/useRealtimeSubscription.js",
+        "technology": "Supabase Realtime",
+        "channel": "public:{tableName}-*",
+        "updates": "Generic table data",
+        "context": "Custom Hook"
+      },
+      {
+        "file": "src/hooks/useRealtimeWithFallback.js",
+        "technology": "Supabase Realtime",
+        "channel": "{channelName}-{table}-events",
+        "updates": "Triggers refetch callback",
+        "context": "Custom Hook (Core)"
+      },
+      {
+        "file": "src/hooks/useRestaurantOrders.js",
+        "technology": "Supabase Realtime",
+        "channel": "restaurant_orders_sub",
+        "updates": "Restaurant orders list",
+        "context": "Custom Hook"
+      },
+      {
+        "file": "src/hooks/useUnreadDeliveryOrders.js",
+        "technology": "Supabase Realtime",
+        "channel": "unread-counts-sync",
+        "updates": "Combined unread counts",
+        "context": "Custom Hook"
+      },
+      {
+        "file": "src/lib/RealtimeHealthCheck.js",
+        "technology": "Supabase Realtime",
+        "channel": "system_health_check",
+        "updates": "Ping/Pong latency checks",
+        "context": "Core Service"
+      }
+    ],
+    "hooksAnalysis": [
+      { "hook": "useAdminNotifications", "hasPolling": false, "hasWebSocket": true, "syncMethod": "Supabase Realtime -> fetch on event" },
+      { "hook": "useCategories", "hasPolling": false, "hasWebSocket": false, "syncMethod": "On mount only" },
+      { "hook": "useClients", "hasPolling": false, "hasWebSocket": false, "syncMethod": "On mount / manual refetch" },
+      { "hook": "useConnectionStatus", "hasPolling": true, "hasWebSocket": false, "syncMethod": "setInterval 30s ping" },
+      { "hook": "useDeliveryOrders", "hasPolling": false, "hasWebSocket": true, "syncMethod": "Supabase Realtime -> fetch on event" },
+      { "hook": "useMenu", "hasPolling": true, "hasWebSocket": true, "syncMethod": "Hybrid (Realtime primary, 3s Polling fallback)" },
+      { "hook": "useRealtimeDeliveryOrders", "hasPolling": true, "hasWebSocket": true, "syncMethod": "Hybrid (Realtime primary, 5s Polling fallback)" },
+      { "hook": "useRealtimeOrders", "hasPolling": true, "hasWebSocket": true, "syncMethod": "Hybrid (Realtime primary, 5s Polling fallback)" },
+      { "hook": "useRealtimeReservations", "hasPolling": true, "hasWebSocket": true, "syncMethod": "Hybrid (Realtime primary, 5s Polling fallback)" },
+      { "hook": "useRealtimeSubscription", "hasPolling": false, "hasWebSocket": true, "syncMethod": "Supabase Realtime -> debounced fetch (500ms)" },
+      { "hook": "useRestaurantOrders", "hasPolling": false, "hasWebSocket": true, "syncMethod": "Supabase Realtime -> fetch on event" }
+    ],
+    "adminPagesAnalysis": [
+      {
+        "page": "AdminRestaurantOrdersPage",
+        "mechanism": "WebSocket (via useRestaurantOrders)",
+        "frequency": "Realtime",
+        "updatedData": "Orders list"
+      },
+      {
+        "page": "AdminDeliveryOrdersPage",
+        "mechanism": "Hybrid (via useRealtimeDeliveryOrders)",
+        "frequency": "Realtime / 5s fallback",
+        "updatedData": "Delivery orders list, Pagination"
+      },
+      {
+        "page": "AdminReservationsPage",
+        "mechanism": "Hybrid (via useRealtimeReservations)",
+        "frequency": "Realtime / 5s fallback",
+        "updatedData": "Reservations list"
+      },
+      {
+        "page": "AdminDashboard",
+        "mechanism": "Polling (explicit) + WebSocket (via LiveFeed)",
+        "frequency": "300s (Analytics) / Realtime (Feed)",
+        "updatedData": "Stats cards, Charts, Live Feed"
+      },
+      {
+        "page": "AdminClientsContent",
+        "mechanism": "WebSocket (explicit) + Manual (useClients)",
+        "frequency": "Realtime",
+        "updatedData": "Clients table (local array)"
+      }
+    ],
+    "statistics": {
+      "filesWithPolling": 5,
+      "filesWithWebSocket": 11,
+      "filesWithBoth": 5,
+      "pollingFrequencies": ["1s (HealthCheck)", "3s/5s (Fallback)", "30s (ConnectionCheck)", "300s (Analytics)"]
+    }
+  }
+}

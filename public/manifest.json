@@ -1,0 +1,89 @@
+{
+  "name": "La Desirade Plus",
+  "short_name": "La Desirade",
+  "description": "Commandez vos repas préférés en ligne",
+  "theme_color": "#FF6B35",
+  "background_color": "#FFFFFF",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "start_url": "/",
+  "scope": "/",
+  "categories": ["food", "shopping"],
+  "prefer_related_applications": false,
+  "overrides": [
+    {
+      "scope": "/admin",
+      "orientation": "any"
+    }
+  ],
+  "icons": [
+    {
+      "src": "/pwa-icons/icon-192x192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/pwa-icons/icon-384x384.svg",
+      "sizes": "384x384",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-icons/icon-512x512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Menu",
+      "short_name": "Menu",
+      "description": "Voir notre délicieux menu",
+      "url": "/menu",
+      "icons": [{ "src": "/pwa-icons/icon-192x192.svg", "sizes": "192x192", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Mes Commandes",
+      "short_name": "Commandes",
+      "description": "Suivre mes commandes en cours",
+      "url": "/orders",
+      "icons": [{ "src": "/pwa-icons/icon-192x192.svg", "sizes": "192x192", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Réserver",
+      "short_name": "Réserver",
+      "description": "Réserver une table",
+      "url": "/reservations",
+      "icons": [{ "src": "/pwa-icons/icon-192x192.svg", "sizes": "192x192", "type": "image/svg+xml" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/pwa-icons/screenshot-mobile.svg",
+      "sizes": "540x720",
+      "type": "image/svg+xml",
+      "form_factor": "narrow",
+      "label": "Menu sur mobile"
+    },
+    {
+      "src": "/pwa-icons/screenshot-tablet.svg",
+      "sizes": "1280x720",
+      "type": "image/svg+xml",
+      "form_factor": "wide",
+      "label": "Application sur tablette"
+    }
+  ],
+  "share_target": {
+    "action": "/search",
+    "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "query"
+    }
+  }
+}

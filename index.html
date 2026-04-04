@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="fr">
+	<head>
+		<meta charset="UTF-8" />
+		<link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="manifest" href="/manifest.json" crossorigin="use-credentials" />
+		<meta name="generator" content="Hostinger Horizons" />
+    
+    <!-- Comprehensive PWA Meta Tags -->
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#FF6B35" />
+    <meta name="background-color" content="#FFFFFF" />
+    
+    <!-- iOS Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="La Desirade Plus" />
+    
+    <!-- Note: SVG icons are used here to satisfy environment constraints, standard impl uses PNG -->
+    <link rel="apple-touch-icon" sizes="120x120" href="/pwa-icons/apple-touch-icon-120x120.svg" />
+    <link rel="apple-touch-icon" sizes="144x144" href="/pwa-icons/apple-touch-icon-144x144.svg" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/pwa-icons/apple-touch-icon-152x152.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/pwa-icons/apple-touch-icon-180x180.svg" />
+
+		<title>La Desirade Plus</title>
+	</head>
+	<body>
+		<div id="root"></div>
+		<script type="module" src="/src/main.jsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js')
+            .then(registration => {
+              console.log('SW registered successfully:', registration.scope);
+            })
+            .catch(error => {
+              console.error('SW registration failed:', error);
+            });
+        });
+      }
+    </script>
+	</body>
+</html>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#f9fafb"/>
+  <rect x="0" y="0" width="250" height="720" fill="white" stroke="#e5e7eb" stroke-width="2"/>
+  <text x="125" y="60" font-family="sans-serif" font-size="28" font-weight="bold" fill="#FF6B35" text-anchor="middle">La Desirade Plus</text>
+  <rect x="30" y="100" width="190" height="40" rx="8" fill="#fff7ed"/>
+  <text x="50" y="125" font-family="sans-serif" font-size="16" fill="#FF6B35">Menu Principal</text>
+  
+  <rect x="290" y="40" width="940" height="300" rx="16" fill="#FF6B35"/>
+  <text x="340" y="150" font-family="sans-serif" font-size="48" font-weight="bold" fill="white">Délicieux Repas</text>
+  <text x="340" y="200" font-family="sans-serif" font-size="24" fill="white">Livrés chez vous en quelques clics</text>
+  
+  <rect x="290" y="380" width="300" height="300" rx="12" fill="white" stroke="#e5e7eb" stroke-width="2"/>
+  <rect x="610" y="380" width="300" height="300" rx="12" fill="white" stroke="#e5e7eb" stroke-width="2"/>
+  <rect x="930" y="380" width="300" height="300" rx="12" fill="white" stroke="#e5e7eb" stroke-width="2"/>
+</svg>

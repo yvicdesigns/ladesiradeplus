@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 720">
+  <rect width="540" height="720" fill="#f9fafb"/>
+  <rect x="0" y="0" width="540" height="80" fill="#FF6B35"/>
+  <text x="270" y="50" font-family="sans-serif" font-size="24" font-weight="bold" fill="white" text-anchor="middle">La Desirade Plus</text>
+  <rect x="40" y="120" width="460" height="150" rx="12" fill="white" stroke="#e5e7eb" stroke-width="2"/>
+  <rect x="60" y="140" width="100" height="110" rx="8" fill="#f3f4f6"/>
+  <rect x="180" y="150" width="200" height="20" rx="4" fill="#d1d5db"/>
+  <rect x="180" y="190" width="150" height="15" rx="4" fill="#e5e7eb"/>
+  <rect x="180" y="220" width="80" height="20" rx="4" fill="#FF6B35"/>
+  
+  <rect x="40" y="290" width="460" height="150" rx="12" fill="white" stroke="#e5e7eb" stroke-width="2"/>
+  <rect x="60" y="310" width="100" height="110" rx="8" fill="#f3f4f6"/>
+  <rect x="180" y="320" width="200" height="20" rx="4" fill="#d1d5db"/>
+  <rect x="180" y="360" width="150" height="15" rx="4" fill="#e5e7eb"/>
+  <rect x="180" y="390" width="80" height="20" rx="4" fill="#FF6B35"/>
+</svg>

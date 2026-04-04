@@ -1,0 +1,52 @@
+import { useState, useCallback } from 'react';
+import { supabase } from '@/lib/customSupabaseClient';
+import { logStockFetch } from '@/lib/stockDebugUtils';
+import { executeWithResilience, getFriendlyErrorMessage } from '@/lib/supabaseErrorHandler';
+
+export const useStockMovements = () => {
+  const [movements, setMovements] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [totalCount, setTotalCount] = useState(0);
+
+  const fetchMovements = useCallback(async ({ page = 1, limit = 10, menuItemId = null, movementType = 'all', startDate = null, endDate = null }) => {
+    setLoading(true);
+    setError(null);
+    const t0 = performance.now();
+    
+    try {
+      const response = await executeWithResilience(async () => {
+        let query = supabase
+          .from('item_stock_movements')
+          .select('id, menu_item_id, movement_type, quantity_changed, previous_quantity, new_quantity, order_id, notes, created_at, menu_items!inner(name)', { count: 'exact' });
+
+        if (menuItemId) query = query.eq('menu_item_id', menuItemId);
+        if (movementType && movementType !== 'all') query = query.eq('movement_type', movementType);
+        if (startDate) query = query.gte('created_at', startDate);
+        if (endDate) query = query.lte('created_at', endDate);
+
+        const from = (page - 1) * limit;
+        const to = from + limit - 1;
+
+        const res = await query.order('created_at', { ascending: false }).range(from, to);
+        if (res.error) throw res.error;
+        return res;
+      }, { context: 'Fetch stock movements' });
+
+      setMovements(response.data || []);
+      setTotalCount(response.count || 0);
+      
+      const duration = performance.now() - t0;
+      logStockFetch('item_stock_movements', { page, limit, menuItemId }, null, response.data?.length, duration);
+    } catch (err) {
+      const friendlyMsg = getFriendlyErrorMessage(err);
+      setError(friendlyMsg);
+      const duration = performance.now() - t0;
+      logStockFetch('item_stock_movements', { page, limit, menuItemId }, err, 0, duration);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return { movements, loading, error, totalCount, fetchMovements };
+};
