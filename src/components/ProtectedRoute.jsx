@@ -37,11 +37,12 @@ export const ProtectedRoute = ({ children, requireAdmin = false }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Task 5: Verify admin role using the robust `isAdmin` boolean from context
   if (requireAdmin) {
     if (!isAdmin) {
-      console.log("[ProtectedRoute] ❌ Access denied (not an admin). Redirecting to /login");
-      return <Navigate to="/login" replace />;
+      const isTargetingAdmin = location.pathname.startsWith('/admin');
+      const redirectTo = isTargetingAdmin ? '/admin/login' : '/login';
+      console.log(`[ProtectedRoute] ❌ Not admin. Redirecting to ${redirectTo}`);
+      return <Navigate to={redirectTo} state={{ from: location }} replace />;
     }
     console.log("[ProtectedRoute] ✅ Admin access granted.");
   } else {
