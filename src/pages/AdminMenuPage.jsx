@@ -374,8 +374,21 @@ export const AdminMenuPage = () => {
                         </CardContent>
                         <CardFooter className="p-2 md:p-3 border-t border-border/50 flex items-center justify-between mt-auto bg-muted/10">
                           <div className="flex items-center gap-2 ml-1">
-                             <Switch checked={!!product?.is_available} onCheckedChange={() => handleToggleAvailability(product)} className="scale-90 md:scale-100" />
-                             <span className="text-[10px] md:text-xs font-medium text-muted-foreground">Actif</span>
+                             <Switch
+                               checked={!!product?.is_available}
+                               onCheckedChange={() => handleToggleAvailability(product)}
+                               className="scale-90 md:scale-100"
+                               disabled={product?.stock_quantity !== null && product?.stock_quantity <= 0}
+                             />
+                             <div className="flex flex-col">
+                               {product?.stock_quantity !== null && product?.stock_quantity <= 0 ? (
+                                 <span className="text-[10px] md:text-xs font-semibold text-red-500">Stock épuisé</span>
+                               ) : product?.is_available ? (
+                                 <span className="text-[10px] md:text-xs font-semibold text-emerald-600">Actif</span>
+                               ) : (
+                                 <span className="text-[10px] md:text-xs font-semibold text-orange-500">Désactivé</span>
+                               )}
+                             </div>
                           </div>
                           <div className="flex gap-1">
                             <Button size="icon" variant="ghost" className="h-9 w-9 md:h-10 md:w-10 text-muted-foreground hover:text-primary hover:bg-primary/10" onClick={() => handleEditProduct(product)}><Edit className="h-4 w-4" /></Button>
