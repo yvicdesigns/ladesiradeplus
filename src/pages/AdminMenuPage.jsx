@@ -26,7 +26,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
 import { useSoftDelete } from '@/hooks/useSoftDelete';
-import { getValidatedRestaurantId } from '@/lib/restaurantValidation';
 
 // Phase 2 Components
 import { ProductFiltersPanel } from '@/components/products/ProductFiltersPanel';
@@ -182,13 +181,10 @@ export const AdminMenuPage = () => {
     }
 
     try {
-      const validRestaurantId = getValidatedRestaurantId(restaurantId);
-
       const { error } = await supabase
         .from('menu_items')
         .update({ is_available: !product.is_available })
-        .eq('id', product.id)
-        .eq('restaurant_id', validRestaurantId); // Enforce tenant isolation
+        .eq('id', product.id);
       
       if (error) {
         if (error.code === '42501') {
