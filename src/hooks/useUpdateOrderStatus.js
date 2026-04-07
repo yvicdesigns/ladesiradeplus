@@ -33,21 +33,23 @@ export const useUpdateOrderStatus = () => {
     try {
       while (attempt < maxRetries && !success) {
         try {
-          const { data, error: rpcError } = await supabase.rpc('update_order_status_optimized', {
-            p_order_id: orderId,
-            p_new_status: newStatus
-          });
+          // Determine table from orderMethod
+          const table = orderMethod === 'restaurant' || orderMethod === 'counter'
+            ? 'restaurant_orders'
+            : 'delivery_orders';
 
-          if (rpcError) throw rpcError;
-          if (data && !data.success) throw new Error(data.error || 'Erreur lors de la mise à jour du statut.');
+          const { error: updateError } = await supabase
+            .from(table)
+            .update({ status: newStatus, updated_at: new Date().toISOString() })
+            .eq('id', orderId);
 
+          if (updateError) throw updateError;
           success = true;
-          resultData = data;
+          resultData = { data: { id: orderId, status: newStatus } };
         } catch (err) {
           attempt++;
           console.warn(`[useUpdateOrderStatus] Attempt ${attempt} failed:`, err.message);
           if (attempt >= maxRetries) throw err;
-          // Exponential backoff
           await new Promise(res => setTimeout(res, Math.pow(2, attempt) * 200));
         }
       }

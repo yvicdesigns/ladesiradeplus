@@ -73,32 +73,22 @@ export const useUpdateRestaurantOrderStatus = () => {
     setError(null);
     
     try {
-      console.log(`[RestaurantOrderStatus] Executing RPC 'update_order_status_optimized' with payload:`, { p_order_id: orderId, p_new_status: newStatus });
-      
-      const { data, error: rpcError } = await supabase.rpc('update_order_status_optimized', {
-        p_order_id: orderId,
-        p_new_status: newStatus
-      });
+      const { error: updateError } = await supabase
+        .from('restaurant_orders')
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq('id', orderId);
 
-      if (rpcError) {
-          console.log('RPC error response:', rpcError);
-          throw rpcError;
-      }
-      
-      if (data && !data.success) {
-        throw new Error(data.error || 'Erreur lors de la mise à jour du statut renvoyée par le serveur.');
-      }
+      if (updateError) throw updateError;
 
       logEntry.status = 'success';
       addLog(logEntry);
-      console.log(`[RestaurantOrderStatus] Update successful for order ${orderId}`);
-      
+
       toast({
         title: "Statut mis à jour",
         description: `La commande est maintenant ${newStatus === 'served' ? 'servie' : newStatus}.`,
       });
 
-      return { success: true, data: data?.data };
+      return { success: true, data: { id: orderId, status: newStatus } };
     } catch (err) {
       console.error("[RestaurantOrderStatus] Error caught during update:", err);
       
