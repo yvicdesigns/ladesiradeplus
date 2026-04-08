@@ -132,13 +132,23 @@ export const AdminDeliveryOrdersPage = () => {
 
   const verifyOrderExists = async (orderId) => {
     try {
-      const { data, error } = await supabase.from('orders').select('id, status').eq('id', orderId).maybeSingle();
-      if (data) return { exists: true, order: data, targetId: data.id };
-      
-      const { data: doData } = await supabase.from('delivery_orders').select('order_id').eq('id', orderId).maybeSingle();
-      if (doData && doData.order_id) return { exists: true, order: { id: doData.order_id }, targetId: doData.order_id };
-      
-      return { exists: false, error };
+      // Cherche d'abord dans delivery_orders directement
+      const { data: doData } = await supabase
+        .from('delivery_orders')
+        .select('id, status, order_id')
+        .eq('id', orderId)
+        .maybeSingle();
+      if (doData) return { exists: true, order: doData, targetId: doData.id };
+
+      // Fallback: l'ID passé est peut-être un order_id
+      const { data: doData2 } = await supabase
+        .from('delivery_orders')
+        .select('id, status, order_id')
+        .eq('order_id', orderId)
+        .maybeSingle();
+      if (doData2) return { exists: true, order: doData2, targetId: doData2.id };
+
+      return { exists: false };
     } catch (e) { return { exists: false, error: e }; }
   };
 
