@@ -118,8 +118,6 @@ export const useRealtimeDeliveryOrders = (options = {}) => {
   }, [fetchOrders]);
 
   useEffect(() => {
-    // In customer tracking mode (orderId provided), subscribe to changes for that specific order
-    // In admin mode, subscribe filtered by restaurantId
     if (!orderId && !restaurantId) return;
 
     const channelFilter = orderId
@@ -135,17 +133,24 @@ export const useRealtimeDeliveryOrders = (options = {}) => {
           table: 'delivery_orders',
           filter: channelFilter
         },
-        () => {
-          fetchOrders();
-        }
+        () => { fetchOrders(); }
       )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') setConnectionStatus('realtime');
-        if (status === 'CLOSED' || status === 'CHANNEL_ERROR') setConnectionStatus('disconnected');
+        if (status === 'CLOSED' || status === 'CHANNEL_ERROR') setConnectionStatus('polling');
       });
+
+    // Polling de secours toutes les 10s si on est en mode tracking client
+    let pollInterval = null;
+    if (orderId) {
+      pollInterval = setInterval(() => {
+        fetchOrders();
+      }, 10000);
+    }
 
     return () => {
       supabase.removeChannel(channel);
+      if (pollInterval) clearInterval(pollInterval);
     };
   }, [restaurantId, orderId, fetchOrders]);
 

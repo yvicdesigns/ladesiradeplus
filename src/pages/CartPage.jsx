@@ -79,7 +79,8 @@ export const CartPage = () => {
     };
     
     validateCartStock();
-  }, [cart.length]); 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cart.length, cart.map(i => `${i.id}:${i.quantity}`).join(',')]);
 
   const handleUpdateQuantity = (id, qty) => {
     playSound('click');

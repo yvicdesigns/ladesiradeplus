@@ -16,7 +16,7 @@ export const AdminMobileMoneyPaymentsTab = () => {
   const [loading, setLoading] = useState(true);
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [filterType, setFilterType] = useState('all'); // all, mtn, airtel
-  const [filterStatus, setFilterStatus] = useState('pending'); // all, pending, confirmed
+  const [filterStatus, setFilterStatus] = useState('all'); // all, pending, confirmed
   const [search, setSearch] = useState('');
   const { toast } = useToast();
 
@@ -177,8 +177,8 @@ export const AdminMobileMoneyPaymentsTab = () => {
                       )}
                     </TableCell>
                     <TableCell>
-                       <Badge className={isConfirmed ? 'bg-amber-500' : 'bg-amber-500'}>
-                        {isConfirmed ? 'Validé' : 'En Attente'}
+                       <Badge className={isConfirmed ? 'bg-green-600 text-white' : 'bg-orange-500 text-white'}>
+                        {isConfirmed ? 'Validé ✓' : 'En Attente'}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">

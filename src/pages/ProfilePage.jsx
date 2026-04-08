@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
-import { User, LogOut, Settings, Heart, MapPin, History, Edit2, Mail, Phone, ChevronRight, Calendar, Users, Clock, AlertCircle, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { User, LogOut, Settings, Heart, MapPin, History, Edit2, Mail, Phone, ChevronRight, Calendar, Users, Clock, AlertCircle, RefreshCw, CheckCircle2, Trash2, MailOpen, MailCheck } from 'lucide-react';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
@@ -137,14 +137,52 @@ export const ProfilePage = () => {
         .from('user_notifications')
         .update({ status: 'read' })
         .eq('id', notificationId);
-
       if (error) throw error;
-
-      setNotifications(prev => prev.map(n => 
-        n.id === notificationId ? { ...n, status: 'read' } : n
-      ));
+      setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, status: 'read' } : n));
     } catch (error) {
       console.error('Error marking as read:', error);
+    }
+  };
+
+  const markAsUnread = async (notificationId) => {
+    try {
+      const { error } = await supabase
+        .from('user_notifications')
+        .update({ status: 'unread' })
+        .eq('id', notificationId);
+      if (error) throw error;
+      setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, status: 'unread' } : n));
+    } catch (error) {
+      console.error('Error marking as unread:', error);
+    }
+  };
+
+  const deleteNotification = async (notificationId) => {
+    try {
+      const { error } = await supabase
+        .from('user_notifications')
+        .delete()
+        .eq('id', notificationId);
+      if (error) throw error;
+      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      toast({ variant: 'destructive', title: 'Erreur', description: 'Impossible de supprimer ce message.' });
+    }
+  };
+
+  const markAllAsRead = async () => {
+    const unreadIds = notifications.filter(n => n.status === 'unread').map(n => n.id);
+    if (unreadIds.length === 0) return;
+    try {
+      const { error } = await supabase
+        .from('user_notifications')
+        .update({ status: 'read' })
+        .in('id', unreadIds);
+      if (error) throw error;
+      setNotifications(prev => prev.map(n => ({ ...n, status: 'read' })));
+    } catch (error) {
+      console.error('Error marking all as read:', error);
     }
   };
 
@@ -311,10 +349,22 @@ export const ProfilePage = () => {
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2">
               <Mail className="w-4 h-4 text-[#D97706]" /> Centre de Messages
+              {notifications.filter(n => n.status === 'unread').length > 0 && (
+                <span className="bg-[#D97706] text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+                  {notifications.filter(n => n.status === 'unread').length}
+                </span>
+              )}
             </h3>
-            <Button variant="ghost" size="sm" onClick={fetchNotifications} disabled={loadingNotifications}>
-              <RefreshCw className={`w-4 h-4 ${loadingNotifications ? 'animate-spin' : ''}`} />
-            </Button>
+            <div className="flex items-center gap-1">
+              {notifications.filter(n => n.status === 'unread').length > 0 && (
+                <Button variant="ghost" size="sm" onClick={markAllAsRead} className="text-xs text-[#D97706] h-8 px-2">
+                  Tout lire
+                </Button>
+              )}
+              <Button variant="ghost" size="sm" onClick={fetchNotifications} disabled={loadingNotifications}>
+                <RefreshCw className={`w-4 h-4 ${loadingNotifications ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
           </div>
 
           <div className="space-y-3">
@@ -322,34 +372,57 @@ export const ProfilePage = () => {
               <Skeleton className="h-24 w-full rounded-2xl" />
             ) : notifications.length === 0 ? (
               <div className="bg-white rounded-2xl p-6 text-center border border-gray-100 shadow-sm">
+                <Mail className="w-8 h-8 text-gray-200 mx-auto mb-2" />
                 <p className="text-gray-500 text-sm font-medium">Votre boîte de réception est vide.</p>
               </div>
             ) : (
               <AnimatePresence>
                 {notifications.map((notif) => (
-                  <motion.div 
+                  <motion.div
                     key={notif.id}
                     layout
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className={`bg-white rounded-xl p-4 shadow-sm border transition-all ${notif.status === 'unread' ? 'border-amber-200 bg-amber-50/30' : 'border-gray-100'}`}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    className={`bg-white rounded-xl p-4 shadow-sm border transition-all ${notif.status === 'unread' ? 'border-amber-200 bg-amber-50/30' : 'border-gray-100 opacity-80'}`}
                   >
                     <div className="flex justify-between items-start gap-3">
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           {notif.status === 'unread' && <span className="w-2 h-2 rounded-full bg-[#D97706] shrink-0 animate-pulse" />}
-                          <h4 className={`font-bold text-sm ${notif.status === 'unread' ? 'text-gray-900' : 'text-gray-600'}`}>
+                          <h4 className={`font-bold text-sm truncate ${notif.status === 'unread' ? 'text-gray-900' : 'text-gray-500'}`}>
                             {notif.title}
                           </h4>
                         </div>
-                        <p className="text-sm text-gray-600 mb-2 leading-relaxed font-medium">{notif.content}</p>
-                        <p className="text-xs text-gray-400 font-medium">{format(new Date(notif.sent_date), "d MMM yyyy 'à' HH:mm", { locale: fr })}</p>
+                        <p className="text-sm text-gray-600 mb-2 leading-relaxed">{notif.content}</p>
+                        <p className="text-xs text-gray-400">{format(new Date(notif.sent_date), "d MMM yyyy 'à' HH:mm", { locale: fr })}</p>
                       </div>
-                      {notif.status === 'unread' && (
-                        <Button variant="ghost" size="sm" onClick={() => markAsRead(notif.id)} className="h-8 w-8 p-0 rounded-full text-[#D97706]">
-                          <CheckCircle2 className="w-5 h-5" />
-                        </Button>
-                      )}
+                      <div className="flex items-center gap-1 shrink-0">
+                        {notif.status === 'unread' ? (
+                          <button
+                            onClick={() => markAsRead(notif.id)}
+                            title="Marquer comme lu"
+                            className="w-8 h-8 flex items-center justify-center rounded-full text-[#D97706] hover:bg-amber-50 transition-colors"
+                          >
+                            <MailCheck className="w-4 h-4" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => markAsUnread(notif.id)}
+                            title="Marquer comme non lu"
+                            className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 transition-colors"
+                          >
+                            <MailOpen className="w-4 h-4" />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => deleteNotification(notif.id)}
+                          title="Supprimer"
+                          className="w-8 h-8 flex items-center justify-center rounded-full text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </motion.div>
                 ))}

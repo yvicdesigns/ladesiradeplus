@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useRealtimeSubscription } from '@/hooks/useRealtimeSubscription';
 import { Plus, MapPin, Truck, Trash2, Edit } from 'lucide-react';
-import { DeliveryCreateModal } from '@/components/DeliveryCreateModal';
+import { DeliveryZoneCreateModal } from '@/components/DeliveryZoneCreateModal';
 import { DeliveryZoneEditModal } from '@/components/DeliveryZoneEditModal';
 import { ConfirmationDeleteModal } from '@/components/ConfirmationDeleteModal';
 import { Badge } from '@/components/ui/badge';
@@ -144,9 +144,9 @@ export const AdminDeliveryPage = () => {
           </div>
         )}
 
-        <DeliveryCreateModal 
-          open={isCreateOpen} 
-          onClose={() => setIsCreateOpen(false)} 
+        <DeliveryZoneCreateModal
+          open={isCreateOpen}
+          onClose={() => setIsCreateOpen(false)}
           onSuccess={refetch}
         />
 

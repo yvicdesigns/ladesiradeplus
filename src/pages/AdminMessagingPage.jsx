@@ -48,14 +48,33 @@ export const AdminMessagingPage = () => {
     if (!restaurantId) return;
     setLoadingClients(true);
     try {
-      const { data, error } = await supabase
+      // Fetch from customers table
+      const { data: customersData, error: customersError } = await supabase
         .from('customers')
         .select('id, name, email, phone, user_id')
         .eq('restaurant_id', restaurantId)
         .or('is_deleted.eq.false,is_deleted.is.null')
         .order('name', { ascending: true });
-      if (error) throw error;
-      setClients(data || []);
+      if (customersError) throw customersError;
+
+      // Also fetch from profiles to include registered users who haven't ordered yet
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, role')
+        .not('role', 'in', '("admin","manager","staff","driver")');
+
+      // Merge: profiles not already in customers
+      const customerEmails = new Set((customersData || []).map(c => c.email?.toLowerCase()).filter(Boolean));
+      const extraProfiles = (profilesData || []).filter(p => p.email && !customerEmails.has(p.email.toLowerCase()));
+      const extraClients = extraProfiles.map(p => ({
+        id: p.id,
+        name: p.full_name || p.email,
+        email: p.email,
+        phone: null,
+        user_id: p.id,
+      }));
+
+      setClients([...(customersData || []), ...extraClients]);
     } catch (e) {
       console.error('Error fetching clients:', e);
     } finally {
@@ -69,17 +88,17 @@ export const AdminMessagingPage = () => {
       const { data, error } = await supabase
         .from('user_notifications')
         .select('*')
-        .or('is_deleted.eq.false,is_deleted.is.null')
         .order('sent_date', { ascending: false })
         .limit(50);
       if (error) throw error;
       setHistory(data || []);
     } catch (e) {
       console.error('Error fetching history:', e);
+      toast({ variant: 'destructive', title: 'Erreur historique', description: e.message || JSON.stringify(e) });
     } finally {
       setLoadingHistory(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     fetchClients();

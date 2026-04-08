@@ -204,7 +204,7 @@ export const AdminSidebar = ({ className, mobile, onClose }) => {
 
         <SidebarGroup icon={Store} label={t('admin.sidebar.restaurant_mgmt', 'Gestion Restaurant')} collapsed={isCollapsed} expanded={sections.restaurant} onToggle={() => toggleSection('restaurant')}>
           <SidebarItem to="/admin/clients" icon={Users} label={t('admin.sidebar.customers', 'Clients CRM')} collapsed={isCollapsed} onClick={handleItemClick} />
-          {canManageStock && <SidebarItem to="/admin/stock-management" icon={Package} label={t('admin.sidebar.inventory', 'Inventaire')} collapsed={isCollapsed} onClick={handleItemClick} />}
+          {canManageStock && <SidebarItem to="/admin/inventory" icon={Package} label={t('admin.sidebar.inventory', 'Inventaire')} collapsed={isCollapsed} onClick={handleItemClick} />}
           <SidebarItem to="/admin/menu" icon={UtensilsCrossed} label={t('admin.sidebar.menu', 'Menu')} collapsed={isCollapsed} onClick={handleItemClick} />
           <SidebarItem to="/admin/promo-banner" icon={ImageIcon} label={t('admin.sidebar.promotions', 'Bannières Promo')} collapsed={isCollapsed} onClick={handleItemClick} />
           <SidebarItem to="/admin/tables" icon={Grid3x3} label={t('admin.sidebar.tables', 'Tables')} collapsed={isCollapsed} onClick={handleItemClick} />
