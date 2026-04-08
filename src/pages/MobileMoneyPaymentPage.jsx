@@ -36,7 +36,7 @@ export const MobileMoneyPaymentPage = () => {
         .from(table)
         .select('*')
         .eq('id', orderId)
-        .single();
+        .maybeSingle();
         
       if (orderError) throw orderError;
       setOrder(orderData);
@@ -44,7 +44,7 @@ export const MobileMoneyPaymentPage = () => {
       const { data: configData } = await supabase
         .from('admin_config')
         .select('*')
-        .single();
+        .maybeSingle();
         
       setAdminConfig(configData);
     } catch (error) {

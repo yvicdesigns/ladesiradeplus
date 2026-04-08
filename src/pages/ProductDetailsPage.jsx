@@ -48,7 +48,7 @@ export const ProductDetailsPage = () => {
         .from('menu_items')
         .select('*, menu_categories(name)')
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       setProduct(data);

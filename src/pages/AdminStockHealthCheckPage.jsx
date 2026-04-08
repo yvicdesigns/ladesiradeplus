@@ -55,7 +55,7 @@ export const AdminStockHealthCheckPage = () => {
       }
 
       // 4. RLS Test (Test insert capability)
-      const { data: testItem } = await supabase.from('menu_items').select('id').limit(1).single();
+      const { data: testItem } = await supabase.from('menu_items').select('id').limit(1).maybeSingle();
       if (testItem) {
          // Attempt a soft write on menu_items (just updating to same value)
          const { error: rlsErr } = await supabase.from('menu_items').update({ stock_quantity: 0 }).eq('id', '00000000-0000-0000-0000-000000000000'); // Fake update

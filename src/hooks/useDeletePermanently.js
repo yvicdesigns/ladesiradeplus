@@ -15,7 +15,7 @@ export const useDeletePermanently = (tableName) => {
         .from(tableName)
         .select('*')
         .eq('id', recordId)
-        .single();
+        .maybeSingle();
 
       // Perform permanent deletion
       const { error } = await supabase

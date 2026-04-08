@@ -22,7 +22,7 @@ export const PromoPopupPage = () => {
           .from('promo_banners')
           .select('*, product:product_id(id, name, price, image_url)')
           .eq('id', bannerId)
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
         if (!data) throw new Error("Bannière introuvable");

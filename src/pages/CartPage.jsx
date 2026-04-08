@@ -100,7 +100,7 @@ export const CartPage = () => {
             .from('promo_codes')
             .select('*')
             .eq('code', promoCodeInput.trim())
-            .single();
+            .maybeSingle();
 
         if (error || !data) {
             toast({ variant: "destructive", title: "Code Invalide", description: "Le code promotionnel saisi n'existe pas." });

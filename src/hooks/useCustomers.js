@@ -127,7 +127,7 @@ export const useCustomers = () => {
         .update(dataToUpdate)
         .eq('id', id)
         .select()
-        .single();
+        .maybeSingle();
         
       if (error) throw error;
       toast({ title: 'Succès', description: 'Client mis à jour avec succès.' });

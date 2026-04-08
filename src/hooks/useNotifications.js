@@ -106,7 +106,7 @@ export const useNotifications = () => {
           .from('notification_preferences')
           .insert([defaultPrefs])
           .select()
-          .single();
+          .maybeSingle();
 
         if (insertError) {
           console.error('Error creating default preferences:', insertError);

@@ -108,7 +108,7 @@ export const AdminHistoryPage = () => {
             tables (table_number)
           `)
           .eq('id', selectedOrder.id)
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
         setOrderDetails(data);

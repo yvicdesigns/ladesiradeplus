@@ -59,12 +59,12 @@ export const PaymentProofPage = () => {
           const config = configData.reduce((acc, item) => { acc[item.config_key] = item.config_value; return acc; }, {});
           setAdminConfig(config);
         }
-        const { data: settingsData } = await supabase.from('admin_settings').select('restaurant_phone').single();
+        const { data: settingsData } = await supabase.from('admin_settings').select('restaurant_phone').maybeSingle();
         if (settingsData) {
           setRestaurantPhone(settingsData.restaurant_phone);
         }
         if (!orderDetails && orderId) {
-          const { data: order, error } = await supabase.from(tableName).select('*').eq('id', orderId).single();
+          const { data: order, error } = await supabase.from(tableName).select('*').eq('id', orderId).maybeSingle();
           if (error) throw error;
           setOrderDetails(order);
           setOrderTotal(order.total_with_fee || order.total_amount || order.total || 0);

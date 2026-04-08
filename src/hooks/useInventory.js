@@ -61,7 +61,7 @@ export const useInventory = () => {
       // Assuming 'quantity' in data is the absolute value and 'movement_type' determines sign, 
       // or 'quantity' handles the sign. Let's assume quantity is positive and type dictates logic.
       
-      const { data: ingredient } = await supabase.from('ingredients').select('current_stock').eq('id', data.ingredient_id).single();
+      const { data: ingredient } = await supabase.from('ingredients').select('current_stock').eq('id', data.ingredient_id).maybeSingle();
       let newStock = Number(ingredient.current_stock);
       const qty = Number(data.quantity);
 

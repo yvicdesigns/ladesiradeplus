@@ -33,7 +33,7 @@ export const OrderConfirmationPage = () => {
           .from('orders')
           .select('*, tables(table_number)')
           .eq('id', orderId)
-          .single();
+          .maybeSingle();
           
         if (orderData) {
           setOrder(orderData);
@@ -95,7 +95,7 @@ export const OrderConfirmationPage = () => {
         });
       }
       if (order?.table_id && !order?.tables) {
-         supabase.from('tables').select('table_number').eq('id', order.table_id).single()
+         supabase.from('tables').select('table_number').eq('id', order.table_id).maybeSingle()
            .then(({data}) => {
              if (data) {
                 setOrder(prev => ({...prev, tables: data}));

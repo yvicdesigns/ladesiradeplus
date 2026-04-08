@@ -11,7 +11,7 @@ export const useStockManagement = () => {
   const getMenuItemStock = async (itemId) => {
     try {
       const data = await executeWithResilience(async () => {
-        const res = await supabase.from('menu_items').select('stock_quantity').eq('id', itemId).single();
+        const res = await supabase.from('menu_items').select('stock_quantity').eq('id', itemId).maybeSingle();
         if (res.error) throw res.error;
         return res.data;
       }, { context: `Fetch stock for item ${itemId}` });
@@ -37,7 +37,7 @@ export const useStockManagement = () => {
     
     try {
       const currentData = await executeWithResilience(async () => {
-        const res = await supabase.from('menu_items').select('stock_quantity').eq('id', itemId).single();
+        const res = await supabase.from('menu_items').select('stock_quantity').eq('id', itemId).maybeSingle();
         if (res.error) throw res.error;
         return res.data;
       }, { context: `Read stock before update (item: ${itemId})` });

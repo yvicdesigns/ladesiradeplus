@@ -65,7 +65,7 @@ export const OrderTrackingPage = () => {
               .in('status', ['pending', 'confirmed', 'preparing', 'ready', 'en_route', 'arrived_at_customer'])
               .order('created_at', { ascending: false })
               .limit(1)
-              .single();
+              .maybeSingle();
 
             if (error) throw new Error("Aucune commande active trouvée.");
             if (data && data.id) {

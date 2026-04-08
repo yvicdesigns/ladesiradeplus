@@ -44,7 +44,7 @@ export const ProfilePage = () => {
         .from('profiles')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
       
       if (profileError) throw profileError;
       setProfile(profileData);
