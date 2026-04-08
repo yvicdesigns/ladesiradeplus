@@ -86,6 +86,23 @@ export const ReservationsPage = () => {
         return;
     }
 
+    // Validation
+    if (!formData.date || !formData.time || !formData.name?.trim() || !formData.phone?.trim()) {
+      toast({
+        variant: 'destructive',
+        title: 'Champs requis',
+        description: 'Veuillez remplir la date, l\'heure, votre nom et votre téléphone.',
+      });
+      return;
+    }
+
+    const selectedDate = new Date(formData.date);
+    const today = new Date(); today.setHours(0,0,0,0);
+    if (selectedDate < today) {
+      toast({ variant: 'destructive', title: 'Date invalide', description: 'La date doit être aujourd\'hui ou dans le futur.' });
+      return;
+    }
+
     setLoadingSubmit(true);
 
     try {

@@ -127,7 +127,7 @@ export const SettingsPage = () => {
                     push_enabled: true,
                     email_enabled: true,
                     sms_enabled: false
-                }, { onConflict: 'user_id', ignoreDuplicates: true });
+                }, { onConflict: 'user_id', ignoreDuplicates: false });
             }
 
         } catch (error) {

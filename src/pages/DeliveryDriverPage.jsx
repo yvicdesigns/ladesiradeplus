@@ -79,7 +79,20 @@ export const DeliveryDriverPage = () => {
                 </div>
             )}
             
-            <Button variant="outline" className="w-full mt-2 border-gray-600 hover:bg-gray-700">
+            <Button
+              variant="outline"
+              className="w-full mt-2 border-gray-600 hover:bg-gray-700"
+              onClick={() => {
+                const address = order.delivery_address || order.orders?.delivery_address;
+                if (!address) return;
+                const encoded = encodeURIComponent(address);
+                // Ouvre Google Maps sur mobile, fallback navigateur
+                const url = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+                  ? `maps://maps.apple.com/?daddr=${encoded}`
+                  : `https://www.google.com/maps/dir/?api=1&destination=${encoded}`;
+                window.open(url, '_blank');
+              }}
+            >
                 <Navigation className="mr-2 h-4 w-4" /> Ouvrir GPS
             </Button>
           </CardContent>
