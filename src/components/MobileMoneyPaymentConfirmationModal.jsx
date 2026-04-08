@@ -26,8 +26,7 @@ export const MobileMoneyPaymentConfirmationModal = ({ order, orderType, open, on
         .from(table)
         .update({
           payment_status: newStatus,
-          payment_confirmed_at: new Date().toISOString(),
-          payment_confirmed_by: user.id
+          payment_confirmed_at: new Date().toISOString()
         })
         .eq('id', order.id);
 
