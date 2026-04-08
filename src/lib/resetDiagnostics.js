@@ -73,20 +73,7 @@ export const runPreResetDiagnostics = async () => {
       }
     }
 
-    // 4. Advanced Diagnostics via RPC
-    try {
-      const { data: advDiag } = await supabase.rpc('diagnose_reset_issues');
-      if (advDiag && advDiag.blocking_fks?.length > 0) {
-        advDiag.blocking_fks.forEach(fk => {
-          diagnostics.potentialBlockers.push({
-            table: fk.table_name,
-            issue: `Blocking FK: ${fk.constraint_name} (Missing CASCADE)`
-          });
-        });
-      }
-    } catch (e) {
-      console.warn("Advanced diagnostics RPC failed, skipping.", e);
-    }
+    // 4. Advanced Diagnostics via RPC (skipped — function not deployed)
 
     diagnostics.canProceed = diagnostics.errors.length === 0;
     diagnostics.success = true;
