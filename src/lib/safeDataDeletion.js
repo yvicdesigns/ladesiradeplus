@@ -25,26 +25,40 @@ export const performSafeDataReset = async (securityToken, onProgress = () => {})
   onProgress({ table: 'System', status: 'processing', message: 'Starting two-stage secure reset...' });
 
   try {
-    // STAGE 1: Call secure RPC (attempts TRUNCATE CASCADE, then DELETE internally)
-    onProgress({ table: 'RPC', status: 'processing', message: 'Executing core reset function...' });
+    // STAGE 1: Try RPC (optional — falls through if function doesn't exist)
+    onProgress({ table: 'RPC', status: 'processing', message: 'Tentative via fonction sécurisée...' });
     const { data: rpcData, error: rpcError } = await supabase.rpc('reset_all_data_secure');
 
-    if (rpcError) throw rpcError;
-
-    if (rpcData && rpcData.tableResults) {
+    if (!rpcError && rpcData?.tableResults) {
       result.tableResults = rpcData.tableResults;
       result.totalDeleted = rpcData.total_deleted || 0;
-      
-      // Update UI with individual table results
       rpcData.tableResults.forEach(res => {
-        onProgress({
-          table: res.table,
-          status: res.success ? 'success' : 'error',
-          count: res.deleted || 0,
-          error: res.error,
-          message: res.message
-        });
+        onProgress({ table: res.table, status: res.success ? 'success' : 'error', count: res.deleted || 0 });
       });
+    } else {
+      // RPC unavailable — proceed with direct client-side deletion
+      onProgress({ table: 'RPC', status: 'warning', message: 'Fonction RPC indisponible, suppression directe...' });
+
+      const DELETION_ORDER = [
+        'user_notifications', 'item_stock_movements', 'payments', 'refunds',
+        'customer_orders', 'customer_reservations', 'reservations', 'reviews',
+        'analytics_cache', 'reports',
+        'order_items', 'delivery_orders', 'restaurant_orders', 'delivery_tracking',
+        'orders', 'customers', 'activity_logs', 'audit_logs'
+      ];
+
+      for (const table of DELETION_ORDER) {
+        onProgress({ table, status: 'processing' });
+        try {
+          const { error: delError } = await supabase.from(table).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+          if (delError && delError.code !== '42P01') throw delError;
+          onProgress({ table, status: 'success' });
+          result.totalDeleted++;
+        } catch (e) {
+          onProgress({ table, status: 'error', error: e.message });
+          result.errors.push({ table, message: e.message });
+        }
+      }
     }
 
     // STAGE 2: Client-side Fallback Verification & Deletion

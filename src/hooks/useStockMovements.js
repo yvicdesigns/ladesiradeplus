@@ -18,7 +18,7 @@ export const useStockMovements = () => {
       const response = await executeWithResilience(async () => {
         let query = supabase
           .from('item_stock_movements')
-          .select('id, menu_item_id, movement_type, quantity_changed, previous_quantity, new_quantity, order_id, notes, created_at, menu_items!inner(name)', { count: 'exact' });
+          .select('id, menu_item_id, movement_type, quantity_changed, previous_quantity, new_quantity, order_id, notes, created_at', { count: 'exact' });
 
         if (menuItemId) query = query.eq('menu_item_id', menuItemId);
         if (movementType && movementType !== 'all') query = query.eq('movement_type', movementType);
@@ -30,7 +30,25 @@ export const useStockMovements = () => {
 
         const res = await query.order('created_at', { ascending: false }).range(from, to);
         if (res.error) throw res.error;
-        return res;
+
+        // Fetch menu item names separately (no FK defined)
+        const itemIds = [...new Set((res.data || []).map(m => m.menu_item_id).filter(Boolean))];
+        let itemNames = {};
+        if (itemIds.length > 0) {
+          const { data: items } = await supabase
+            .from('menu_items')
+            .select('id, name')
+            .in('id', itemIds);
+          (items || []).forEach(i => { itemNames[i.id] = i.name; });
+        }
+
+        return {
+          ...res,
+          data: (res.data || []).map(m => ({
+            ...m,
+            menu_items: { name: itemNames[m.menu_item_id] || 'Produit inconnu' }
+          }))
+        };
       }, { context: 'Fetch stock movements' });
 
       setMovements(response.data || []);
