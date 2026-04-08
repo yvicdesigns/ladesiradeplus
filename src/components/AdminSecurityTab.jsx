@@ -26,8 +26,8 @@ export const AdminSecurityTab = () => {
             <p className="text-sm text-blue-900/80 mb-6">
               Vérifiez que toutes vos tables sensibles (orders, profiles, admin_settings) sont correctement protégées par des politiques de sécurité (Row Level Security).
             </p>
-            <Button onClick={() => navigate('/admin/rls-diagnostics')} className="w-full gap-2 bg-blue-600 hover:bg-blue-700">
-              <Shield className="h-4 w-4" /> Lancer le diagnostic
+            <Button disabled className="w-full gap-2 bg-blue-600 hover:bg-blue-700 opacity-50 cursor-not-allowed">
+              <Shield className="h-4 w-4" /> Disponible en développement uniquement
             </Button>
           </CardContent>
         </Card>
@@ -43,8 +43,8 @@ export const AdminSecurityTab = () => {
             <p className="text-sm text-amber-900/80 mb-6">
               Exécutez des tests automatisés pour vous assurer que les utilisateurs non autorisés ne peuvent pas accéder aux données ou les modifier illégalement.
             </p>
-            <Button onClick={() => navigate('/admin/test-rls')} className="w-full gap-2 bg-amber-600 hover:bg-amber-700 text-white">
-              <AlertTriangle className="h-4 w-4" /> Exécuter les tests RLS
+            <Button disabled className="w-full gap-2 bg-amber-600 hover:bg-amber-700 text-white opacity-50 cursor-not-allowed">
+              <AlertTriangle className="h-4 w-4" /> Disponible en développement uniquement
             </Button>
           </CardContent>
         </Card>

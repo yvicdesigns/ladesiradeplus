@@ -483,12 +483,6 @@ export const AdminClientsContent = () => {
               </Button>
             </div>
             
-            <Button variant="outline" onClick={() => navigate('/admin/debug-clients')} className="text-slate-600 border-slate-200 hover:bg-slate-50">
-              <BugPlay className="w-4 h-4 mr-2" /> Debug Clients
-            </Button>
-            <Button variant="outline" onClick={() => navigate('/admin/customers-deduplication')} className="text-amber-600 border-amber-200 hover:bg-amber-50">
-              <Wrench className="w-4 h-4 mr-2" /> Déduplication
-            </Button>
             <Button onClick={refetchClients} variant="outline" className="bg-white" disabled={clientsLoading}>
               <RefreshCw className={`w-4 h-4 mr-2 ${clientsLoading ? 'animate-spin' : ''}`} /> Actualiser
             </Button>

@@ -90,54 +90,9 @@ export const AdminLayout = ({ children }) => {
           >
             {role === 'admin' && (
               <div className="flex justify-end mb-2 relative z-10 landscape:mb-1 gap-2 flex-wrap bg-white p-2 rounded-xl border border-gray-200 shadow-sm">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => navigate('/admin/order-id-sync')}
-                  className="bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-800 border-amber-200 gap-2 landscape:h-8"
-                >
-                  <DatabaseZap className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Sync IDs</span>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => navigate('/admin/order-id-diagnostics')}
-                  className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 border-indigo-200 gap-2 landscape:h-8"
-                >
-                  <ActivitySquare className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Diagnostic IDs</span>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => navigate('/admin/order-id-investigation')}
-                  className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 border-indigo-200 gap-2 landscape:h-8"
-                >
-                  <SearchCode className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Tracer un ID</span>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => navigate('/admin/restaurant-deletion-audit')}
-                  className="bg-card text-muted-foreground hover:bg-red-50 hover:text-red-700 hover:border-red-200 gap-2 landscape:h-8"
-                >
-                  <ShieldAlert className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Audit Supression</span>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => navigate('/admin/setup-user-assignment')}
-                  className="bg-card text-muted-foreground hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 gap-2 landscape:h-8"
-                >
-                  <Settings className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Assignations RLS</span>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => setDebugPanelOpen(!debugPanelOpen)}
                   className="bg-card text-muted-foreground hover:bg-primary/5 hover:text-primary hover:border-primary/30 gap-2 landscape:h-8"
                 >

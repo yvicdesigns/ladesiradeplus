@@ -46,7 +46,7 @@ export const PaymentProofPage = () => {
         className: "bg-amber-500 text-white"
       });
       // UPDATED: Redirect to Tracking Page
-      navigate(`/tracking/${orderId}`);
+      navigate(orderType === 'delivery' ? `/track-order/${orderId}` : `/track-restaurant-order/${orderId}`);
     }
   }, [realtimePaymentStatus, navigate, orderId, toast]);
 
@@ -123,7 +123,7 @@ export const PaymentProofPage = () => {
       window.open(waLink, '_blank');
       
       // UPDATED: Redirect to Tracking Page immediately
-      navigate(`/tracking/${orderId}`);
+      navigate(orderType === 'delivery' ? `/track-order/${orderId}` : `/track-restaurant-order/${orderId}`);
 
     } catch (error) {
       console.error(error);
