@@ -41,12 +41,17 @@ export const MobileMoneyPaymentPage = () => {
       if (orderError) throw orderError;
       setOrder(orderData);
 
-      const { data: configData } = await supabase
+      const { data: configRows } = await supabase
         .from('admin_config')
-        .select('*')
-        .maybeSingle();
-        
-      setAdminConfig(configData);
+        .select('config_key, config_value');
+
+      if (configRows) {
+        const config = configRows.reduce((acc, item) => {
+          acc[item.config_key] = item.config_value;
+          return acc;
+        }, {});
+        setAdminConfig(config);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
       toast({
@@ -68,6 +73,14 @@ export const MobileMoneyPaymentPage = () => {
             variant: "destructive",
             title: "Format invalide",
             description: t('payment.upload_format')
+        });
+        return;
+      }
+      if (selectedFile.size > 5 * 1024 * 1024) {
+        toast({
+            variant: "destructive",
+            title: "Fichier trop volumineux",
+            description: "La taille maximale autorisée est de 5 MB."
         });
         return;
       }
@@ -145,7 +158,7 @@ export const MobileMoneyPaymentPage = () => {
   const isMtn = order.mobile_money_type === 'mtn';
   const phoneNumber = isMtn ? adminConfig?.mtn_mobile_money : adminConfig?.airtel_mobile_money;
   const operatorColor = isMtn ? 'text-yellow-600 bg-yellow-50 border-yellow-200' : 'text-red-600 bg-red-50 border-red-200';
-  const amount = orderType === 'delivery' ? order.total_with_fee : order.total;
+  const amount = order.total_with_fee || order.total_amount || order.total || 0;
 
   return (
     <>

@@ -96,9 +96,9 @@ export const ReservationsPage = () => {
       return;
     }
 
-    const selectedDate = new Date(formData.date);
-    const today = new Date(); today.setHours(0,0,0,0);
-    if (selectedDate < today) {
+    // Compare as date strings to avoid UTC/local timezone shift issues
+    const todayStr = new Date().toISOString().slice(0, 10);
+    if (formData.date < todayStr) {
       toast({ variant: 'destructive', title: 'Date invalide', description: 'La date doit être aujourd\'hui ou dans le futur.' });
       return;
     }
