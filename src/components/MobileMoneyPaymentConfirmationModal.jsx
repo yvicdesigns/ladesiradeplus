@@ -69,7 +69,7 @@ export const MobileMoneyPaymentConfirmationModal = ({ order, orderType, open, on
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Montant:</span>
-              <span className="font-bold text-primary text-lg">{formatCurrency(orderType === 'delivery' ? order.total_with_fee : order.total)}</span>
+              <span className="font-bold text-primary text-lg">{formatCurrency(order.displayTotal ?? (orderType === 'delivery' ? order.total_amount : order.orders?.total) ?? 0)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Type:</span>

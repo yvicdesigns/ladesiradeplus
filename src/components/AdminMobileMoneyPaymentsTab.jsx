@@ -52,18 +52,18 @@ export const AdminMobileMoneyPaymentsTab = () => {
 
       if (deliveryError) throw deliveryError;
 
-      // Fetch restaurant orders with Mobile Money payment
+      // Fetch restaurant orders with Mobile Money payment (join orders for total)
       const { data: restData, error: restError } = await supabase
         .from('restaurant_orders')
-        .select('*')
+        .select('*, orders:order_id(total)')
         .eq('payment_method', 'mobile_money')
         .order('created_at', { ascending: false });
 
       if (restError) throw restError;
 
-      // Combine and format
-      const formattedDelivery = (deliveryData || []).map(o => ({ ...o, orderType: 'delivery' }));
-      const formattedRest = (restData || []).map(o => ({ ...o, orderType: 'restaurant' }));
+      // Combine and format — normalise amount to a single `displayTotal` field
+      const formattedDelivery = (deliveryData || []).map(o => ({ ...o, orderType: 'delivery', displayTotal: o.total_amount || 0 }));
+      const formattedRest = (restData || []).map(o => ({ ...o, orderType: 'restaurant', displayTotal: o.orders?.total || 0 }));
       
       setPayments([...formattedDelivery, ...formattedRest].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
     } catch (error) {
@@ -166,7 +166,7 @@ export const AdminMobileMoneyPaymentsTab = () => {
                         {payment.mobile_money_type?.toUpperCase() || 'N/A'}
                       </Badge>
                     </TableCell>
-                    <TableCell className="font-bold">{formatCurrency(payment.orderType === 'delivery' ? payment.total_with_fee : payment.total)}</TableCell>
+                    <TableCell className="font-bold">{formatCurrency(payment.displayTotal)}</TableCell>
                     <TableCell>
                       {payment.payment_screenshot_url ? (
                         <div className="w-8 h-8 rounded overflow-hidden border bg-muted">
