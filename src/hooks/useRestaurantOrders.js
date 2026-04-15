@@ -43,6 +43,9 @@ export const useRestaurantOrders = () => {
           status,
           created_at,
           payment_method,
+          payment_status,
+          payment_screenshot_url,
+          mobile_money_type,
           customer_id,
           order_id,
           orders:order_id (

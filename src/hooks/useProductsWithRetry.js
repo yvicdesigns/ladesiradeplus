@@ -35,7 +35,8 @@ export function useProductsWithRetry(options = {}) {
 
     const processedProducts = (prodsData || []).map(item => ({
       ...item,
-      is_available: item.stock_quantity > 0 && !item.is_deleted
+      // Available if: not deleted, not explicitly disabled, and has stock (or stock is null = unlimited)
+      is_available: !item.is_deleted && item.is_available !== false && (item.stock_quantity === null || item.stock_quantity > 0)
     }));
 
     return { products: processedProducts, categories: catsData || [] };

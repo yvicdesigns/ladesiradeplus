@@ -80,6 +80,20 @@ export const useUpdateRestaurantOrderStatus = () => {
 
       if (updateError) throw updateError;
 
+      // Sync status to master orders table so order history stays up-to-date
+      const { data: subOrder } = await supabase
+        .from('restaurant_orders')
+        .select('order_id')
+        .eq('id', orderId)
+        .maybeSingle();
+
+      if (subOrder?.order_id) {
+        await supabase
+          .from('orders')
+          .update({ status: newStatus, updated_at: new Date().toISOString() })
+          .eq('id', subOrder.order_id);
+      }
+
       logEntry.status = 'success';
       addLog(logEntry);
 
