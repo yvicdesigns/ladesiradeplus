@@ -15,7 +15,7 @@ export const DeleteAccountConfirmationModal = ({ open, onClose }) => {
   const handleDelete = async () => {
     try {
       setLoading(true);
-      const { error } = await supabase.from('profiles').delete().eq('id', (await supabase.auth.getUser()).data.user.id);
+      const { error } = await supabase.from('profiles').delete().eq('user_id', (await supabase.auth.getUser()).data.user.id);
       if (error) throw error;
       
       const { error: authError } = await supabase.auth.signOut();

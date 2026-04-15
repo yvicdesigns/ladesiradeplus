@@ -44,7 +44,7 @@ export const HomePage = () => {
       const { data } = await supabase
         .from('profiles')
         .select('role')
-        .eq('id', user.id)
+        .eq('user_id', user.id)
         .maybeSingle();
       setIsAdminOrManager(data && ['admin', 'manager', 'staff'].includes(data.role));
     } catch (err) {

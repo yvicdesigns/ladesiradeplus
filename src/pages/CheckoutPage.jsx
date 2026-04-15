@@ -146,7 +146,7 @@ export const CheckoutPage = () => {
   useEffect(() => {
     if (user && !preSelectedClientId) {
       const fetchProfile = async () => {
-        const { data } = await supabase.from('profiles').select('full_name, phone, email').eq('id', user.id).maybeSingle();
+        const { data } = await supabase.from('profiles').select('full_name, phone, email').eq('user_id', user.id).maybeSingle();
         if (data) {
           setFormData(prev => ({
             ...prev, fullName: data.full_name || prev.fullName, phone: data.phone || prev.phone, email: data.email || user.email || prev.email

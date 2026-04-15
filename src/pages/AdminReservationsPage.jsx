@@ -68,7 +68,7 @@ export const AdminReservationsPage = () => {
       setIsAuthChecking(true);
       if (!user) { navigate('/'); return; }
       try {
-        const { data, error } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
+        const { data, error } = await supabase.from('profiles').select('role').eq('user_id', user.id).maybeSingle();
         if (error || !['admin', 'manager', 'staff'].includes(data?.role)) {
           toast({ variant: "destructive", title: "Accès refusé" });
           navigate('/');

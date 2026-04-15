@@ -227,7 +227,7 @@ export const SettingsPage = () => {
     if (!user) return;
     setLoading(true);
     try {
-      const { error: profileError } = await supabase.from('profiles').delete().eq('id', user.id);
+      const { error: profileError } = await supabase.from('profiles').delete().eq('user_id', user.id);
       if (profileError) console.error('Error deleting profile:', profileError);
       await signOut();
       navigate('/');

@@ -58,7 +58,7 @@ export const authService = {
 
   async getUserRole(userId) {
     if (!userId) return null;
-    const { data } = await supabase.from('profiles').select('role').eq('id', userId).maybeSingle();
+    const { data } = await supabase.from('profiles').select('role').eq('user_id', userId).maybeSingle();
     return data?.role;
   },
 
