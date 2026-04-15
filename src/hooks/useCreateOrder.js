@@ -155,6 +155,21 @@ export const useCreateOrder = () => {
         }
       }
 
+      // 5. Increment promo code usage_count if a promo code was used
+      if (orderDetails.promo_code_id) {
+        const { data: promoRow } = await supabase
+          .from('promo_codes')
+          .select('usage_count')
+          .eq('id', orderDetails.promo_code_id)
+          .maybeSingle();
+        if (promoRow) {
+          await supabase
+            .from('promo_codes')
+            .update({ usage_count: (promoRow.usage_count || 0) + 1 })
+            .eq('id', orderDetails.promo_code_id);
+        }
+      }
+
       return { success: true, order: rpcResult.order };
 
     } catch (error) {
