@@ -38,7 +38,7 @@ export const DeliveryCreateModal = ({ open, onClose }) => {
       // Fetch recent orders that are ready or preparing
       const { data } = await supabase
         .from('orders')
-        .select('id, created_at, total_amount')
+        .select('id, created_at, total')
         .in('status', ['ready', 'preparing'])
         .order('created_at', { ascending: false })
         .limit(10);
@@ -94,7 +94,7 @@ export const DeliveryCreateModal = ({ open, onClose }) => {
                 <SelectContent>
                   {orders.map(order => (
                     <SelectItem key={order.id} value={order.id}>
-                      #{order.id.slice(0, 8)} - ${order.total_amount}
+                      #{order.id.slice(0, 8)} - ${order.total}
                     </SelectItem>
                   ))}
                 </SelectContent>
