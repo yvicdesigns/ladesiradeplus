@@ -8,6 +8,7 @@ export const useRealtimeDeliveryOrders = (options = {}) => {
   // Support both legacy numeric limit and options object
   const initialLimit = typeof options === 'number' ? options : (options.limit || 50);
   const orderId = typeof options === 'object' ? options.orderId : null;
+  const userId = typeof options === 'object' ? options.userId : null;
 
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +43,7 @@ export const useRealtimeDeliveryOrders = (options = {}) => {
         .select(`
           *,
           orders:order_id (
-            id, total, status, type, created_at, customer_name, customer_phone, delivery_address, is_deleted,
+            id, total, status, type, created_at, customer_name, customer_phone, delivery_address, is_deleted, user_id,
             order_items (
               id, quantity, price,
               menu_items (name)
@@ -83,7 +84,7 @@ export const useRealtimeDeliveryOrders = (options = {}) => {
       if (fetchError) throw fetchError;
 
       // Ensure data maps properly for UI (pulling up order total as fallback)
-      const mappedData = (data || []).map(doItem => ({
+      let mappedData = (data || []).map(doItem => ({
         ...doItem,
         total: doItem.total || doItem.orders?.total || 0,
         customer_name: doItem.orders?.customer_name || 'Inconnu',
@@ -92,6 +93,11 @@ export const useRealtimeDeliveryOrders = (options = {}) => {
         // Hoist order_items from the nested orders relation so tracking page can access them directly
         order_items: doItem.orders?.order_items || []
       }));
+
+      // Customer mode: filter to only show orders belonging to this user
+      if (userId) {
+        mappedData = mappedData.filter(o => o.orders?.user_id === userId);
+      }
 
       setOrders(mappedData);
       setPagination(prev => ({
@@ -111,7 +117,7 @@ export const useRealtimeDeliveryOrders = (options = {}) => {
     } finally {
       setLoading(false);
     }
-  }, [restaurantId, orderId, filters, pagination.page, pagination.limit, toast]);
+  }, [restaurantId, orderId, userId, filters, pagination.page, pagination.limit, toast]);
 
   useEffect(() => {
     fetchOrders();

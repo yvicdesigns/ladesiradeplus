@@ -56,7 +56,7 @@ export const useAuditLogs = (filters = {}, pagination = { page: 1, limit: 20 }) 
 
       let topUserEmail = 'N/A';
       if (topUserId) {
-        const { data: profile } = await supabase.from('profiles').select('email').eq('id', topUserId).maybeSingle();
+        const { data: profile } = await supabase.from('profiles').select('email').eq('user_id', topUserId).maybeSingle();
         if (profile) topUserEmail = profile.email;
       }
 

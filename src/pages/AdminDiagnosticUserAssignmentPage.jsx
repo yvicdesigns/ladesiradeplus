@@ -114,7 +114,7 @@ export const AdminDiagnosticUserAssignmentPage = () => {
         }
       }
 
-      await supabase.from('profiles').update({ role: 'admin' }).eq('id', targetUserId);
+      await supabase.from('profiles').update({ role: 'admin' }).eq('user_id', targetUserId);
 
       toast({
         title: "Succès",
