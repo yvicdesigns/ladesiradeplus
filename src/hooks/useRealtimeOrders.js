@@ -79,8 +79,10 @@ export function useRealtimeOrders(
       const result = await retryWithExponentialBackoff(async () => {
         const applyFilters = (query) => {
           if (filtersRef.current.userId) query = query.eq('user_id', filtersRef.current.userId);
+          if (filtersRef.current.restaurantId) query = query.eq('restaurant_id', filtersRef.current.restaurantId);
           if (filtersRef.current.status) query = query.eq('status', filtersRef.current.status);
           if (filtersRef.current.order_method) query = query.eq('order_method', filtersRef.current.order_method);
+          if (filtersRef.current.order_type) query = query.eq('order_type', filtersRef.current.order_type);
           query = applyIsDeletedFilter(query, filtersRef.current.includeDeleted ?? false);
           
           if (currSearch) {

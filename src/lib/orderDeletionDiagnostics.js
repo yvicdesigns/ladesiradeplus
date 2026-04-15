@@ -24,7 +24,7 @@ export const runFullOrderDeletionDiagnostic = async () => {
     report.auth.user = session?.user?.id;
 
     if (session?.user?.id) {
-       const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).maybeSingle();
+       const { data: profile } = await supabase.from('profiles').select('role').eq('user_id', session.user.id).maybeSingle();
        report.auth.role = profile?.role || 'unknown';
     }
 
