@@ -70,33 +70,29 @@ export const useOrderTracking = (paramId) => {
       }
 
       // 2. Check restaurant_orders
+      const RESTAURANT_SELECT = `
+          *,
+          orders:order_id (
+            id, total, created_at, customer_name, customer_phone, type, status, table_id,
+            order_method,
+            tables(table_number),
+            order_items ( id, quantity, price, menu_items (name) )
+          )
+      `;
+
       let { data: restaurantData, error: restaurantError } = await supabase
         .from('restaurant_orders')
-        .select(`
-            *,
-            orders:order_id (
-              id, total, created_at, customer_name, customer_phone, type, status, table_id,
-              tables(table_number),
-              order_items ( id, quantity, price, menu_items (name) )
-            )
-        `)
+        .select(RESTAURANT_SELECT)
         .eq('id', paramId)
         .maybeSingle();
 
       if (!restaurantData) {
           const { data: restaurantByOrderId } = await supabase
             .from('restaurant_orders')
-            .select(`
-                *,
-                orders:order_id (
-                  id, total, created_at, customer_name, customer_phone, type, status, table_id,
-                  tables(table_number),
-                  order_items ( id, quantity, price, menu_items (name) )
-                )
-            `)
+            .select(RESTAURANT_SELECT)
             .eq('order_id', paramId)
             .maybeSingle();
-            
+
           if (restaurantByOrderId) restaurantData = restaurantByOrderId;
       }
 
@@ -106,6 +102,7 @@ export const useOrderTracking = (paramId) => {
               total: restaurantData.orders?.total,
               customer_name: restaurantData.orders?.customer_name,
               table_number: restaurantData.orders?.tables?.table_number,
+              order_method: restaurantData.orders?.order_method,
               created_at: restaurantData.created_at,
               type: 'restaurant',
               status: restaurantData.status || restaurantData.orders?.status,

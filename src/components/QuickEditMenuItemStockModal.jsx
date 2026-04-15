@@ -22,7 +22,8 @@ export const QuickEditMenuItemStockModal = ({ isOpen, onClose, menuItem, onSucce
   useEffect(() => {
     if (isOpen && menuItem) {
       setAdjustmentType('set');
-      setValue(menuItem.stock_quantity?.toString() || '0');
+      // null = unlimited; initialise to empty so admin must explicitly set a value
+      setValue(menuItem.stock_quantity !== null ? menuItem.stock_quantity.toString() : '');
       setNotes('');
       setError(null);
       setSuccess(false);
@@ -102,7 +103,7 @@ export const QuickEditMenuItemStockModal = ({ isOpen, onClose, menuItem, onSucce
         <DialogHeader>
           <DialogTitle>Ajuster le stock du plat</DialogTitle>
           <DialogDescription className="font-medium text-gray-900">
-            {menuItem.name} (Stock actuel: <span className="font-bold text-blue-600">{menuItem.stock_quantity || 0}</span>)
+            {menuItem.name} (Stock actuel: <span className="font-bold text-blue-600">{menuItem.stock_quantity === null ? '∞ Illimité' : menuItem.stock_quantity}</span>)
           </DialogDescription>
         </DialogHeader>
         

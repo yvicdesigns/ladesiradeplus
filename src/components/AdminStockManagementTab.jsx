@@ -101,13 +101,15 @@ const StockManagementContent = () => {
       );
     }
     if (showLowStockOnly) {
-      result = result.filter(item => (item.stock_quantity || 0) < LOW_STOCK);
+      // null stock_quantity means unlimited — exclude from low-stock alerts
+      result = result.filter(item => item.stock_quantity !== null && item.stock_quantity < LOW_STOCK);
     }
     return result;
   }, [menuItems, searchTerm, showLowStockOnly]);
 
-  const criticalStockCount = (menuItems || []).filter(i => (i.stock_quantity || 0) < CRITICAL_STOCK).length;
-  const lowStockCount = (menuItems || []).filter(i => (i.stock_quantity || 0) >= CRITICAL_STOCK && (i.stock_quantity || 0) < LOW_STOCK).length;
+  // null stock_quantity = unlimited stock — never count as critical or low
+  const criticalStockCount = (menuItems || []).filter(i => i.stock_quantity !== null && i.stock_quantity < CRITICAL_STOCK).length;
+  const lowStockCount = (menuItems || []).filter(i => i.stock_quantity !== null && i.stock_quantity >= CRITICAL_STOCK && i.stock_quantity < LOW_STOCK).length;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -214,10 +216,11 @@ const StockManagementContent = () => {
                 </TableRow>
               ) : (
                 filteredItems.map(item => {
-                  const stock = item.stock_quantity || 0;
-                  const isCritical = stock < CRITICAL_STOCK;
-                  const isLow = stock >= CRITICAL_STOCK && stock < LOW_STOCK;
-                  
+                  const isUnlimited = item.stock_quantity === null;
+                  const stock = isUnlimited ? null : item.stock_quantity;
+                  const isCritical = !isUnlimited && stock < CRITICAL_STOCK;
+                  const isLow = !isUnlimited && stock >= CRITICAL_STOCK && stock < LOW_STOCK;
+
                   return (
                     <TableRow key={item.id} className="hover:bg-gray-50">
                       <TableCell>
@@ -233,12 +236,16 @@ const StockManagementContent = () => {
                         {formatCurrency(item.price)}
                       </TableCell>
                       <TableCell className="text-center">
-                        <span className={`text-xl font-black ${isCritical ? 'text-red-600' : isLow ? 'text-yellow-600' : 'text-amber-600'}`}>
-                          {stock}
+                        <span className={`text-xl font-black ${isUnlimited ? 'text-gray-400' : isCritical ? 'text-red-600' : isLow ? 'text-yellow-600' : 'text-amber-600'}`}>
+                          {isUnlimited ? '∞' : stock}
                         </span>
                       </TableCell>
                       <TableCell className="text-center">
-                        {isCritical ? (
+                        {isUnlimited ? (
+                          <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200 gap-1 w-[120px] justify-center shadow-none">
+                            <Package className="w-3 h-3" /> Illimité
+                          </Badge>
+                        ) : isCritical ? (
                           <Badge variant="destructive" className="bg-red-100 text-red-800 hover:bg-red-100 border-red-200 gap-1 w-[120px] justify-center shadow-none">
                             <PackageX className="w-3 h-3" /> Critique
                           </Badge>
