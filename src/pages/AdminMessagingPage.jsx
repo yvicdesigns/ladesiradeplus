@@ -60,7 +60,7 @@ export const AdminMessagingPage = () => {
       // Also fetch from profiles to include registered users who haven't ordered yet
       const { data: profilesData } = await supabase
         .from('profiles')
-        .select('id, full_name, email, role')
+        .select('id, user_id, full_name, email, role')
         .not('role', 'in', '("admin","manager","staff","driver")');
 
       // Merge: profiles not already in customers
@@ -71,7 +71,7 @@ export const AdminMessagingPage = () => {
         name: p.full_name || p.email,
         email: p.email,
         phone: null,
-        user_id: p.id,
+        user_id: p.user_id,
       }));
 
       setClients([...(customersData || []), ...extraClients]);
