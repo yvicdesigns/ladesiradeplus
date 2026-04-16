@@ -31,10 +31,12 @@ export const MobileMoneyPaymentPage = () => {
     try {
       setLoading(true);
       const table = orderType === 'delivery' ? 'delivery_orders' : 'restaurant_orders';
-      
+      // restaurant_orders has no total column — must join orders to get the total
+      const selectClause = orderType === 'restaurant' ? '*, orders:order_id(total)' : '*';
+
       const { data: orderData, error: orderError } = await supabase
         .from(table)
-        .select('*')
+        .select(selectClause)
         .eq('id', orderId)
         .maybeSingle();
         
@@ -133,7 +135,7 @@ export const MobileMoneyPaymentPage = () => {
       navigate(`/order-confirmation/${targetId}`, { 
         replace: true,
         state: { 
-            order: { ...order, payment_screenshot_url: publicUrl, total: order.total_amount || order.total }, 
+            order: { ...order, payment_screenshot_url: publicUrl, total: order.total_amount || order.orders?.total || order.total },
             type: orderType,
             items: typeof order.items === 'string' ? JSON.parse(order.items) : order.items 
         } 
@@ -158,7 +160,7 @@ export const MobileMoneyPaymentPage = () => {
   const isMtn = order.mobile_money_type === 'mtn';
   const phoneNumber = isMtn ? adminConfig?.mtn_mobile_money : adminConfig?.airtel_mobile_money;
   const operatorColor = isMtn ? 'text-yellow-600 bg-yellow-50 border-yellow-200' : 'text-red-600 bg-red-50 border-red-200';
-  const amount = order.total_with_fee || order.total_amount || order.total || 0;
+  const amount = order.total_with_fee || order.total_amount || order.orders?.total || order.total || 0;
 
   return (
     <>
