@@ -15,7 +15,7 @@ export const HistoryStatistics = ({ orders = [] }) => {
        // but typically history shows gross unless filtered by status.
        // Here we assume filtered data is what the user wants to analyze.
        if (['cancelled', 'rejected'].includes(o.status)) return sum;
-       return sum + (Number(o.total_amount) || 0);
+       return sum + (Number(o.total) || 0);
     }, 0);
     
     const avgOrderValue = totalCount > 0 ? totalRevenue / totalCount : 0;
@@ -53,7 +53,7 @@ export const HistoryStatistics = ({ orders = [] }) => {
       );
       
       if(dateStr) {
-          acc[dateStr] = (acc[dateStr] || 0) + (Number(o.total_amount) || 0);
+          acc[dateStr] = (acc[dateStr] || 0) + (Number(o.total) || 0);
       }
       return acc;
     }, {});

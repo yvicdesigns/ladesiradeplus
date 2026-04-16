@@ -22,8 +22,8 @@ export const HistoryExportButtons = ({ orders = [] }) => {
             status: status,
             customer: o.customer_name || 'Inconnu',
             phone: o.delivery_orders?.[0]?.customer_phone || '-',
-            amount: o.total_amount,
-            formattedAmount: formatCurrency(o.total_amount)
+            amount: o.total,
+            formattedAmount: formatCurrency(o.total)
         };
     });
   };

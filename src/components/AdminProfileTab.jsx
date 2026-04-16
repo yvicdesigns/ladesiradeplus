@@ -102,7 +102,7 @@ export const AdminProfileTab = () => {
       <EditAdminProfileModal 
         open={showEditModal} 
         onClose={() => setShowEditModal(false)}
-        profile={{...profile, id: profile?.id || user?.id, email: user?.email}} 
+        profile={{...profile, id: profile?.id || user?.id, user_id: profile?.user_id || user?.id, email: user?.email}}
         onSuccess={fetchProfile}
       />
       

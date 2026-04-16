@@ -60,7 +60,7 @@ export const LiveFeed = () => {
         addEvent({
           id: payload.new.id,
           type: 'order',
-          message: `New Order #${payload.new.id.slice(0, 6)} received ($${payload.new.total_amount})`,
+          message: `New Order #${payload.new.id.slice(0, 6)} received ($${payload.new.total})`,
           timestamp: new Date().toISOString()
         });
       })

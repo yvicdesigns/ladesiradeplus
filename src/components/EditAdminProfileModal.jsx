@@ -30,7 +30,7 @@ export const EditAdminProfileModal = ({ open, onClose, profile, onSuccess }) => 
           phone: data.phone,
           updated_at: new Date().toISOString()
         })
-        .eq('id', profile.id);
+        .eq('user_id', profile.user_id);
 
       if (error) throw error;
 
