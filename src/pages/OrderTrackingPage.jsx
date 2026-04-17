@@ -187,9 +187,8 @@ export const OrderTrackingPage = () => {
           if (isValidUUID(deliveryOrderId)) {
               const { error: deliveryError } = await supabase
                 .from('delivery_orders')
-                .update({ 
+                .update({
                     status: STATUS_DELIVERED,
-                    payment_confirmed_at: order.payment_confirmed_at || new Date().toISOString(),
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', deliveryOrderId);

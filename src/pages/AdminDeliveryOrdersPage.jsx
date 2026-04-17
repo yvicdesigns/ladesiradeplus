@@ -203,7 +203,8 @@ export const AdminDeliveryOrdersPage = () => {
             if (error) throw error;
         }, { context: 'Update Payment Status', retry: true });
         
-        toast({ title: "Succès", description: "Commande modifiée avec succès", className: "bg-green-600 text-white" });
+        toast({ title: "Succès", description: "Paiement confirmé avec succès", className: "bg-green-600 text-white" });
+        setSelectedOrder(prev => prev ? { ...prev, payment_status: status } : null);
         refresh();
     } catch (err) {
         toast({ title: "Erreur", description: `Erreur: ${err.message || 'Erreur inconnue'}`, variant: "destructive" });
