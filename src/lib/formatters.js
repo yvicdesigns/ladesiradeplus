@@ -119,9 +119,10 @@ export const formatPaymentMethod = (method) => {
   if (!method) return 'Non Spécifié';
   switch (method.toLowerCase()) {
     case 'cash':
-    case 'cash_on_delivery':
     case 'table_payment':
       return 'Paiement à la Table';
+    case 'cash_on_delivery':
+      return 'Paiement à la Livraison';
     case 'cash_register':
       return 'Paiement en Caisse';
     case 'mobile_money':

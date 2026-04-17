@@ -199,7 +199,7 @@ export const AdminDeliveryOrdersPage = () => {
         const targetId = verification.exists ? verification.targetId : id;
 
         await executeWithResilience(async () => {
-            const { error } = await supabase.from('delivery_orders').update({ payment_status: status }).eq('order_id', targetId);
+            const { error } = await supabase.from('delivery_orders').update({ payment_status: status }).eq('id', targetId);
             if (error) throw error;
         }, { context: 'Update Payment Status', retry: true });
         
