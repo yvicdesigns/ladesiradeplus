@@ -4,11 +4,13 @@ import { AdminTopbar } from './AdminTopbar';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DebugPermissionsPanel } from '@/components/DebugPermissionsPanel';
 import { DeleteDebugPanel } from '@/components/DeleteDebugPanel';
+import { PersistentOrderAlertBanner } from '@/components/PersistentOrderAlertBanner';
 import { AlertCircle, TerminalSquare, Settings, ShieldAlert, ActivitySquare, SearchCode, DatabaseZap } from 'lucide-react';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { usePersistentOrderAlert } from '@/hooks/usePersistentOrderAlert';
 
 class SidebarErrorBoundary extends React.Component {
   constructor(props) {
@@ -41,9 +43,10 @@ class SidebarErrorBoundary extends React.Component {
 export const AdminLayout = ({ children }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [debugPanelOpen, setDebugPanelOpen] = useState(false);
-  const { role } = useAuth(); 
+  const { role } = useAuth();
   const navigate = useNavigate();
   const { currentLanguage } = useLanguage();
+  const { pendingOrders, acknowledgeAll } = usePersistentOrderAlert();
 
   return (
     <div className="flex h-[100dvh] bg-background overflow-hidden font-sans text-foreground landscape:flex-row">
@@ -55,6 +58,10 @@ export const AdminLayout = ({ children }) => {
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative bg-muted/20">
         <AdminTopbar onMenuClick={() => setMobileMenuOpen(!mobileMenuOpen)} />
+        <PersistentOrderAlertBanner
+          pendingOrders={pendingOrders}
+          onAcknowledgeAll={acknowledgeAll}
+        />
         
         <AnimatePresence>
           {mobileMenuOpen && (
