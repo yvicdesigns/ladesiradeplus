@@ -24,7 +24,6 @@ import { ConnectionStatus } from '@/components/ConnectionStatus';
 import { debugLogger, LOG_EVENTS } from '@/lib/debugLogger';
 import { useDeliveryVoiceNotification } from '@/hooks/useDeliveryVoiceNotification';
 import { executeWithResilience } from '@/lib/supabaseErrorHandler';
-import { createDeliveryTracking } from '@/services/DeliveryService';
 import { isValidUUID } from '@/lib/deliveryValidation';
 import { formatOrderIdForDisplay } from '@/lib/orderIdVerification';
 
@@ -181,44 +180,14 @@ export const OrderTrackingPage = () => {
     const deliveryOrderId = order.order_id ? order.id : (order.delivery_orders?.[0]?.id || null);
     
     setUpdating(true);
-    
+
     try {
-      await executeWithResilience(async () => {
-          if (isValidUUID(deliveryOrderId)) {
-              const { error: deliveryError } = await supabase
-                .from('delivery_orders')
-                .update({
-                    status: STATUS_DELIVERED,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', deliveryOrderId);
+      const { error } = await supabase.rpc('confirm_delivery_received', {
+        p_order_id: mainOrderId,
+        p_delivery_order_id: isValidUUID(deliveryOrderId) ? deliveryOrderId : mainOrderId,
+      });
 
-              if (deliveryError) throw deliveryError;
-              
-              const trackingResult = await createDeliveryTracking(
-                deliveryOrderId,
-                STATUS_DELIVERED,
-                null,
-                'Livraison confirmée par le client',
-                mainOrderId,
-                order.customer_id || order.orders?.user_id
-              );
-
-              if (!trackingResult.success) {
-                console.warn("Warning: Tracking history not recorded:", trackingResult.error);
-              }
-          }
-
-          const { error: updateError } = await supabase
-            .from('orders')
-            .update({ 
-                status: STATUS_DELIVERED,
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', mainOrderId);
-
-          if (updateError) throw updateError;
-      }, { context: 'Confirm Arrival', retry: true });
+      if (error) throw error;
 
       toast({ 
           title: "Réussie", 

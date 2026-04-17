@@ -6,10 +6,12 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { useRestaurant } from '@/contexts/RestaurantContext';
 import { Loader2 } from 'lucide-react';
 
 export const EditProfileModal = ({ isOpen, onClose, profileData, customerData, onProfileUpdate }) => {
   const { user } = useAuth();
+  const { restaurantId } = useRestaurant();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -60,33 +62,73 @@ export const EditProfileModal = ({ isOpen, onClose, profileData, customerData, o
 
     setLoading(true);
     try {
-      // 1. Update Profiles Table
-      const { error: profileError } = await supabase
+      // 1. Update profile — if no row exists yet (e.g. Google user), insert one
+      const { data: existingProfile } = await supabase
         .from('profiles')
-        .update({
-          full_name: formData.full_name,
-          phone: formData.phone,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('user_id', user.id);
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      if (profileError) throw profileError;
+      if (existingProfile) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({
+            full_name: formData.full_name,
+            phone: formData.phone,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('user_id', user.id);
+        if (profileError) throw profileError;
+      } else {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: user.id,
+            email: user.email,
+            full_name: formData.full_name,
+            phone: formData.phone,
+            role: 'customer',
+          });
+        if (profileError) throw profileError;
+      }
 
-      // 2. Upsert Customers Table
-      // We use upsert because the customer record might not exist yet if they haven't ordered
-      const { error: customerError } = await supabase
+      // 2. Update customers table only if a record already exists (restaurant_id is NOT NULL so we can't insert without it)
+      const { data: existingCustomer } = await supabase
         .from('customers')
-        .upsert({
-          user_id: user.id,
-          name: formData.full_name, // Sync name
-          phone: formData.phone,    // Sync phone
-          email: user.email,        // Ensure email is set
-          address: formData.address,
-          city: formData.city,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'user_id' });
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      if (customerError) throw customerError;
+      if (existingCustomer) {
+        const { error: customerError } = await supabase
+          .from('customers')
+          .update({
+            name: formData.full_name,
+            phone: formData.phone,
+            address: formData.address,
+            city: formData.city,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', user.id);
+
+        if (customerError) throw customerError;
+      } else if (restaurantId) {
+        // Create customer record for the first time (requires restaurant_id)
+        const { error: customerError } = await supabase
+          .from('customers')
+          .insert({
+            user_id: user.id,
+            email: user.email,
+            name: formData.full_name,
+            phone: formData.phone,
+            address: formData.address,
+            city: formData.city,
+            restaurant_id: restaurantId,
+            registration_date: new Date().toISOString(),
+          });
+
+        if (customerError) throw customerError;
+      }
 
       toast({
         title: "Succès",

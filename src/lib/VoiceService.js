@@ -10,6 +10,16 @@ const MAX_LOGS = 50;
 // Cache for browser support to prevent infinite checking loops
 let cachedBrowserSupport = null;
 
+// Chrome bug workaround: speechSynthesis pauses itself after ~15s of inactivity.
+// Calling resume() periodically keeps the engine alive and prevents stuck state.
+if (typeof window !== 'undefined') {
+  setInterval(() => {
+    if (window.speechSynthesis && !window.speechSynthesis.speaking) {
+      window.speechSynthesis.resume();
+    }
+  }, 5000);
+}
+
 const addLog = (level, action, details = null) => {
   const logEntry = {
     timestamp: new Date().toISOString(),
@@ -161,8 +171,14 @@ export const VoiceService = {
   getFrenchVoice: (voices = null) => {
     try {
       const vList = voices || VoiceService.getVoiceList();
-      const frVoice = vList.find(v => v.lang.startsWith('fr')) || 
-                      vList.find(v => v.name.toLowerCase().includes('french')) || 
+      // Prefer Chrome's built-in Google voices (more reliable than macOS system voices)
+      const googleFr = vList.find(v => v.name.toLowerCase().includes('google') && v.lang.startsWith('fr'));
+      if (googleFr) {
+        addLog('INFO', 'Found Google French voice', googleFr.name);
+        return googleFr;
+      }
+      const frVoice = vList.find(v => v.lang.startsWith('fr')) ||
+                      vList.find(v => v.name.toLowerCase().includes('french')) ||
                       null;
       if (frVoice) addLog('INFO', 'Found French voice', frVoice.name);
       else addLog('WARN', 'No French voice found');
@@ -304,12 +320,21 @@ export const VoiceService = {
           safeResolve(false);
         }, timeoutMs);
 
+        // Chrome bug: speechSynthesis can get paused after page navigation.
+        // Must call resume() before speak(), otherwise utterances are immediately cancelled.
+        if (window.speechSynthesis.paused) {
+          addLog('INFO', 'speechSynthesis was paused — calling resume()');
+          window.speechSynthesis.resume();
+        }
         if (window.speechSynthesis.speaking) {
           window.speechSynthesis.cancel();
         }
 
         addLog('INFO', 'Invoking window.speechSynthesis.speak()');
         window.speechSynthesis.speak(utterance);
+        // Chrome bug: utterance can be queued but never start playing.
+        // Calling resume() after speak() kicks the engine out of stuck state.
+        window.speechSynthesis.resume();
 
       } catch (error) {
         addLog('ERROR', 'Unexpected error during speak attempt', error);
