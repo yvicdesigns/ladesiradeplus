@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
-import { Zap, Clock, RotateCcw, Info, ChevronRight } from 'lucide-react';
+import { Zap, Clock, RotateCcw, Info, ChevronRight, Loader2, CheckCircle2, AlertTriangle, Server } from 'lucide-react';
 import { DEFAULT_WORKFLOW_SETTINGS, PROGRESSION_RULES } from '@/hooks/useOrderAutoProgression';
 
 const STEP_COLORS = {
@@ -26,7 +26,7 @@ const STATUS_LABELS = {
   delivered:  'Livrée',
 };
 
-export const WorkflowSettingsPanel = ({ settings, onUpdate }) => {
+export const WorkflowSettingsPanel = ({ settings, onUpdate, saving = false, dbAvailable = false }) => {
   const { toast } = useToast();
 
   const toggleGlobal = (enabled) => {
@@ -72,6 +72,37 @@ export const WorkflowSettingsPanel = ({ settings, onUpdate }) => {
 
   return (
     <div className="space-y-6">
+
+      {/* Indicateur mode serveur / local */}
+      <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-sm ${
+        dbAvailable
+          ? 'bg-green-50 border-green-200 text-green-800'
+          : 'bg-amber-50 border-amber-200 text-amber-800'
+      }`}>
+        <Server className="h-4 w-4 flex-shrink-0" />
+        {dbAvailable ? (
+          <div>
+            <p className="font-semibold">Mode serveur actif</p>
+            <p className="text-xs opacity-80">
+              La progression fonctionne 24h/24 même si le dashboard est fermé. Les paramètres sont sauvegardés dans Supabase.
+            </p>
+          </div>
+        ) : (
+          <div>
+            <p className="font-semibold">Mode local (dashboard uniquement)</p>
+            <p className="text-xs opacity-80">
+              La progression s'arrête si le dashboard est fermé. Pour activer le mode serveur, exécutez le fichier SQL dans Supabase.
+              <br />Fichier : <code className="font-mono bg-amber-100 px-1 rounded">supabase/sql/workflow_auto_progression.sql</code>
+            </p>
+          </div>
+        )}
+        {saving && (
+          <Loader2 className="h-4 w-4 animate-spin ml-auto flex-shrink-0" />
+        )}
+        {!saving && dbAvailable && (
+          <CheckCircle2 className="h-4 w-4 ml-auto flex-shrink-0 text-green-600" />
+        )}
+      </div>
 
       {/* Activation globale */}
       <Card className={settings.enabled ? 'border-blue-200 bg-blue-50/30' : 'border-gray-200'}>

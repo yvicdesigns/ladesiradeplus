@@ -35,7 +35,7 @@ export const AdminSettingsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user, role, loading: authLoading, signOut } = useAuth();
   const { toast } = useToast();
-  const { settings: workflowSettings, updateSettings: updateWorkflowSettings } = useOrderAutoProgression();
+  const { settings: workflowSettings, updateSettings: updateWorkflowSettings, saving: workflowSaving, dbAvailable: workflowDbAvailable } = useOrderAutoProgression();
   
   const [initStatus, setInitStatus] = useState(null);
   const [isChecking, setIsChecking] = useState(true);
@@ -261,7 +261,12 @@ export const AdminSettingsPage = () => {
             <TabsContent value="sound" className="m-0"><AdminSoundSettingsTab /></TabsContent>
             <TabsContent value="delivery-alerts" className="m-0"><AdminDeliverySettingsTab /></TabsContent>
             <TabsContent value="workflow" className="m-0">
-              <WorkflowSettingsPanel settings={workflowSettings} onUpdate={updateWorkflowSettings} />
+              <WorkflowSettingsPanel
+                settings={workflowSettings}
+                onUpdate={updateWorkflowSettings}
+                saving={workflowSaving}
+                dbAvailable={workflowDbAvailable}
+              />
             </TabsContent>
             <TabsContent value="users" className="m-0"><AdminUsersTab /></TabsContent>
             <TabsContent value="mobile-money" className="m-0"><AdminMobileMoneyPaymentsTab /></TabsContent>

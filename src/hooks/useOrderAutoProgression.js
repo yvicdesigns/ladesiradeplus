@@ -3,7 +3,8 @@ import { supabase } from '@/lib/customSupabaseClient';
 import { useToast } from '@/components/ui/use-toast';
 
 const STORAGE_KEY = 'deliveryWorkflowSettings';
-const POLL_INTERVAL_MS = 60_000; // vérification toutes les 60 secondes
+const POLL_INTERVAL_MS = 60_000; // vérification frontend toutes les 60s (backup)
+const DB_ROW_ID = '00000000-0000-0000-0000-000000000099';
 
 export const DEFAULT_WORKFLOW_SETTINGS = {
   enabled: true,
@@ -12,7 +13,7 @@ export const DEFAULT_WORKFLOW_SETTINGS = {
     confirmed_to_preparing: { enabled: true,  minutes: 2  },
     preparing_to_ready:     { enabled: true,  minutes: 30 },
     ready_to_in_transit:    { enabled: true,  minutes: 10 },
-    in_transit_to_delivered:{ enabled: false, minutes: 60 }, // manuel par défaut
+    in_transit_to_delivered:{ enabled: false, minutes: 60 },
   }
 };
 
@@ -24,40 +25,59 @@ export const PROGRESSION_RULES = [
   { from: 'in_transit', to: 'delivered',  key: 'in_transit_to_delivered', label: 'En route → Livrée' },
 ];
 
-const loadSettings = () => {
+// Convertir la structure plate de la DB vers la structure React
+const dbRowToSettings = (row) => ({
+  enabled: row.enabled ?? true,
+  steps: {
+    pending_to_confirmed:   { enabled: true,              minutes: row.pending_to_confirmed_min   ?? 3  },
+    confirmed_to_preparing: { enabled: true,              minutes: row.confirmed_to_preparing_min ?? 2  },
+    preparing_to_ready:     { enabled: true,              minutes: row.preparing_to_ready_min     ?? 30 },
+    ready_to_in_transit:    { enabled: true,              minutes: row.ready_to_in_transit_min    ?? 10 },
+    in_transit_to_delivered:{ enabled: row.in_transit_to_delivered_enabled ?? false, minutes: row.in_transit_to_delivered_min ?? 60 },
+  }
+});
+
+// Convertir la structure React vers la structure plate de la DB
+const settingsToDbRow = (settings) => ({
+  id: DB_ROW_ID,
+  enabled: settings.enabled,
+  pending_to_confirmed_min:        settings.steps.pending_to_confirmed.minutes,
+  confirmed_to_preparing_min:      settings.steps.confirmed_to_preparing.minutes,
+  preparing_to_ready_min:          settings.steps.preparing_to_ready.minutes,
+  ready_to_in_transit_min:         settings.steps.ready_to_in_transit.minutes,
+  in_transit_to_delivered_min:     settings.steps.in_transit_to_delivered.minutes,
+  in_transit_to_delivered_enabled: settings.steps.in_transit_to_delivered.enabled,
+  updated_at: new Date().toISOString(),
+});
+
+const loadFromLocalStorage = () => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return DEFAULT_WORKFLOW_SETTINGS;
+    if (!raw) return null;
     const parsed = JSON.parse(raw);
-    // Fusionner avec les défauts pour les clés manquantes
     return {
       ...DEFAULT_WORKFLOW_SETTINGS,
       ...parsed,
       steps: { ...DEFAULT_WORKFLOW_SETTINGS.steps, ...parsed.steps }
     };
-  } catch {
-    return DEFAULT_WORKFLOW_SETTINGS;
-  }
+  } catch { return null; }
 };
 
-const saveSettings = (settings) => {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-  } catch {}
+const saveToLocalStorage = (settings) => {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(settings)); } catch {}
 };
 
-// Avancer le statut directement via Supabase (opération de fond, silencieuse)
+// Avancer une commande côté frontend (backup si pg_cron non configuré)
 const autoAdvanceOrder = async (orderId, fromStatus, toStatus) => {
   try {
     const { error } = await supabase
       .from('delivery_orders')
       .update({ status: toStatus, updated_at: new Date().toISOString() })
       .eq('id', orderId)
-      .eq('status', fromStatus); // guard: ne met à jour que si le statut n'a pas changé entre-temps
+      .eq('status', fromStatus);
 
     if (error) throw error;
 
-    // Synchroniser la table orders principale
     const { data: subOrder } = await supabase
       .from('delivery_orders')
       .select('order_id')
@@ -70,7 +90,6 @@ const autoAdvanceOrder = async (orderId, fromStatus, toStatus) => {
         .update({ status: toStatus, updated_at: new Date().toISOString() })
         .eq('id', subOrder.order_id);
     }
-
     return true;
   } catch (err) {
     console.warn('[AutoProgression] Échec avancement commande', orderId, err.message);
@@ -79,24 +98,67 @@ const autoAdvanceOrder = async (orderId, fromStatus, toStatus) => {
 };
 
 export const useOrderAutoProgression = () => {
-  const [settings, setSettings] = useState(loadSettings);
+  const [settings, setSettings] = useState(loadFromLocalStorage() ?? DEFAULT_WORKFLOW_SETTINGS);
+  const [saving, setSaving] = useState(false);
+  const [dbAvailable, setDbAvailable] = useState(false);
   const { toast } = useToast();
   const intervalRef = useRef(null);
   const isRunningRef = useRef(false);
 
-  const updateSettings = useCallback((newSettings) => {
-    setSettings(newSettings);
-    saveSettings(newSettings);
+  // Charger les paramètres depuis Supabase au montage
+  useEffect(() => {
+    const loadFromDb = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('workflow_settings')
+          .select('*')
+          .eq('id', DB_ROW_ID)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (data) {
+          const converted = dbRowToSettings(data);
+          setSettings(converted);
+          saveToLocalStorage(converted);
+          setDbAvailable(true);
+        }
+      } catch {
+        // Table pas encore créée — on reste sur localStorage
+        setDbAvailable(false);
+      }
+    };
+    loadFromDb();
   }, []);
 
+  // Sauvegarder les paramètres (Supabase + localStorage)
+  const updateSettings = useCallback(async (newSettings) => {
+    setSettings(newSettings);
+    saveToLocalStorage(newSettings);
+
+    if (!dbAvailable) return;
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('workflow_settings')
+        .upsert(settingsToDbRow(newSettings));
+
+      if (error) throw error;
+    } catch (err) {
+      console.warn('[AutoProgression] Échec sauvegarde DB:', err.message);
+    } finally {
+      setSaving(false);
+    }
+  }, [dbAvailable]);
+
+  // Vérification frontend (backup si pg_cron n'est pas activé)
   const checkAndAdvance = useCallback(async () => {
-    if (isRunningRef.current) return; // éviter les chevauchements
+    if (isRunningRef.current) return;
     if (!settings.enabled) return;
 
     isRunningRef.current = true;
-
     try {
-      // Récupérer toutes les commandes actives non supprimées
       const activeStatuses = PROGRESSION_RULES
         .filter(r => settings.steps[r.key]?.enabled)
         .map(r => r.from);
@@ -117,29 +179,22 @@ export const useOrderAutoProgression = () => {
       for (const order of orders) {
         const rule = PROGRESSION_RULES.find(r => r.from === order.status);
         if (!rule) continue;
-
         const step = settings.steps[rule.key];
         if (!step?.enabled) continue;
 
-        const updatedAt = new Date(order.updated_at).getTime();
-        const elapsedMin = (now - updatedAt) / 60_000;
-
+        const elapsedMin = (now - new Date(order.updated_at).getTime()) / 60_000;
         if (elapsedMin >= step.minutes) {
           const success = await autoAdvanceOrder(order.id, order.status, rule.to);
-          if (success) {
-            advanced.push({ id: order.id, from: order.status, to: rule.to });
-          }
+          if (success) advanced.push({ from: order.status, to: rule.to });
         }
       }
 
       if (advanced.length > 0) {
-        const label = advanced.length === 1
-          ? `Commande avancée automatiquement : ${advanced[0].from} → ${advanced[0].to}`
-          : `${advanced.length} commandes avancées automatiquement`;
-
         toast({
           title: 'Flux automatique',
-          description: label,
+          description: advanced.length === 1
+            ? `Commande avancée : ${advanced[0].from} → ${advanced[0].to}`
+            : `${advanced.length} commandes avancées automatiquement`,
           className: 'bg-blue-600 text-white',
           duration: 4000,
         });
@@ -149,26 +204,20 @@ export const useOrderAutoProgression = () => {
     }
   }, [settings, toast]);
 
-  // Lancer/arrêter le polling selon l'état activé
+  // Lancer le polling frontend
   useEffect(() => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
-
     if (settings.enabled) {
-      // Première vérification immédiate au chargement
       checkAndAdvance();
       intervalRef.current = setInterval(checkAndAdvance, POLL_INTERVAL_MS);
     }
-
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [settings.enabled, checkAndAdvance]);
 
-  return { settings, updateSettings };
+  return { settings, updateSettings, saving, dbAvailable };
 };
