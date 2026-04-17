@@ -192,6 +192,36 @@ export const MobileMoneyPaymentPage = () => {
                 {t('payment.ref_order')} <span className="font-bold text-gray-900">#{order.id.slice(0,8)}</span>
             </div>
 
+            {/* Instructions de paiement */}
+            <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 space-y-3">
+              <p className="text-sm font-bold text-gray-800 flex items-center gap-2">
+                <span className="bg-primary text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">?</span>
+                Comment procéder
+              </p>
+              {isMtn ? (
+                <ol className="space-y-2 text-sm text-gray-700">
+                  <li className="flex gap-2"><span className="font-bold text-yellow-600 flex-shrink-0">1.</span> Composez <span className="font-mono font-bold">*165#</span> sur votre téléphone MTN</li>
+                  <li className="flex gap-2"><span className="font-bold text-yellow-600 flex-shrink-0">2.</span> Sélectionnez <span className="font-semibold">"Transfert d'argent"</span></li>
+                  <li className="flex gap-2"><span className="font-bold text-yellow-600 flex-shrink-0">3.</span> Entrez le numéro : <span className="font-mono font-bold">{phoneNumber}</span></li>
+                  <li className="flex gap-2"><span className="font-bold text-yellow-600 flex-shrink-0">4.</span> Entrez le montant : <span className="font-bold">{formatCurrency(amount)}</span></li>
+                  <li className="flex gap-2"><span className="font-bold text-yellow-600 flex-shrink-0">5.</span> Confirmez avec votre code PIN MTN</li>
+                  <li className="flex gap-2"><span className="font-bold text-yellow-600 flex-shrink-0">6.</span> Prenez une capture d'écran du SMS de confirmation et envoyez-la ci-dessous</li>
+                </ol>
+              ) : (
+                <ol className="space-y-2 text-sm text-gray-700">
+                  <li className="flex gap-2"><span className="font-bold text-red-600 flex-shrink-0">1.</span> Composez <span className="font-mono font-bold">*555#</span> sur votre téléphone Airtel</li>
+                  <li className="flex gap-2"><span className="font-bold text-red-600 flex-shrink-0">2.</span> Sélectionnez <span className="font-semibold">"Envoyer de l'argent"</span></li>
+                  <li className="flex gap-2"><span className="font-bold text-red-600 flex-shrink-0">3.</span> Entrez le numéro : <span className="font-mono font-bold">{phoneNumber}</span></li>
+                  <li className="flex gap-2"><span className="font-bold text-red-600 flex-shrink-0">4.</span> Entrez le montant : <span className="font-bold">{formatCurrency(amount)}</span></li>
+                  <li className="flex gap-2"><span className="font-bold text-red-600 flex-shrink-0">5.</span> Confirmez avec votre code PIN Airtel Money</li>
+                  <li className="flex gap-2"><span className="font-bold text-red-600 flex-shrink-0">6.</span> Prenez une capture d'écran du SMS de confirmation et envoyez-la ci-dessous</li>
+                </ol>
+              )}
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 text-xs text-amber-800">
+                ⚠️ Mentionnez la référence <span className="font-bold">#{order.id.slice(0,8)}</span> dans le motif du transfert si possible.
+              </div>
+            </div>
+
             <div className="space-y-3 pt-2">
                <Label className="block text-sm font-medium text-gray-700">{t('payment.proof_label')}</Label>
                <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 hover:bg-gray-50 transition-colors text-center cursor-pointer relative">
