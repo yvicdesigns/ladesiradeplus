@@ -2,9 +2,12 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { playNewOrderSound } from '@/lib/soundUtils';
 import { SoundSettingsService } from '@/lib/SoundSettingsService';
+import { VoiceService } from '@/lib/VoiceService';
 
 const REPEAT_INTERVAL_MS = 30_000; // 30 secondes entre chaque répétition
 const MAX_DURATION_MS = 10 * 60_000; // 10 minutes maximum
+// Délai entre la fin des sonneries (~2.3s) et le début de la voix
+const VOICE_DELAY_MS = 2600;
 
 export const usePersistentOrderAlert = () => {
   const [pendingOrders, setPendingOrders] = useState([]);
@@ -13,6 +16,7 @@ export const usePersistentOrderAlert = () => {
   const soundSettingsRef = useRef(null);
   const channelRef = useRef(null);
   const pendingRef = useRef([]); // miroir de pendingOrders pour l'intervalle
+  const voiceTimerRef = useRef(null);
 
   // Garder pendingRef synchronisé
   useEffect(() => {
@@ -26,6 +30,22 @@ export const usePersistentOrderAlert = () => {
       .catch(() => {});
   }, []);
 
+  const speakAnnouncement = useCallback((count = 1) => {
+    const s = soundSettingsRef.current;
+    // Utiliser le texte personnalisé des paramètres, sinon le message par défaut
+    const baseText = s?.admin_new_order_voice_text || 'Vous avez une nouvelle commande en attente';
+    const text = count > 1
+      ? `Vous avez ${count} commandes en attente`
+      : baseText;
+
+    VoiceService.speak(text, {
+      lang: 'fr-FR',
+      rate: s?.voice_speed ?? 1.0,
+      pitch: s?.voice_pitch ?? 1.0,
+      volume: 1.0,
+    }).catch(() => {});
+  }, []);
+
   const playAlert = useCallback(() => {
     const s = soundSettingsRef.current;
     playNewOrderSound(
@@ -33,13 +53,24 @@ export const usePersistentOrderAlert = () => {
       s?.admin_new_order_audio_url || null,
       s?.admin_new_order_audio_enabled ?? false
     );
-  }, []);
+
+    // Voix après la fin des 2 sonneries
+    if (voiceTimerRef.current) clearTimeout(voiceTimerRef.current);
+    voiceTimerRef.current = setTimeout(() => {
+      speakAnnouncement(pendingRef.current.length);
+    }, VOICE_DELAY_MS);
+  }, [speakAnnouncement]);
 
   const stopRepeating = useCallback(() => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
+    if (voiceTimerRef.current) {
+      clearTimeout(voiceTimerRef.current);
+      voiceTimerRef.current = null;
+    }
+    VoiceService.stop();
   }, []);
 
   const startRepeating = useCallback(() => {

@@ -176,7 +176,7 @@ export const SoundSettingsService = {
     admin_voice_enabled: true,
     client_voice_enabled: true,
 
-    admin_new_order_voice_text: 'Nouvelle commande reçue',
+    admin_new_order_voice_text: 'Vous avez une nouvelle commande en attente',
     client_order_pending_voice_text: 'Votre commande est en attente',
     client_order_received_voice_text: 'Votre commande a été reçue',
     
