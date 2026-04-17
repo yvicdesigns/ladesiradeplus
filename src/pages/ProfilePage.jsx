@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
-import { User, LogOut, Settings, Heart, MapPin, History, Edit2, Mail, Phone, ChevronRight, Calendar, Users, Clock, AlertCircle, RefreshCw, CheckCircle2, Trash2, MailOpen, MailCheck } from 'lucide-react';
+import { User, LogOut, Settings, Heart, MapPin, History, Edit2, Mail, Phone, ChevronRight, Calendar, Users, Clock, AlertCircle, RefreshCw, CheckCircle2, Trash2, MailOpen, MailCheck, MessageSquare, Send } from 'lucide-react';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
@@ -33,6 +33,11 @@ export const ProfilePage = () => {
   // Modal states
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [reservationError, setReservationError] = useState(null);
+
+  // Contact manager state
+  const [msgTitle, setMsgTitle] = useState('');
+  const [msgContent, setMsgContent] = useState('');
+  const [sendingMsg, setSendingMsg] = useState(false);
 
   // Fetch Profile & Customer Data
   const fetchUserData = async () => {
@@ -183,6 +188,26 @@ export const ProfilePage = () => {
       setNotifications(prev => prev.map(n => ({ ...n, status: 'read' })));
     } catch (error) {
       console.error('Error marking all as read:', error);
+    }
+  };
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!msgTitle.trim() || !msgContent.trim()) return;
+    setSendingMsg(true);
+    try {
+      const { error } = await supabase.rpc('send_message_to_admin', {
+        p_title: msgTitle.trim(),
+        p_content: msgContent.trim(),
+      });
+      if (error) throw error;
+      toast({ title: 'Message envoyé', description: 'Le manager a reçu votre message.', className: 'bg-green-600 text-white' });
+      setMsgTitle('');
+      setMsgContent('');
+    } catch (err) {
+      toast({ variant: 'destructive', title: 'Erreur', description: err.message });
+    } finally {
+      setSendingMsg(false);
     }
   };
 
@@ -483,8 +508,48 @@ export const ProfilePage = () => {
           )}
         </motion.div>
 
+        {/* Contact Manager Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5"
+        >
+          <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2 mb-4">
+            <MessageSquare className="w-4 h-4 text-[#D97706]" /> Contacter le Manager
+          </h3>
+          <form onSubmit={handleSendMessage} className="space-y-3">
+            <input
+              type="text"
+              value={msgTitle}
+              onChange={e => setMsgTitle(e.target.value)}
+              placeholder="Objet du message..."
+              maxLength={100}
+              required
+              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-300"
+            />
+            <textarea
+              value={msgContent}
+              onChange={e => setMsgContent(e.target.value)}
+              placeholder="Votre message..."
+              rows={3}
+              maxLength={500}
+              required
+              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 resize-none focus:outline-none focus:ring-2 focus:ring-amber-300"
+            />
+            <Button
+              type="submit"
+              disabled={sendingMsg || !msgTitle.trim() || !msgContent.trim()}
+              className="w-full bg-[#D97706] hover:bg-[#B45309] text-white font-bold h-11"
+            >
+              {sendingMsg ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
+              Envoyer au Manager
+            </Button>
+          </form>
+        </motion.div>
+
         {/* Menu Actions */}
-        <motion.div 
+        <motion.div
            initial={{ opacity: 0, y: 10 }}
            animate={{ opacity: 1, y: 0 }}
            transition={{ delay: 0.3 }}

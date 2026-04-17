@@ -43,38 +43,85 @@ export const AdminMessagingPage = () => {
 
   const [history, setHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
+  const [inbox, setInbox] = useState([]);
+  const [loadingInbox, setLoadingInbox] = useState(true);
+  const [activeTab, setActiveTab] = useState('compose');
 
   const fetchClients = useCallback(async () => {
     if (!restaurantId) return;
     setLoadingClients(true);
     try {
-      // Fetch from customers table
-      const { data: customersData, error: customersError } = await supabase
+      // 1. customers table (CRM)
+      const { data: customersData } = await supabase
         .from('customers')
         .select('id, name, email, phone, user_id')
         .eq('restaurant_id', restaurantId)
-        .or('is_deleted.eq.false,is_deleted.is.null')
-        .order('name', { ascending: true });
-      if (customersError) throw customersError;
+        .or('is_deleted.eq.false,is_deleted.is.null');
 
-      // Also fetch from profiles to include registered users who haven't ordered yet
+      // 2. delivery_orders — unique customers by phone
+      const { data: deliveryData } = await supabase
+        .from('delivery_orders')
+        .select('customer_id, customer_name, customer_phone, customer_email')
+        .eq('restaurant_id', restaurantId)
+        .or('is_deleted.eq.false,is_deleted.is.null');
+
+      // 3. reservations — unique customers by phone
+      const { data: reservationsData } = await supabase
+        .from('reservations')
+        .select('user_id, customer_name, customer_phone, customer_email')
+        .eq('restaurant_id', restaurantId)
+        .or('is_deleted.eq.false,is_deleted.is.null');
+
+      // 4. profiles — registered users with customer role
       const { data: profilesData } = await supabase
         .from('profiles')
-        .select('id, user_id, full_name, email, role')
-        .not('role', 'in', '("admin","manager","staff","driver")');
+        .select('user_id, full_name, email')
+        .not('role', 'in', '("admin","manager","staff","driver","kitchen","delivery")');
 
-      // Merge: profiles not already in customers
-      const customerEmails = new Set((customersData || []).map(c => c.email?.toLowerCase()).filter(Boolean));
-      const extraProfiles = (profilesData || []).filter(p => p.email && !customerEmails.has(p.email.toLowerCase()));
-      const extraClients = extraProfiles.map(p => ({
-        id: p.id,
+      // Merge all sources, deduplicate by phone then email
+      const seen = new Set();
+      const merged = [];
+
+      const addClient = (client) => {
+        const key = client.phone?.replace(/\s/g, '') || client.email?.toLowerCase();
+        if (!key || seen.has(key)) return;
+        seen.add(key);
+        merged.push(client);
+      };
+
+      (customersData || []).forEach(c => addClient({
+        id: c.id,
+        name: c.name,
+        email: c.email,
+        phone: c.phone,
+        user_id: c.user_id,
+      }));
+
+      (deliveryData || []).forEach(d => addClient({
+        id: d.customer_id || `delivery-${d.customer_phone}`,
+        name: d.customer_name,
+        email: d.customer_email,
+        phone: d.customer_phone,
+        user_id: d.customer_id,
+      }));
+
+      (reservationsData || []).forEach(r => addClient({
+        id: r.user_id || `res-${r.customer_phone}`,
+        name: r.customer_name,
+        email: r.customer_email,
+        phone: r.customer_phone,
+        user_id: r.user_id,
+      }));
+
+      (profilesData || []).forEach(p => addClient({
+        id: p.user_id,
         name: p.full_name || p.email,
         email: p.email,
         phone: null,
         user_id: p.user_id,
       }));
 
-      setClients([...(customersData || []), ...extraClients]);
+      setClients(merged.sort((a, b) => (a.name || '').localeCompare(b.name || '')));
     } catch (e) {
       console.error('Error fetching clients:', e);
     } finally {
@@ -88,6 +135,7 @@ export const AdminMessagingPage = () => {
       const { data, error } = await supabase
         .from('user_notifications')
         .select('*')
+        .not('type', 'eq', 'client_message')
         .order('sent_date', { ascending: false })
         .limit(50);
       if (error) throw error;
@@ -100,10 +148,65 @@ export const AdminMessagingPage = () => {
     }
   }, [toast]);
 
+  const fetchInbox = useCallback(async () => {
+    setLoadingInbox(true);
+    try {
+      const { data, error } = await supabase
+        .from('user_notifications')
+        .select('*')
+        .eq('type', 'client_message')
+        .order('sent_date', { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      setInbox(data || []);
+    } catch (e) {
+      console.error('Error fetching inbox:', e);
+    } finally {
+      setLoadingInbox(false);
+    }
+  }, []);
+
+  const markInboxRead = async (id) => {
+    await supabase.from('user_notifications').update({ status: 'read' }).eq('id', id);
+    setInbox(prev => prev.map(n => n.id === id ? { ...n, status: 'read' } : n));
+  };
+
+  const [replyTo, setReplyTo] = useState(null); // { client_id, client_email, originalTitle }
+  const [replyContent, setReplyContent] = useState('');
+  const [sendingReply, setSendingReply] = useState(false);
+
+  const handleReply = async () => {
+    if (!replyContent.trim() || !replyTo) return;
+    setSendingReply(true);
+    try {
+      const now = new Date().toISOString();
+      const { error } = await supabase.from('user_notifications').insert({
+        client_id: replyTo.client_id || null,
+        client_email: replyTo.client_email || null,
+        title: `Réponse : ${replyTo.originalTitle}`,
+        content: replyContent.trim(),
+        type: 'info',
+        status: 'unread',
+        sent_date: now,
+        created_at: now,
+        is_deleted: false,
+      });
+      if (error) throw error;
+      toast({ title: 'Réponse envoyée', description: `Réponse envoyée à ${replyTo.client_email}.`, className: 'bg-green-600 text-white' });
+      setReplyTo(null);
+      setReplyContent('');
+    } catch (e) {
+      toast({ variant: 'destructive', title: "Erreur", description: e.message });
+    } finally {
+      setSendingReply(false);
+    }
+  };
+
   useEffect(() => {
     fetchClients();
     fetchHistory();
-  }, [fetchClients, fetchHistory]);
+    fetchInbox();
+  }, [fetchClients, fetchHistory, fetchInbox]);
 
   const handleSend = async () => {
     if (!title.trim() || !content.trim()) {
@@ -192,11 +295,119 @@ export const AdminMessagingPage = () => {
             </h1>
             <p className="text-gray-500 text-sm mt-1">Envoyez des messages personnalisés à vos clients.</p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => { fetchClients(); fetchHistory(); }}>
+          <Button variant="outline" size="sm" onClick={() => { fetchClients(); fetchHistory(); fetchInbox(); }}>
             <RefreshCw className="w-4 h-4" />
           </Button>
         </div>
 
+        {/* Tabs */}
+        <div className="flex gap-2 border-b border-gray-200 pb-0">
+          <button
+            onClick={() => setActiveTab('compose')}
+            className={`px-4 py-2 text-sm font-bold border-b-2 transition-colors ${activeTab === 'compose' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          >
+            <Send className="w-4 h-4 inline mr-1.5" />Envoyer
+          </button>
+          <button
+            onClick={() => setActiveTab('inbox')}
+            className={`px-4 py-2 text-sm font-bold border-b-2 transition-colors flex items-center gap-1.5 ${activeTab === 'inbox' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          >
+            <MessageSquare className="w-4 h-4" />
+            Messages reçus
+            {inbox.filter(n => n.status === 'unread').length > 0 && (
+              <span className="bg-red-500 text-white text-xs font-black rounded-full w-5 h-5 flex items-center justify-center">
+                {inbox.filter(n => n.status === 'unread').length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {activeTab === 'inbox' ? (
+          <div className="bg-white rounded-xl border shadow-sm">
+            <div className="p-4 border-b flex items-center justify-between">
+              <h3 className="font-bold text-gray-900">Messages des clients</h3>
+              <span className="text-sm text-gray-500">{inbox.length} message(s)</span>
+            </div>
+            {loadingInbox ? (
+              <div className="p-8 text-center text-gray-400">Chargement...</div>
+            ) : inbox.length === 0 ? (
+              <div className="p-12 text-center">
+                <MessageSquare className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+                <p className="text-gray-500 font-medium">Aucun message reçu.</p>
+              </div>
+            ) : (
+              <div className="divide-y max-h-[600px] overflow-y-auto">
+                {inbox.map(msg => (
+                  <div key={msg.id} className={`p-4 transition-colors ${msg.status === 'unread' ? 'bg-amber-50' : 'hover:bg-gray-50'}`}>
+                    <div className="flex items-start gap-3" onClick={() => markInboxRead(msg.id)}>
+                      <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
+                        <User className="w-4 h-4 text-amber-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="font-bold text-sm text-gray-900">{msg.title}</span>
+                          {msg.status === 'unread' && <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />}
+                        </div>
+                        <p className="text-sm text-gray-600 leading-relaxed">{msg.content}</p>
+                        <div className="flex items-center gap-3 mt-1 flex-wrap">
+                          <span className="text-xs text-gray-400 font-medium">{msg.client_email || 'Client'}</span>
+                          {msg.sent_date && (
+                            <span className="text-xs text-gray-400">{format(new Date(msg.sent_date), "d MMM yyyy 'à' HH:mm", { locale: fr })}</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={e => { e.stopPropagation(); setReplyTo({ client_id: msg.client_id, client_email: msg.client_email, originalTitle: msg.title }); setReplyContent(''); }}
+                          className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors"
+                          title="Répondre"
+                        >
+                          <Send className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={e => { e.stopPropagation(); handleDelete(msg.id); setInbox(prev => prev.filter(n => n.id !== msg.id)); }}
+                          className="p-1.5 rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-500 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Inline reply form */}
+                    {replyTo?.client_email === msg.client_email && replyTo?.originalTitle === msg.title && (
+                      <div className="mt-3 ml-11 bg-white border border-blue-100 rounded-xl p-3 space-y-2">
+                        <p className="text-xs font-bold text-blue-600">Répondre à {replyTo.client_email}</p>
+                        <textarea
+                          value={replyContent}
+                          onChange={e => setReplyContent(e.target.value)}
+                          placeholder="Votre réponse..."
+                          rows={3}
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-200"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleReply}
+                            disabled={sendingReply || !replyContent.trim()}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg disabled:opacity-50"
+                          >
+                            {sendingReply ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                            Envoyer la réponse
+                          </button>
+                          <button
+                            onClick={() => setReplyTo(null)}
+                            className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700 font-medium rounded-lg hover:bg-gray-100"
+                          >
+                            Annuler
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* Compose */}
           <div className="lg:col-span-2 space-y-4">
@@ -394,6 +605,7 @@ export const AdminMessagingPage = () => {
             </Card>
           </div>
         </div>
+        )} {/* end activeTab === 'inbox' ternary */}
       </div>
     </AdminLayout>
   );
