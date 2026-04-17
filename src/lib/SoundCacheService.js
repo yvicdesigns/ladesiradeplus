@@ -8,14 +8,14 @@ const SoundCacheService = {
   // Settings cache
   settings: {
     volumes: {
-      global: 0.5,
+      global: 0.9,
       button: 0.5,
-      notification: 0.5,
-      success: 0.5
+      notification: 0.9,
+      success: 0.6
     },
     types: {
       button: 'beep',
-      notification: 'ding',
+      notification: 'alert_bell',
       success: 'chime'
     }
   },
@@ -47,7 +47,7 @@ const SoundCacheService = {
     }
 
     // Pre-generate common sounds to warm up the cache
-    const commonSounds = ['beep', 'ding', 'chime', 'pop'];
+    const commonSounds = ['beep', 'ding', 'chime', 'pop', 'alert_bell'];
     const ctx = SoundCacheService.audioContext;
     
     try {

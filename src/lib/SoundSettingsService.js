@@ -161,13 +161,13 @@ export const SoundSettingsService = {
   },
 
   getDefaultSettings: () => ({
-    default_sound_type: 'click',
-    default_sound_volume: 0.5,
+    default_sound_type: 'alert_bell',
+    default_sound_volume: 0.9,
     button_volume: 0.5,
-    notification_volume: 0.8, // Increased default for notifications
-    success_volume: 0.5,
+    notification_volume: 0.9,
+    success_volume: 0.6,
     button_sound_type: 'beep',
-    notification_sound_type: 'ding',
+    notification_sound_type: 'alert_bell',
     success_sound_type: 'chime',
     
     voice_gender: 'female',

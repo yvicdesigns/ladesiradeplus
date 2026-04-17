@@ -17,12 +17,13 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { AdminAudioDiagnosticPanel } from '@/components/AdminAudioDiagnosticPanel';
 
 const AVAILABLE_SOUNDS = [
-  { id: 'beep', name: 'Beep (Standard)' },
-  { id: 'beep_high', name: 'Beep (Aigu)' },
-  { id: 'beep_low', name: 'Beep (Grave)' },
+  { id: 'alert_bell', name: '🔔 Sonnerie Alerte (Recommandé)' },
+  { id: 'chime', name: 'Carillon (Mélodique)' },
   { id: 'ding', name: 'Ding (Cloche)' },
-  { id: 'pop', name: 'Pop (Percussif)' },
-  { id: 'chime', name: 'Carillon (Mélodique)' }
+  { id: 'beep_high', name: 'Beep (Aigu)' },
+  { id: 'beep', name: 'Beep (Standard)' },
+  { id: 'beep_low', name: 'Beep (Grave)' },
+  { id: 'pop', name: 'Pop (Percussif)' }
 ];
 
 const MESSAGE_TYPES = [

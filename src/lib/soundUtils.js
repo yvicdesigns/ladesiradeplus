@@ -2,10 +2,10 @@
 // This mimics the logic in useSound but as a standalone function
 
 /**
- * Plays a restaurant-style new order chime (ding-dong-ding).
+ * Plays an urgent restaurant alert bell (two sequences of 3 ascending notes).
  * If a custom audio URL is provided and enabled, plays that instead.
  */
-export const playNewOrderSound = async (volume = 0.8, customAudioUrl = null, customEnabled = false) => {
+export const playNewOrderSound = async (volume = 0.9, customAudioUrl = null, customEnabled = false) => {
   // Try custom MP3 first if configured
   if (customEnabled && customAudioUrl) {
     try {
@@ -18,37 +18,60 @@ export const playNewOrderSound = async (volume = 0.8, customAudioUrl = null, cus
     }
   }
 
-  // Synth fallback — pleasant restaurant chime (3 notes)
+  // Synth fallback — urgent restaurant alert bell, plays TWICE
   try {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (!AudioContext) return;
     const ctx = new AudioContext();
 
-    const notes = [
-      { freq: 880, start: 0,    duration: 0.25 },   // La5
-      { freq: 1046, start: 0.25, duration: 0.25 },  // Do6
-      { freq: 1318, start: 0.5,  duration: 0.5  },  // Mi6
-    ];
+    if (ctx.state === 'suspended') {
+      try { await ctx.resume(); } catch { return; }
+    }
 
-    notes.forEach(({ freq, start, duration }) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
+    // Each "ring" = 3 ascending notes with bell timbre (sine + triangle harmonic)
+    const playRing = (startOffset) => {
+      const notes = [
+        { freq: 880,  start: startOffset + 0,     duration: 0.20 }, // La5
+        { freq: 1108, start: startOffset + 0.20,  duration: 0.20 }, // Ré6
+        { freq: 1318, start: startOffset + 0.40,  duration: 0.55 }, // Mi6 (tenu)
+      ];
 
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
+      notes.forEach(({ freq, start, duration }) => {
+        // Fundamental — sine wave, full volume
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(freq, ctx.currentTime + start);
+        gain1.gain.setValueAtTime(0, ctx.currentTime + start);
+        gain1.gain.linearRampToValueAtTime(volume, ctx.currentTime + start + 0.005); // attaque percussive
+        gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + duration);
+        osc1.start(ctx.currentTime + start);
+        osc1.stop(ctx.currentTime + start + duration + 0.01);
 
-      const vol = volume * 0.6;
-      gain.gain.setValueAtTime(0, ctx.currentTime + start);
-      gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + start + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + duration);
+        // Harmonique — triangle à 2× la fréquence (timbre de cloche)
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(freq * 2, ctx.currentTime + start);
+        gain2.gain.setValueAtTime(0, ctx.currentTime + start);
+        gain2.gain.linearRampToValueAtTime(volume * 0.35, ctx.currentTime + start + 0.005);
+        gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + duration * 0.75);
+        osc2.start(ctx.currentTime + start);
+        osc2.stop(ctx.currentTime + start + duration + 0.01);
+      });
+    };
 
-      osc.start(ctx.currentTime + start);
-      osc.stop(ctx.currentTime + start + duration);
-    });
+    // Première sonnerie immédiate
+    playRing(0);
+    // Deuxième sonnerie 1.2s après (gap perceptible, impossible à manquer)
+    playRing(1.2);
+
   } catch (e) {
-    console.warn('[Sound] New order chime failed:', e);
+    console.warn('[Sound] New order alert failed:', e);
   }
 };
 
