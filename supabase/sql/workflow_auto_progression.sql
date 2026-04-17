@@ -117,13 +117,13 @@ BEGIN
   -- Synchroniser les statuts vers la table orders principale
   -- (pour que l'historique et le suivi client restent à jour)
   UPDATE orders o
-  SET    status     = do.status,
+  SET    status     = dord.status,
          updated_at = NOW()
-  FROM   delivery_orders do
-  WHERE  o.id        = do.order_id
-    AND  o.status   != do.status
-    AND  do.is_deleted = false
-    AND  do.status  IN ('confirmed', 'preparing', 'ready', 'in_transit', 'delivered');
+  FROM   delivery_orders dord
+  WHERE  o.id        = dord.order_id
+    AND  o.status   != dord.status
+    AND  dord.is_deleted = false
+    AND  dord.status  IN ('confirmed', 'preparing', 'ready', 'in_transit', 'delivered');
 
 END;
 $$;
