@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { Loader2, UploadCloud, CheckCircle, Smartphone, ArrowRight } from 'lucide-react';
+import { Loader2, UploadCloud, CheckCircle, Smartphone, ArrowRight, Copy } from 'lucide-react';
 import { formatCurrency } from '@/lib/formatters';
 import { useTranslation } from 'react-i18next';
 
@@ -22,6 +22,14 @@ export const MobileMoneyPaymentPage = () => {
   const [uploading, setUploading] = useState(false);
   const [adminConfig, setAdminConfig] = useState(null);
   const [file, setFile] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyNumber = (number) => {
+    navigator.clipboard.writeText(number).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
 
   useEffect(() => {
     fetchOrderAndConfig();
@@ -184,37 +192,50 @@ export const MobileMoneyPaymentPage = () => {
                  {t('payment.send_via', { operator: isMtn ? 'MTN' : 'Airtel' })}
                </span>
                <span className="text-3xl font-bold">{formatCurrency(amount)}</span>
-               <span className="text-sm">{t('payment.to_number')}</span>
-               <span className="text-xl font-mono font-bold tracking-wider">{phoneNumber || 'Non configuré'}</span>
             </div>
 
             <div className="text-center text-sm text-gray-500 bg-white p-3 rounded border">
                 {t('payment.ref_order')} <span className="font-bold text-gray-900">#{order.id.slice(0,8)}</span>
             </div>
 
+            {/* Numéro à copier */}
+            <div className={`flex items-center justify-between rounded-xl border px-4 py-3 ${isMtn ? 'bg-yellow-50 border-yellow-200' : 'bg-red-50 border-red-200'}`}>
+              <div>
+                <p className="text-xs text-gray-500 mb-0.5">Numéro {isMtn ? 'MTN Mobile Money' : 'Airtel Money'}</p>
+                <span className={`text-2xl font-mono font-bold tracking-widest ${isMtn ? 'text-yellow-700' : 'text-red-700'}`}>{phoneNumber || 'Non configuré'}</span>
+              </div>
+              <button
+                onClick={() => handleCopyNumber(phoneNumber)}
+                className={`flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-lg transition-all ${copied ? 'bg-green-100 text-green-700' : isMtn ? 'bg-yellow-200 text-yellow-800 hover:bg-yellow-300' : 'bg-red-200 text-red-800 hover:bg-red-300'}`}
+              >
+                {copied ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {copied ? 'Copié !' : 'Copier'}
+              </button>
+            </div>
+
             {/* Instructions de paiement */}
             <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 space-y-3">
-              <p className="text-sm font-bold text-gray-800 flex items-center gap-2">
-                <span className="bg-primary text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">?</span>
-                Comment procéder
-              </p>
+              <p className="text-sm font-bold text-gray-800">Comment procéder :</p>
               {isMtn ? (
-                <ol className="space-y-2 text-sm text-gray-700">
-                  <li className="flex gap-2"><span className="font-bold text-yellow-600 flex-shrink-0">1.</span> Composez <span className="font-mono font-bold">*165#</span> sur votre téléphone MTN</li>
-                  <li className="flex gap-2"><span className="font-bold text-yellow-600 flex-shrink-0">2.</span> Sélectionnez <span className="font-semibold">"Transfert d'argent"</span></li>
-                  <li className="flex gap-2"><span className="font-bold text-yellow-600 flex-shrink-0">3.</span> Entrez le numéro : <span className="font-mono font-bold">{phoneNumber}</span></li>
-                  <li className="flex gap-2"><span className="font-bold text-yellow-600 flex-shrink-0">4.</span> Entrez le montant : <span className="font-bold">{formatCurrency(amount)}</span></li>
-                  <li className="flex gap-2"><span className="font-bold text-yellow-600 flex-shrink-0">5.</span> Confirmez avec votre code PIN MTN</li>
-                  <li className="flex gap-2"><span className="font-bold text-yellow-600 flex-shrink-0">6.</span> Prenez une capture d'écran du SMS de confirmation et envoyez-la ci-dessous</li>
+                <ol className="space-y-2.5 text-sm text-gray-700">
+                  <li className="flex gap-2 items-start"><span className="font-bold text-yellow-600 flex-shrink-0 bg-yellow-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">1</span> Composez <span className="font-mono font-bold mx-1">*105#</span> sur votre téléphone MTN</li>
+                  <li className="flex gap-2 items-start"><span className="font-bold text-yellow-600 flex-shrink-0 bg-yellow-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">2</span> Sélectionnez <span className="font-semibold mx-1">1 — Envoi d'argent</span></li>
+                  <li className="flex gap-2 items-start"><span className="font-bold text-yellow-600 flex-shrink-0 bg-yellow-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">3</span> Sélectionnez <span className="font-semibold mx-1">1 — Abonné Mobile Money</span></li>
+                  <li className="flex gap-2 items-start"><span className="font-bold text-yellow-600 flex-shrink-0 bg-yellow-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">4</span> Entrez le numéro Mobile Money : <span className="font-mono font-bold mx-1">{phoneNumber}</span></li>
+                  <li className="flex gap-2 items-start"><span className="font-bold text-yellow-600 flex-shrink-0 bg-yellow-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">5</span> Entrez le montant à envoyer : <span className="font-bold mx-1">{formatCurrency(amount)}</span></li>
+                  <li className="flex gap-2 items-start"><span className="font-bold text-yellow-600 flex-shrink-0 bg-yellow-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">6</span> Cliquez sur <span className="font-semibold mx-1">Envoyer / Send</span></li>
+                  <li className="flex gap-2 items-start"><span className="font-bold text-yellow-600 flex-shrink-0 bg-yellow-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">7</span> Prenez une capture d'écran du SMS de confirmation et envoyez-la ci-dessous</li>
                 </ol>
               ) : (
-                <ol className="space-y-2 text-sm text-gray-700">
-                  <li className="flex gap-2"><span className="font-bold text-red-600 flex-shrink-0">1.</span> Composez <span className="font-mono font-bold">*555#</span> sur votre téléphone Airtel</li>
-                  <li className="flex gap-2"><span className="font-bold text-red-600 flex-shrink-0">2.</span> Sélectionnez <span className="font-semibold">"Envoyer de l'argent"</span></li>
-                  <li className="flex gap-2"><span className="font-bold text-red-600 flex-shrink-0">3.</span> Entrez le numéro : <span className="font-mono font-bold">{phoneNumber}</span></li>
-                  <li className="flex gap-2"><span className="font-bold text-red-600 flex-shrink-0">4.</span> Entrez le montant : <span className="font-bold">{formatCurrency(amount)}</span></li>
-                  <li className="flex gap-2"><span className="font-bold text-red-600 flex-shrink-0">5.</span> Confirmez avec votre code PIN Airtel Money</li>
-                  <li className="flex gap-2"><span className="font-bold text-red-600 flex-shrink-0">6.</span> Prenez une capture d'écran du SMS de confirmation et envoyez-la ci-dessous</li>
+                <ol className="space-y-2.5 text-sm text-gray-700">
+                  <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">1</span> Composez <span className="font-mono font-bold mx-1">*128#</span> sur votre téléphone Airtel</li>
+                  <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">2</span> Sélectionnez <span className="font-semibold mx-1">2 — Envoyer / Retirer Argent</span></li>
+                  <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">3</span> Sélectionnez <span className="font-semibold mx-1">1 — Envoyer de l'argent</span></li>
+                  <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">4</span> Sélectionnez <span className="font-semibold mx-1">1 — Airtel Money</span></li>
+                  <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">5</span> Saisissez le numéro : <span className="font-mono font-bold mx-1">{phoneNumber}</span></li>
+                  <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">6</span> Saisissez le montant : <span className="font-bold mx-1">{formatCurrency(amount)}</span></li>
+                  <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">7</span> Entrez votre <span className="font-semibold mx-1">code PIN</span></li>
+                  <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">8</span> Prenez une capture d'écran du SMS de confirmation et envoyez-la ci-dessous</li>
                 </ol>
               )}
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 text-xs text-amber-800">
