@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePersistentOrderAlert } from '@/hooks/usePersistentOrderAlert';
+import { useOrderAutoProgression } from '@/hooks/useOrderAutoProgression';
 
 class SidebarErrorBoundary extends React.Component {
   constructor(props) {
@@ -47,6 +48,8 @@ export const AdminLayout = ({ children }) => {
   const navigate = useNavigate();
   const { currentLanguage } = useLanguage();
   const { pendingOrders, acknowledgeAll } = usePersistentOrderAlert();
+  // Flux automatique — tourne en arrière-plan sur toutes les pages admin
+  useOrderAutoProgression();
 
   return (
     <div className="flex h-[100dvh] bg-background overflow-hidden font-sans text-foreground landscape:flex-row">

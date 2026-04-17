@@ -26,6 +26,8 @@ import { AdminUsersTab } from '@/components/AdminUsersTab';
 import { AdminMobileMoneyPaymentsTab } from '@/components/AdminMobileMoneyPaymentsTab';
 import { AdminSecurityTab } from '@/components/AdminSecurityTab';
 import { AdminDataTab } from '@/components/AdminDataTab';
+import { WorkflowSettingsPanel } from '@/components/WorkflowSettingsPanel';
+import { useOrderAutoProgression } from '@/hooks/useOrderAutoProgression';
 
 export const AdminSettingsPage = () => {
   const { t } = useLanguage();
@@ -33,6 +35,7 @@ export const AdminSettingsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user, role, loading: authLoading, signOut } = useAuth();
   const { toast } = useToast();
+  const { settings: workflowSettings, updateSettings: updateWorkflowSettings } = useOrderAutoProgression();
   
   const [initStatus, setInitStatus] = useState(null);
   const [isChecking, setIsChecking] = useState(true);
@@ -238,6 +241,7 @@ export const AdminSettingsPage = () => {
                 <TabsTrigger value="notifications">{t('admin.settings.tabs.notifications', 'Notifications')}</TabsTrigger>
                 <TabsTrigger value="sound">{t('admin.settings.tabs.sound', 'Sons')}</TabsTrigger>
                 <TabsTrigger value="delivery-alerts">{t('admin.settings.tabs.delivery_alerts', 'Livraison')}</TabsTrigger>
+                <TabsTrigger value="workflow">Flux Auto</TabsTrigger>
                 <TabsTrigger value="users">{t('admin.settings.tabs.users', 'Utilisateurs')}</TabsTrigger>
                 <TabsTrigger value="mobile-money">{t('admin.settings.tabs.mobile_money', 'Paiements Mobiles')}</TabsTrigger>
                 <TabsTrigger value="security">{t('admin.settings.tabs.security', 'Sécurité')}</TabsTrigger>
@@ -256,6 +260,9 @@ export const AdminSettingsPage = () => {
             <TabsContent value="notifications" className="m-0"><AdminNotificationsTab /></TabsContent>
             <TabsContent value="sound" className="m-0"><AdminSoundSettingsTab /></TabsContent>
             <TabsContent value="delivery-alerts" className="m-0"><AdminDeliverySettingsTab /></TabsContent>
+            <TabsContent value="workflow" className="m-0">
+              <WorkflowSettingsPanel settings={workflowSettings} onUpdate={updateWorkflowSettings} />
+            </TabsContent>
             <TabsContent value="users" className="m-0"><AdminUsersTab /></TabsContent>
             <TabsContent value="mobile-money" className="m-0"><AdminMobileMoneyPaymentsTab /></TabsContent>
             <TabsContent value="security" className="m-0"><AdminSecurityTab /></TabsContent>
