@@ -89,12 +89,26 @@ BEGIN
     AND  updated_at < NOW() - (s.confirmed_to_preparing_min || ' minutes')::INTERVAL;
 
   -- preparing → ready
-  UPDATE delivery_orders
+  -- Utilise le MAX(preparation_time) des plats commandés.
+  -- Si aucun plat n'a de temps renseigné, utilise le délai par défaut des paramètres.
+  UPDATE delivery_orders dord
   SET    status     = 'ready',
          updated_at = NOW()
-  WHERE  status     = 'preparing'
-    AND  is_deleted = false
-    AND  updated_at < NOW() - (s.preparing_to_ready_min || ' minutes')::INTERVAL;
+  WHERE  dord.status     = 'preparing'
+    AND  dord.is_deleted = false
+    AND  dord.updated_at < NOW() - (
+           GREATEST(
+             COALESCE(
+               (SELECT MAX(mi.preparation_time)
+                FROM   order_items oi
+                JOIN   menu_items  mi ON mi.id = oi.menu_item_id
+                WHERE  oi.order_id = dord.order_id
+                  AND  COALESCE(mi.preparation_time, 0) > 0),
+               s.preparing_to_ready_min   -- fallback si aucun plat n'a de temps
+             ),
+             1   -- minimum 1 minute
+           ) || ' minutes'
+         )::INTERVAL;
 
   -- ready → in_transit
   UPDATE delivery_orders

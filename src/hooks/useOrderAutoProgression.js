@@ -152,6 +152,28 @@ export const useOrderAutoProgression = () => {
     }
   }, [dbAvailable]);
 
+  // Calcule le délai réel pour "preparing → ready" :
+  // MAX(preparation_time) des plats commandés, ou fallback sur le délai configuré
+  const getPreparingDelay = useCallback(async (orderId, fallbackMin) => {
+    try {
+      const { data, error } = await supabase
+        .from('order_items')
+        .select('menu_items(preparation_time)')
+        .eq('order_id', orderId);
+
+      if (error || !data || data.length === 0) return fallbackMin;
+
+      const times = data
+        .map(item => item.menu_items?.preparation_time)
+        .filter(t => t && t > 0);
+
+      if (times.length === 0) return fallbackMin;
+      return Math.max(...times);
+    } catch {
+      return fallbackMin;
+    }
+  }, []);
+
   // Vérification frontend (backup si pg_cron n'est pas activé)
   const checkAndAdvance = useCallback(async () => {
     if (isRunningRef.current) return;
@@ -167,7 +189,7 @@ export const useOrderAutoProgression = () => {
 
       const { data: orders, error } = await supabase
         .from('delivery_orders')
-        .select('id, status, updated_at')
+        .select('id, status, updated_at, order_id')
         .in('status', activeStatuses)
         .eq('is_deleted', false);
 
@@ -182,8 +204,14 @@ export const useOrderAutoProgression = () => {
         const step = settings.steps[rule.key];
         if (!step?.enabled) continue;
 
+        // Pour "preparing → ready", utiliser le temps réel des plats
+        let delayMin = step.minutes;
+        if (rule.key === 'preparing_to_ready' && order.order_id) {
+          delayMin = await getPreparingDelay(order.order_id, step.minutes);
+        }
+
         const elapsedMin = (now - new Date(order.updated_at).getTime()) / 60_000;
-        if (elapsedMin >= step.minutes) {
+        if (elapsedMin >= delayMin) {
           const success = await autoAdvanceOrder(order.id, order.status, rule.to);
           if (success) advanced.push({ from: order.status, to: rule.to });
         }
@@ -202,7 +230,7 @@ export const useOrderAutoProgression = () => {
     } finally {
       isRunningRef.current = false;
     }
-  }, [settings, toast]);
+  }, [settings, toast, getPreparingDelay]);
 
   // Lancer le polling frontend
   useEffect(() => {
