@@ -15,7 +15,12 @@ export const TEST_CATEGORIES = [
   'Authentication',
   'UserProfile',
   'ResponsiveDesign',
-  'ErrorHandling'
+  'ErrorHandling',
+  'DeliveryWorkflow',
+  'AdminNotifications',
+  'AutoProgression',
+  'PaymentValidation',
+  'DeviceTesting'
 ];
 
 export const MANUAL_TESTS = [
@@ -421,5 +426,345 @@ export const MANUAL_TESTS = [
     description: 'Verify API errors during submission are shown to user.',
     expectedBehavior: 'Toast notification or inline error appears if submission fails (e.g., network error during checkout).',
     steps: ['Block network request during checkout submit', 'Verify error toast']
+  },
+
+  // ============================================================
+  // CATEGORY: DeliveryWorkflow — Flux complet de commande livraison
+  // ============================================================
+  {
+    id: 'DELIV-01',
+    category: 'DeliveryWorkflow',
+    name: 'Commande de bout en bout — Livraison',
+    description: 'Scénario complet : client passe une commande de livraison jusqu\'à la livraison finale.',
+    expectedBehavior: 'Chaque étape du statut est visible côté client ET côté admin. Aucun blocage.',
+    steps: [
+      '1. [CLIENT] Ouvrir l\'app sur un téléphone, aller sur le menu',
+      '2. [CLIENT] Ajouter 2-3 plats au panier, valider la commande livraison avec adresse',
+      '3. [ADMIN] Vérifier que la commande apparaît dans le dashboard Livraisons avec statut "En attente"',
+      '4. [ADMIN] Cliquer "Confirmer" — vérifier que le statut passe à "Confirmée"',
+      '5. [CLIENT] Vérifier que la page de suivi affiche "Confirmée"',
+      '6. [ADMIN] Cliquer "En préparation" — vérifier le statut',
+      '7. [ADMIN] Cliquer "Prête" — vérifier le statut',
+      '8. [ADMIN] Cliquer "En route" — vérifier le statut côté client',
+      '9. [ADMIN] Cliquer "Livrée" — vérifier que la commande passe dans l\'historique',
+      '10. [CLIENT] Vérifier que la commande est bien marquée "Livrée" dans l\'historique'
+    ]
+  },
+  {
+    id: 'DELIV-02',
+    category: 'DeliveryWorkflow',
+    name: 'Commande annulée par l\'admin',
+    description: 'Vérifier le comportement quand l\'admin annule une commande en cours.',
+    expectedBehavior: 'Statut passe à "Annulée", commande disparaît des actives, visible dans historique avec statut annulé.',
+    steps: [
+      '1. [CLIENT] Passer une commande de livraison',
+      '2. [ADMIN] Dans le détail de la commande, cliquer "Annuler"',
+      '3. [ADMIN] Confirmer l\'annulation dans la boîte de dialogue',
+      '4. [ADMIN] Vérifier que la commande n\'apparaît plus dans les commandes actives',
+      '5. [CLIENT] Vérifier que la page de suivi affiche le statut annulé'
+    ]
+  },
+  {
+    id: 'DELIV-03',
+    category: 'DeliveryWorkflow',
+    name: 'Détail commande — Informations complètes',
+    description: 'Vérifier que le modal de détail d\'une commande affiche toutes les infos correctes.',
+    expectedBehavior: 'Nom client, téléphone, adresse, liste des plats, montant total, méthode de paiement s\'affichent correctement.',
+    steps: [
+      '1. [ADMIN] Aller dans Livraisons',
+      '2. [ADMIN] Cliquer sur "Voir" sur une commande',
+      '3. Vérifier : Nom client visible',
+      '4. Vérifier : Numéro de téléphone visible',
+      '5. Vérifier : Adresse de livraison visible',
+      '6. Vérifier : Liste des plats commandés avec quantités',
+      '7. Vérifier : Montant total correct (avec frais de livraison)',
+      '8. Vérifier : Méthode de paiement affichée ("Paiement à la Livraison" ou "Mobile Money")'
+    ]
+  },
+  {
+    id: 'DELIV-04',
+    category: 'DeliveryWorkflow',
+    name: 'Filtres et recherche dans le dashboard livraisons',
+    description: 'Vérifier que les filtres fonctionnent correctement.',
+    expectedBehavior: 'Filtrer par statut ne montre que les commandes concernées. La recherche trouve une commande par nom.',
+    steps: [
+      '1. [ADMIN] Aller dans Livraisons',
+      '2. Cliquer sur le filtre "En attente" — vérifier que seules les commandes en attente s\'affichent',
+      '3. Cliquer sur "Confirmée" — vérifier',
+      '4. Taper un nom de client dans la recherche — vérifier que la commande apparaît',
+      '5. Taper un nom inexistant — vérifier que "Aucune commande trouvée" s\'affiche',
+      '6. Cliquer "Tout" pour réinitialiser les filtres'
+    ]
+  },
+
+  // ============================================================
+  // CATEGORY: AdminNotifications — Alertes et sons
+  // ============================================================
+  {
+    id: 'NOTIF-01',
+    category: 'AdminNotifications',
+    name: 'Sonnerie nouvelle commande',
+    description: 'Vérifier que la sonnerie d\'alerte se déclenche quand une nouvelle commande arrive.',
+    expectedBehavior: 'Sonnerie "alert_bell" joue 2 fois (La-Ré-Mi) quand une nouvelle commande est passée.',
+    steps: [
+      '1. [ADMIN] Ouvrir le dashboard (s\'assurer que le son est activé dans le navigateur)',
+      '2. [CLIENT] Passer une commande de livraison depuis un autre appareil',
+      '3. [ADMIN] Vérifier que la sonnerie retentit immédiatement',
+      '4. Vérifier que la sonnerie joue bien 2 fois de suite',
+      '5. Vérifier que la bannière rouge "Nouvelle commande en attente" apparaît en haut'
+    ]
+  },
+  {
+    id: 'NOTIF-02',
+    category: 'AdminNotifications',
+    name: 'Annonce vocale après sonnerie',
+    description: 'Vérifier que la voix annonce "Vous avez une nouvelle commande en attente" après les sonneries.',
+    expectedBehavior: 'Environ 2-3 secondes après la sonnerie, une voix dit le message en français.',
+    steps: [
+      '1. [CLIENT] Passer une commande depuis un autre appareil',
+      '2. [ADMIN] Écouter : 2 sonneries → puis voix "Vous avez une nouvelle commande en attente"',
+      '3. Vérifier que la voix est en français',
+      '4. Si la voix ne fonctionne pas : aller dans Paramètres → Sons → vérifier que "Voix admin" est activée'
+    ]
+  },
+  {
+    id: 'NOTIF-03',
+    category: 'AdminNotifications',
+    name: 'Répétition de l\'alerte toutes les 30 secondes',
+    description: 'Vérifier que la sonnerie se répète si personne ne valide la commande.',
+    expectedBehavior: 'La sonnerie + voix se répètent toutes les 30 secondes tant que la commande n\'est pas validée.',
+    steps: [
+      '1. [CLIENT] Passer une commande',
+      '2. [ADMIN] NE PAS cliquer sur "Voir les commandes" ni valider',
+      '3. Attendre 30 secondes — vérifier que la sonnerie rejoue',
+      '4. Attendre encore 30 secondes — vérifier que ça rejoue à nouveau',
+      '5. [ADMIN] Cliquer "Voir les commandes" dans la bannière — vérifier que l\'alerte s\'arrête'
+    ]
+  },
+  {
+    id: 'NOTIF-04',
+    category: 'AdminNotifications',
+    name: 'Bannière d\'alerte persistante',
+    description: 'Vérifier que la bannière rouge reste visible sur toutes les pages admin.',
+    expectedBehavior: 'Même si l\'admin navigue vers Paramètres ou Réservations, la bannière reste présente.',
+    steps: [
+      '1. [CLIENT] Passer une commande sans la valider',
+      '2. [ADMIN] Vérifier que la bannière rouge apparaît sous la barre de navigation',
+      '3. [ADMIN] Naviguer vers Paramètres — vérifier que la bannière est toujours là',
+      '4. [ADMIN] Naviguer vers Réservations — vérifier que la bannière est toujours là',
+      '5. [ADMIN] Cliquer X sur la bannière — vérifier qu\'elle disparaît et que le son s\'arrête'
+    ]
+  },
+  {
+    id: 'NOTIF-05',
+    category: 'AdminNotifications',
+    name: 'Personnalisation du son dans les paramètres',
+    description: 'Vérifier que le changement de son dans Paramètres → Sons est effectif.',
+    expectedBehavior: 'Changer le type de son et cliquer Tester joue le nouveau son.',
+    steps: [
+      '1. [ADMIN] Aller dans Paramètres → Sons',
+      '2. Changer le son de notification de "Sonnerie Alerte" à "Carillon"',
+      '3. Cliquer le bouton "Tester" — vérifier que le carillon joue',
+      '4. Cliquer Sauvegarder',
+      '5. [CLIENT] Passer une commande — vérifier que le nouveau son joue'
+    ]
+  },
+
+  // ============================================================
+  // CATEGORY: AutoProgression — Flux automatique
+  // ============================================================
+  {
+    id: 'AUTO-01',
+    category: 'AutoProgression',
+    name: 'Progression automatique — pending → confirmed',
+    description: 'Vérifier que le système confirme automatiquement une commande après le délai configuré.',
+    expectedBehavior: 'Après 3 minutes (délai par défaut) sans action admin, la commande passe à "Confirmée".',
+    steps: [
+      '1. [ADMIN] Aller dans Paramètres → Flux Auto — noter le délai "En attente → Confirmée" (défaut: 3 min)',
+      '2. [CLIENT] Passer une commande',
+      '3. [ADMIN] NE PAS cliquer — attendre le délai configuré + 1 minute',
+      '4. [ADMIN] Vérifier que la commande est passée automatiquement en "Confirmée"',
+      '5. Vérifier que le statut côté client a aussi changé'
+    ]
+  },
+  {
+    id: 'AUTO-02',
+    category: 'AutoProgression',
+    name: 'Progression manuelle override — annule le timer',
+    description: 'Vérifier que valider manuellement avant le délai fonctionne et repart de zéro.',
+    expectedBehavior: 'L\'admin clique avant le délai → avancement immédiat. Le timer suivant repart de 0.',
+    steps: [
+      '1. [CLIENT] Passer une commande (statut: En attente)',
+      '2. [ADMIN] Dans les 3 premières minutes, cliquer manuellement "Confirmer"',
+      '3. Vérifier que le statut passe immédiatement à "Confirmée" sans attendre',
+      '4. Attendre 2 minutes (délai confirmed→preparing)',
+      '5. Vérifier que la commande passe en "En préparation" après ce délai'
+    ]
+  },
+  {
+    id: 'AUTO-03',
+    category: 'AutoProgression',
+    name: 'Délai préparation basé sur les plats',
+    description: 'Vérifier que le délai "En préparation → Prête" respecte le temps du plat le plus long.',
+    expectedBehavior: 'Si un plat a 45 min de préparation, la commande ne passe pas en "Prête" avant 45 min.',
+    steps: [
+      '1. [ADMIN] Vérifier qu\'un plat du menu a un "Temps (min)" renseigné (ex: 45 min)',
+      '2. [CLIENT] Commander ce plat',
+      '3. [ADMIN] Faire passer la commande à "En préparation" (manuellement ou attendre)',
+      '4. Attendre le délai fixe (ex: 30 min du paramètre) → vérifier que la commande NE passe PAS en "Prête"',
+      '5. Attendre jusqu\'à 45 min → vérifier que la commande passe automatiquement en "Prête"'
+    ]
+  },
+  {
+    id: 'AUTO-04',
+    category: 'AutoProgression',
+    name: 'Désactivation du flux automatique',
+    description: 'Vérifier que désactiver le toggle stoppe toute progression automatique.',
+    expectedBehavior: 'Après désactivation dans Paramètres → Flux Auto, aucune commande n\'avance sans action manuelle.',
+    steps: [
+      '1. [ADMIN] Aller dans Paramètres → Flux Auto',
+      '2. Désactiver le toggle "Progression automatique"',
+      '3. [CLIENT] Passer une commande',
+      '4. Attendre plus de 5 minutes sans toucher',
+      '5. Vérifier que la commande est toujours en "En attente" — AUCUN avancement automatique',
+      '6. Réactiver le toggle pour revenir en mode normal'
+    ]
+  },
+  {
+    id: 'AUTO-05',
+    category: 'AutoProgression',
+    name: 'Mode serveur actif (pg_cron)',
+    description: 'Vérifier que la progression fonctionne même quand le dashboard est fermé.',
+    expectedBehavior: 'Après fermeture du dashboard, une commande en attente avance quand même selon les délais.',
+    steps: [
+      '1. [ADMIN] Vérifier dans Paramètres → Flux Auto que le bandeau est VERT (mode serveur)',
+      '2. [CLIENT] Passer une commande',
+      '3. [ADMIN] FERMER complètement le navigateur/dashboard',
+      '4. Attendre le délai configuré + 2 minutes',
+      '5. [ADMIN] Rouvrir le dashboard — vérifier que la commande a avancé automatiquement'
+    ]
+  },
+
+  // ============================================================
+  // CATEGORY: PaymentValidation — Paiements
+  // ============================================================
+  {
+    id: 'PAY-01',
+    category: 'PaymentValidation',
+    name: 'Paiement à la livraison — affichage correct',
+    description: 'Vérifier que le mode "Paiement à la Livraison" s\'affiche bien (pas "Paiement à la Table").',
+    expectedBehavior: 'Dans le détail commande, la méthode de paiement affiche "Paiement à la Livraison".',
+    steps: [
+      '1. [CLIENT] Passer une commande avec paiement "Cash on Delivery"',
+      '2. [ADMIN] Ouvrir le détail de la commande',
+      '3. Vérifier que la méthode de paiement affiche bien "Paiement à la Livraison"',
+      '4. Vérifier que le statut paiement affiche "Non payé"'
+    ]
+  },
+  {
+    id: 'PAY-02',
+    category: 'PaymentValidation',
+    name: 'Validation du paiement à la livraison',
+    description: 'Vérifier que cliquer "Valider" dans le modal change le statut paiement.',
+    expectedBehavior: 'Après validation, le statut passe de "Non payé" à "Payé" et est sauvegardé en base.',
+    steps: [
+      '1. [ADMIN] Ouvrir une commande avec statut paiement "Non payé"',
+      '2. Cliquer sur le bouton de validation du paiement',
+      '3. Vérifier que le statut passe immédiatement à "Payé" dans le modal',
+      '4. Fermer et rouvrir le modal — vérifier que "Payé" est bien persisté',
+      '5. Rafraîchir la page — vérifier que le changement est toujours là'
+    ]
+  },
+  {
+    id: 'PAY-03',
+    category: 'PaymentValidation',
+    name: 'Paiement Mobile Money — soumission preuve',
+    description: 'Vérifier le flux complet de paiement Mobile Money avec upload de preuve.',
+    expectedBehavior: 'Le client peut uploader une capture d\'écran. L\'admin voit la preuve dans le détail commande.',
+    steps: [
+      '1. [CLIENT] Passer une commande avec paiement "Mobile Money"',
+      '2. [CLIENT] Sur la page de paiement, entrer le numéro de transaction et uploader une capture d\'écran',
+      '3. [CLIENT] Soumettre',
+      '4. [ADMIN] Aller dans Paiements Mobiles → vérifier que la soumission apparaît',
+      '5. [ADMIN] Cliquer "Approuver" — vérifier que le statut passe à "Approuvé"'
+    ]
+  },
+
+  // ============================================================
+  // CATEGORY: DeviceTesting — Tests sur appareils réels
+  // ============================================================
+  {
+    id: 'DEV-01',
+    category: 'DeviceTesting',
+    name: 'Installation PWA sur tablette',
+    description: 'Vérifier que l\'app peut s\'installer comme une app native sur la tablette admin.',
+    expectedBehavior: 'L\'icône apparaît sur l\'écran d\'accueil, l\'app s\'ouvre en plein écran sans barre navigateur.',
+    steps: [
+      '1. Sur la tablette, ouvrir Chrome ou Safari',
+      '2. Naviguer vers ladesiradeplus.com',
+      '3. Chrome Android: Menu ⋮ → "Ajouter à l\'écran d\'accueil"',
+      '4. Safari iOS/iPadOS: Bouton Partager → "Sur l\'écran d\'accueil"',
+      '5. Ouvrir l\'app depuis l\'icône — vérifier qu\'elle s\'ouvre sans barre URL',
+      '6. Se connecter avec le compte admin'
+    ]
+  },
+  {
+    id: 'DEV-02',
+    category: 'DeviceTesting',
+    name: 'Son sur tablette — volume et déclenchement',
+    description: 'Vérifier que la sonnerie de nouvelle commande est audible sur la tablette.',
+    expectedBehavior: 'La sonnerie joue fort et clairement sur la tablette quand une commande arrive.',
+    steps: [
+      '1. Sur la tablette, ouvrir le dashboard admin',
+      '2. Monter le volume de la tablette au maximum',
+      '3. [CLIENT] Passer une commande depuis un autre appareil',
+      '4. Vérifier que la sonnerie est audible sur la tablette',
+      '5. Vérifier que la voix "Vous avez une nouvelle commande en attente" est claire',
+      '6. Si pas de son : vérifier que le navigateur a la permission audio (pas en mode silencieux)'
+    ]
+  },
+  {
+    id: 'DEV-03',
+    category: 'DeviceTesting',
+    name: 'Dashboard admin — affichage tablette',
+    description: 'Vérifier que le dashboard s\'affiche correctement sur l\'écran de la tablette.',
+    expectedBehavior: 'Tous les éléments sont lisibles, les boutons sont cliquables, rien ne déborde.',
+    steps: [
+      '1. Sur la tablette, ouvrir le dashboard Livraisons',
+      '2. Vérifier que le tableau des commandes est lisible',
+      '3. Vérifier que les boutons de statut sont assez grands pour être cliqués avec le doigt',
+      '4. Ouvrir le détail d\'une commande — vérifier l\'affichage du modal',
+      '5. Tester en mode portrait ET en mode paysage',
+      '6. Vérifier que la bannière d\'alerte rouge est visible en haut'
+    ]
+  },
+  {
+    id: 'DEV-04',
+    category: 'DeviceTesting',
+    name: 'Démarrage automatique au démarrage de la tablette',
+    description: 'Vérifier que l\'app peut être configurée pour démarrer automatiquement.',
+    expectedBehavior: 'Après redémarrage de la tablette, le dashboard est accessible rapidement sans manipulation.',
+    steps: [
+      '1. Installer l\'app en PWA sur la tablette (voir DEV-01)',
+      '2. Sur Android : Paramètres → Apps → Chrome/App → Autoriser le démarrage automatique',
+      '3. Redémarrer la tablette',
+      '4. Vérifier que l\'app est accessible rapidement',
+      '5. Alternative : configurer un raccourci dans la barre des tâches de la tablette'
+    ]
+  },
+  {
+    id: 'DEV-05',
+    category: 'DeviceTesting',
+    name: 'Connexion Wi-Fi instable — comportement',
+    description: 'Vérifier que l\'app gère correctement une coupure de connexion temporaire.',
+    expectedBehavior: 'Un indicateur de connexion s\'affiche en rouge. Quand le Wi-Fi revient, l\'app se reconnecte.',
+    steps: [
+      '1. Ouvrir le dashboard sur la tablette',
+      '2. Couper le Wi-Fi de la tablette pendant 30 secondes',
+      '3. Vérifier qu\'un indicateur "Déconnecté" ou rouge apparaît dans le dashboard',
+      '4. Rétablir le Wi-Fi',
+      '5. Vérifier que l\'indicateur repasse en "Connecté" sans recharger la page',
+      '6. [CLIENT] Passer une commande — vérifier qu\'elle apparaît bien sur la tablette'
+    ]
   }
 ];
