@@ -54,6 +54,24 @@ export const CheckoutPage = () => {
   const [paymentMethod, setPaymentMethod] = useState('cash_on_delivery');
   const [mobileMoneyType, setMobileMoneyType] = useState('');
   const [paymentProofUrl, setPaymentProofUrl] = useState(null);
+  const [mobileMoneyConfig, setMobileMoneyConfig] = useState({ mtn: '', airtel: '' });
+  const [copiedNumber, setCopiedNumber] = useState(false);
+
+  useEffect(() => {
+    supabase.from('admin_config').select('config_key, config_value').then(({ data }) => {
+      if (data) {
+        const cfg = data.reduce((acc, r) => { acc[r.config_key] = r.config_value; return acc; }, {});
+        setMobileMoneyConfig({ mtn: cfg.mtn_mobile_money || '', airtel: cfg.airtel_mobile_money || '' });
+      }
+    });
+  }, []);
+
+  const handleCopyMobileNumber = (number) => {
+    navigator.clipboard.writeText(number).then(() => {
+      setCopiedNumber(true);
+      setTimeout(() => setCopiedNumber(false), 2000);
+    });
+  };
 
   const [activePromoCode, setActivePromoCode] = useState(locationState.promoCode || null);
 
@@ -497,10 +515,56 @@ export const CheckoutPage = () => {
                               </div>
                             </div>
                              {mobileMoneyType && (
-                                <div className="space-y-3 pt-2">
+                                <>
+                                  {/* Numéro + bouton copier */}
+                                  <div className={`flex items-center justify-between rounded-xl border px-4 py-3 ${mobileMoneyType === 'mtn' ? 'bg-yellow-50 border-yellow-200' : 'bg-red-50 border-red-200'}`}>
+                                    <div>
+                                      <p className="text-xs text-gray-500 mb-0.5">{mobileMoneyType === 'mtn' ? 'Numéro MTN Mobile Money' : 'Numéro Airtel Money'}</p>
+                                      <span className={`text-xl font-mono font-bold tracking-widest ${mobileMoneyType === 'mtn' ? 'text-yellow-700' : 'text-red-700'}`}>
+                                        {mobileMoneyType === 'mtn' ? mobileMoneyConfig.mtn : mobileMoneyConfig.airtel}
+                                      </span>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleCopyMobileNumber(mobileMoneyType === 'mtn' ? mobileMoneyConfig.mtn : mobileMoneyConfig.airtel)}
+                                      className={`flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-lg transition-all ${copiedNumber ? 'bg-green-100 text-green-700' : mobileMoneyType === 'mtn' ? 'bg-yellow-200 text-yellow-800 hover:bg-yellow-300' : 'bg-red-200 text-red-800 hover:bg-red-300'}`}
+                                    >
+                                      {copiedNumber ? '✓ Copié !' : '📋 Copier'}
+                                    </button>
+                                  </div>
+
+                                  {/* Instructions étape par étape */}
+                                  <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 space-y-3">
+                                    <p className="text-sm font-bold text-gray-800">Comment procéder :</p>
+                                    {mobileMoneyType === 'mtn' ? (
+                                      <ol className="space-y-2 text-sm text-gray-700">
+                                        <li className="flex gap-2 items-start"><span className="font-bold text-yellow-600 flex-shrink-0 bg-yellow-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">1</span>Composez <span className="font-mono font-bold mx-1">*105#</span> sur votre téléphone MTN</li>
+                                        <li className="flex gap-2 items-start"><span className="font-bold text-yellow-600 flex-shrink-0 bg-yellow-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">2</span>Sélectionnez <span className="font-semibold mx-1">1 — Envoi d'argent</span></li>
+                                        <li className="flex gap-2 items-start"><span className="font-bold text-yellow-600 flex-shrink-0 bg-yellow-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">3</span>Sélectionnez <span className="font-semibold mx-1">1 — Abonné Mobile Money</span></li>
+                                        <li className="flex gap-2 items-start"><span className="font-bold text-yellow-600 flex-shrink-0 bg-yellow-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">4</span>Entrez le numéro : <span className="font-mono font-bold mx-1">{mobileMoneyConfig.mtn}</span></li>
+                                        <li className="flex gap-2 items-start"><span className="font-bold text-yellow-600 flex-shrink-0 bg-yellow-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">5</span>Entrez le montant à envoyer</li>
+                                        <li className="flex gap-2 items-start"><span className="font-bold text-yellow-600 flex-shrink-0 bg-yellow-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">6</span>Cliquez sur <span className="font-semibold mx-1">Envoyer / Send</span></li>
+                                        <li className="flex gap-2 items-start"><span className="font-bold text-yellow-600 flex-shrink-0 bg-yellow-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">7</span>Prenez une capture d'écran du SMS et uploadez-la ci-dessous</li>
+                                      </ol>
+                                    ) : (
+                                      <ol className="space-y-2 text-sm text-gray-700">
+                                        <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">1</span>Composez <span className="font-mono font-bold mx-1">*128#</span> sur votre téléphone Airtel</li>
+                                        <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">2</span>Sélectionnez <span className="font-semibold mx-1">2 — Envoyer / Retirer Argent</span></li>
+                                        <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">3</span>Sélectionnez <span className="font-semibold mx-1">1 — Envoyer de l'argent</span></li>
+                                        <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">4</span>Sélectionnez <span className="font-semibold mx-1">1 — Airtel Money</span></li>
+                                        <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">5</span>Saisissez le numéro : <span className="font-mono font-bold mx-1">{mobileMoneyConfig.airtel}</span></li>
+                                        <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">6</span>Saisissez le montant</li>
+                                        <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">7</span>Entrez votre <span className="font-semibold mx-1">code PIN</span></li>
+                                        <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">8</span>Prenez une capture d'écran du SMS et uploadez-la ci-dessous</li>
+                                      </ol>
+                                    )}
+                                  </div>
+
+                                  <div className="space-y-3 pt-2">
                                     <Label className="text-sm font-bold text-gray-700">Preuve de Paiement Valide (Obligatoire)</Label>
                                     <PaymentProofUpload onUploadSuccess={(url) => setPaymentProofUrl(url)} onRemove={() => setPaymentProofUrl(null)} initialUrl={paymentProofUrl} />
-                                </div>
+                                  </div>
+                                </>
                              )}
                          </div>
                       )}
