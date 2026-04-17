@@ -41,6 +41,7 @@ export function useRealtimeWithFallback({
   const retryCountRef = useRef(0);
   const isConnectingRef = useRef(false);
   const lastUpdateRef = useRef(0);
+  const connectionStatusRef = useRef(enabled ? CONNECTION_STATUS.CONNECTING : CONNECTION_STATUS.DISCONNECTED);
 
   const fetchCallback = useCallback(async () => {
     if (!fetchData || !isMounted.current) return;
@@ -66,6 +67,7 @@ export function useRealtimeWithFallback({
 
   const startPollingFallback = useCallback(() => {
     if (!enabled || !isMounted.current) return;
+    connectionStatusRef.current = CONNECTION_STATUS.POLLING;
     setConnectionStatus(CONNECTION_STATUS.POLLING);
     const adaptiveInterval = realtimeHealthCheck.healthScore < 50 ? pollingInterval * 2 : pollingInterval;
     // Cap minimum polling interval to 2000ms to prevent spam, but normally uses the 2-minute interval
@@ -110,6 +112,7 @@ export function useRealtimeWithFallback({
         isConnectingRef.current = false;
         
         if (status === 'SUBSCRIBED') {
+          connectionStatusRef.current = CONNECTION_STATUS.REALTIME;
           setConnectionStatus(CONNECTION_STATUS.REALTIME);
           retryCountRef.current = 0;
           fetchCallback(); 
@@ -135,10 +138,10 @@ export function useRealtimeWithFallback({
       
       const unsubHealth = realtimeHealthCheck.subscribeToStatusChanges(({ event }) => {
         if (!isMounted.current) return;
-        if (event === 'health-check-passed' && connectionStatus === CONNECTION_STATUS.POLLING) {
+        if (event === 'health-check-passed' && connectionStatusRef.current === CONNECTION_STATUS.POLLING) {
            retryCountRef.current = 0;
            connectRealtime();
-        } else if (event === 'health-check-failed' && connectionStatus === CONNECTION_STATUS.REALTIME) {
+        } else if (event === 'health-check-failed' && connectionStatusRef.current === CONNECTION_STATUS.REALTIME) {
            startPollingFallback();
         }
       });
@@ -160,7 +163,7 @@ export function useRealtimeWithFallback({
         supabase.removeChannel(channelRef.current).catch(() => {});
       }
     }
-  }, [enabled, connectRealtime, stopPollingFallback, connectionStatus, startPollingFallback]);
+  }, [enabled, connectRealtime, stopPollingFallback, startPollingFallback]);
 
   return {
     data,
