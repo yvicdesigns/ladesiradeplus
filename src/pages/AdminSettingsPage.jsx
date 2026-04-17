@@ -24,6 +24,7 @@ import { AdminResetSettingsTab } from '@/components/AdminResetSettingsTab';
 import { AdminDeliverySettingsTab } from '@/components/AdminDeliverySettingsTab';
 import { AdminUsersTab } from '@/components/AdminUsersTab';
 import { AdminMobileMoneyPaymentsTab } from '@/components/AdminMobileMoneyPaymentsTab';
+import { AdminPaymentSettingsTab } from '@/components/AdminPaymentSettingsTab';
 import { AdminSecurityTab } from '@/components/AdminSecurityTab';
 import { AdminDataTab } from '@/components/AdminDataTab';
 import { WorkflowSettingsPanel } from '@/components/WorkflowSettingsPanel';
@@ -269,7 +270,12 @@ export const AdminSettingsPage = () => {
               />
             </TabsContent>
             <TabsContent value="users" className="m-0"><AdminUsersTab /></TabsContent>
-            <TabsContent value="mobile-money" className="m-0"><AdminMobileMoneyPaymentsTab /></TabsContent>
+            <TabsContent value="mobile-money" className="m-0">
+              <div className="space-y-6">
+                <AdminPaymentSettingsTab />
+                <AdminMobileMoneyPaymentsTab />
+              </div>
+            </TabsContent>
             <TabsContent value="security" className="m-0"><AdminSecurityTab /></TabsContent>
             <TabsContent value="data" className="m-0"><AdminDataTab /></TabsContent>
             <TabsContent value="reset" className="m-0"><AdminResetSettingsTab /></TabsContent>
