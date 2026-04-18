@@ -61,9 +61,7 @@ export const DeliveryOrderDetailModal = ({ order, open, onOpenChange, onUpdateSt
 
     setLoadingAction(action);
     try {
-      await executeWithResilience(async () => {
-         await onUpdatePayment(targetOrderId, status);
-      }, { context: 'Detail Modal Payment Update', retry: true });
+      await onUpdatePayment(targetOrderId, status);
     } catch (err) {
       console.error('[DEBUG] ERROR caught in modal during payment update:', err);
       toast({ variant: 'destructive', title: 'Échec de la mise à jour', description: err.message || 'Une erreur est survenue lors de la validation du paiement.' });
