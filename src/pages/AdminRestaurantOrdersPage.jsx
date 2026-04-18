@@ -32,6 +32,7 @@ import React, { useState, useMemo } from 'react';
 import { AdminLayout } from '@/components/AdminLayout';
 import { useRestaurantOrders } from '@/hooks/useRestaurantOrders';
 import { useUpdateRestaurantOrderStatus } from '@/hooks/useUpdateRestaurantOrderStatus';
+import { useNewRestaurantOrderNotificationBadge } from '@/hooks/useNewRestaurantOrderNotificationBadge';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -46,19 +47,20 @@ import {
   getValidActionsForOrderMethod 
 } from '@/lib/formatters';
 import { 
-  Search, 
-  Store, 
-  Loader2, 
-  PlayCircle, 
-  CheckCircle2, 
-  Utensils, 
-  RefreshCw, 
-  X, 
-  ChevronUp, 
-  ChevronDown, 
-  ArrowUpDown, 
+  Search,
+  Store,
+  Loader2,
+  PlayCircle,
+  CheckCircle2,
+  Utensils,
+  RefreshCw,
+  X,
+  ChevronUp,
+  ChevronDown,
+  ArrowUpDown,
   Trash2,
   AlertTriangle,
+  BellRing,
   Filter,
   Calendar,
   DollarSign,
@@ -94,6 +96,7 @@ import { OrdersByStatusChart } from '@/components/OrdersByStatusChart';
 const AdminRestaurantOrdersPage = () => {
   const { orders = [], loading, error, refresh } = useRestaurantOrders();
   const { updateOrderStatus, loading: updatingStatus } = useUpdateRestaurantOrderStatus();
+  const { unreadCount, resetBadge } = useNewRestaurantOrderNotificationBadge({ showToast: true });
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -413,10 +416,17 @@ const AdminRestaurantOrdersPage = () => {
         
         {/* Header Section */}
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold flex items-center gap-3 text-gray-900">
-            <Utensils className="h-8 w-8 text-blue-600" />
-            Commandes Restaurant
-          </h1>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-3xl font-bold flex items-center gap-3 text-gray-900">
+              <Utensils className="h-8 w-8 text-blue-600" />
+              Commandes Restaurant
+            </h1>
+            {unreadCount > 0 && (
+              <Badge variant="destructive" className="animate-pulse cursor-pointer" onClick={resetBadge}>
+                <BellRing className="w-3 h-3 mr-1" /> {unreadCount} nouvelles
+              </Badge>
+            )}
+          </div>
           <p className="text-muted-foreground text-sm font-medium">
             Gérez les commandes sur place, à emporter et au comptoir. Les statistiques reflètent vos filtres actuels.
           </p>

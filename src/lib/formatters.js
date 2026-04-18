@@ -220,10 +220,19 @@ export const getValidActionsForOrderMethod = (orderMethod, currentStatus) => {
   
   if (currentStatus === 'pending') {
     if (isCounter) {
+      // Counter orders: accept directly to served, or reject
+      actions.push({ action: 'confirmed', label: 'Accepter', className: 'bg-green-600 hover:bg-green-700 text-white', isAccept: true });
+    } else {
+      // All other orders: must be accepted (confirmed) before work begins
+      actions.push({ action: 'confirmed', label: 'Accepter', className: 'bg-green-600 hover:bg-green-700 text-white', isAccept: true });
+    }
+    actions.push({ action: 'rejected', label: 'Refuser', className: 'bg-red-600 hover:bg-red-700 text-white', isReject: true });
+    return actions; // Only Accept/Reject for pending — no cancel button shown
+  } else if (currentStatus === 'confirmed') {
+    if (isCounter) {
       actions.push({ action: 'served', label: 'Marquer comme Servie', className: 'bg-green-600 hover:bg-green-700 text-white' });
     } else {
       actions.push({ action: 'preparing', label: 'Lancer Préparation', className: 'bg-blue-600 hover:bg-blue-700 text-white' });
-      actions.push({ action: 'ready', label: 'Marquer Prête', className: 'bg-purple-600 hover:bg-purple-700 text-white' });
     }
   } else if (currentStatus === 'preparing') {
     actions.push({ action: 'ready', label: 'Marquer Prête', className: 'bg-purple-600 hover:bg-purple-700 text-white' });
