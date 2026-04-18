@@ -4,13 +4,15 @@ import { AdminTopbar } from './AdminTopbar';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DebugPermissionsPanel } from '@/components/DebugPermissionsPanel';
 import { DeleteDebugPanel } from '@/components/DeleteDebugPanel';
-import { PersistentOrderAlertBanner } from '@/components/PersistentOrderAlertBanner';
+import { PersistentOrderAlertBanner, PersistentReservationAlertBanner, PersistentRestaurantOrderAlertBanner } from '@/components/PersistentOrderAlertBanner';
 import { AlertCircle, TerminalSquare, Settings, ShieldAlert, ActivitySquare, SearchCode, DatabaseZap } from 'lucide-react';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePersistentOrderAlert } from '@/hooks/usePersistentOrderAlert';
+import { usePersistentReservationAlert } from '@/hooks/usePersistentReservationAlert';
+import { usePersistentRestaurantOrderAlert } from '@/hooks/usePersistentRestaurantOrderAlert';
 import { useOrderAutoProgression } from '@/hooks/useOrderAutoProgression';
 
 class SidebarErrorBoundary extends React.Component {
@@ -48,6 +50,8 @@ export const AdminLayout = ({ children }) => {
   const navigate = useNavigate();
   const { currentLanguage } = useLanguage();
   const { pendingOrders, acknowledgeAll } = usePersistentOrderAlert();
+  const { pendingReservations, acknowledgeAll: acknowledgeAllReservations } = usePersistentReservationAlert();
+  const { pendingOrders: pendingRestaurantOrders, acknowledgeAll: acknowledgeAllRestaurant } = usePersistentRestaurantOrderAlert();
   // Flux automatique — tourne en arrière-plan sur toutes les pages admin
   useOrderAutoProgression();
 
@@ -64,6 +68,14 @@ export const AdminLayout = ({ children }) => {
         <PersistentOrderAlertBanner
           pendingOrders={pendingOrders}
           onAcknowledgeAll={acknowledgeAll}
+        />
+        <PersistentReservationAlertBanner
+          pendingReservations={pendingReservations}
+          onAcknowledgeAll={acknowledgeAllReservations}
+        />
+        <PersistentRestaurantOrderAlertBanner
+          pendingOrders={pendingRestaurantOrders}
+          onAcknowledgeAll={acknowledgeAllRestaurant}
         />
         
         <AnimatePresence>

@@ -96,6 +96,16 @@ export const ReservationsPage = () => {
       return;
     }
 
+    const phoneDigits = formData.phone.replace(/\D/g, '');
+    if (phoneDigits.length < 6) {
+      toast({
+        variant: 'destructive',
+        title: 'Numéro invalide',
+        description: 'Veuillez entrer un numéro de téléphone valide.',
+      });
+      return;
+    }
+
     // Compare as date strings to avoid UTC/local timezone shift issues
     const todayStr = new Date().toISOString().slice(0, 10);
     if (formData.date < todayStr) {
@@ -324,10 +334,14 @@ export const ReservationsPage = () => {
                      className="h-12 rounded-xl bg-gray-50 border-gray-300 focus:bg-white focus:border-[#D97706] focus:ring-[#D97706] text-sm text-gray-900"
                      required
                   />
-                   <Input 
+                   <Input
+                     type="tel"
                      placeholder="Numéro de Téléphone"
                      value={formData.phone}
-                     onChange={e => setFormData({...formData, phone: e.target.value})}
+                     onChange={e => {
+                       const val = e.target.value.replace(/[^\d\s+\-().]/g, '');
+                       setFormData({...formData, phone: val});
+                     }}
                      className="h-12 rounded-xl bg-gray-50 border-gray-300 focus:bg-white focus:border-[#D97706] focus:ring-[#D97706] text-sm text-gray-900"
                      required
                   />

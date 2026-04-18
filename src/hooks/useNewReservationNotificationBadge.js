@@ -23,7 +23,7 @@ export const useNewReservationNotificationBadge = ({ showToast = true } = {}) =>
         .from('reservations')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'pending')
-        .eq('is_deleted', false);
+        .not('is_deleted', 'is', true);
 
       if (error) throw error;
       if (isMounted.current && count !== null) setUnreadCount(count);
@@ -47,7 +47,9 @@ export const useNewReservationNotificationBadge = ({ showToast = true } = {}) =>
         if (!isMounted.current) return;
         fetchCount();
 
-        if (payload.eventType === 'INSERT' && showToast && payload.new?.is_deleted === false) {
+        console.log('[ReservationBadge] event:', payload.eventType, '| showToast:', showToast, '| is_deleted:', payload.new?.is_deleted);
+        if (payload.eventType === 'INSERT' && showToast && payload.new?.is_deleted !== true) {
+          console.log('[ReservationBadge] → firing toast + sound');
           const s = soundSettingsRef.current;
           playNewOrderSound(
             s?.notification_volume ?? 0.8,

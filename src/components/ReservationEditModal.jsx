@@ -91,7 +91,13 @@ export const ReservationEditModal = ({ open, onClose, reservation }) => {
             <div className="space-y-2">
               <Label className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" /> Phone</Label>
               <Input
-                {...register('customer_phone', { required: 'Phone is required' })}
+                type="tel"
+                {...register('customer_phone', {
+                  required: 'Phone is required',
+                  validate: v => v.replace(/\D/g, '').length >= 6 || 'Numéro invalide',
+                  onChange: e => { e.target.value = e.target.value.replace(/[^\d\s+\-().]/g, ''); }
+                })}
+                placeholder="06 12 34 56 78"
               />
               {errors.customer_phone && <span className="text-xs text-red-500">{errors.customer_phone.message}</span>}
             </div>

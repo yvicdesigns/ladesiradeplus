@@ -8,6 +8,8 @@ import { useUnreadDeliveryOrders } from '@/hooks/useUnreadDeliveryOrders';
 import { useRestaurantOrdersCount } from '@/hooks/useRestaurantOrdersCount';
 import { useReservationsCount } from '@/hooks/useReservationsCount';
 import { useAdminNotifications } from '@/hooks/useAdminNotifications';
+import { usePendingReviewsCount } from '@/hooks/usePendingReviewsCount';
+import { useUnreadMessagesCount } from '@/hooks/useUnreadMessagesCount';
 import { SoundNavLink } from '@/components/SoundNavLink';
 import { SoundLink } from '@/components/SoundLink';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -103,7 +105,8 @@ export const AdminSidebar = ({ className, mobile, onClose }) => {
   const { count: restaurantOrderCount } = useRestaurantOrdersCount();
   const { count: reservationsCount } = useReservationsCount();
   const { unreadCount: notificationsCount } = useAdminNotifications();
-  const [counts] = useState({ reviews: 0, trash: 0 });
+  const { count: reviewsCount } = usePendingReviewsCount();
+  const { count: messagesCount } = useUnreadMessagesCount();
 
   const badgePrimaryStyle = ""; 
   const trashBadgeStyle = "bg-destructive/10 text-destructive";
@@ -213,8 +216,8 @@ export const AdminSidebar = ({ className, mobile, onClose }) => {
         </SidebarGroup>
 
         <SidebarGroup icon={Briefcase} label={t('admin.sidebar.business', 'Affaires')} collapsed={isCollapsed} expanded={sections.business} onToggle={() => toggleSection('business')}>
-          <SidebarItem to="/admin/reviews" icon={Star} label={t('admin.sidebar.reviews', 'Avis')} badgeCount={counts?.reviews || 0} badgeClassName={badgePrimaryStyle} collapsed={isCollapsed} onClick={handleItemClick} />
-          {isAdmin && <SidebarItem to="/admin/messagerie" icon={MessageSquare} label={t('admin.sidebar.messaging', 'Messagerie')} collapsed={isCollapsed} onClick={handleItemClick} />}
+          <SidebarItem to="/admin/reviews" icon={Star} label={t('admin.sidebar.reviews', 'Avis')} badgeCount={reviewsCount || 0} badgeClassName={badgePrimaryStyle} collapsed={isCollapsed} onClick={handleItemClick} />
+          {isAdmin && <SidebarItem to="/admin/messagerie" icon={MessageSquare} label={t('admin.sidebar.messaging', 'Messagerie')} badgeCount={messagesCount || 0} badgeClassName={badgePrimaryStyle} collapsed={isCollapsed} onClick={handleItemClick} />}
         </SidebarGroup>
 
         <SidebarGroup icon={BarChart3} label={t('admin.sidebar.analytics_group', 'Analytiques')} collapsed={isCollapsed} expanded={sections.analytics} onToggle={() => toggleSection('analytics')}>
@@ -231,7 +234,7 @@ export const AdminSidebar = ({ className, mobile, onClose }) => {
           <SidebarGroup icon={Wrench} label={t('admin.sidebar.maintenance', 'Maintenance')} collapsed={isCollapsed} expanded={sections.maintenance} onToggle={() => toggleSection('maintenance')}>
             <SidebarItem to="/admin/robustness-audit" icon={Activity} label={t('admin.sidebar.robustness_audit', 'Audit de Robustesse')} collapsed={isCollapsed} onClick={handleItemClick} className="font-bold text-primary" />
             <SidebarItem to="/admin/test/order-status" icon={FlaskConical} label="Testeur Statuts" collapsed={isCollapsed} onClick={handleItemClick} className="text-indigo-600" />
-            <SidebarItem to="/admin/trash" icon={Trash2} label={t('admin.sidebar.trash', 'Corbeille')} badgeCount={counts?.trash || 0} badgeClassName={trashBadgeStyle} collapsed={isCollapsed} onClick={handleItemClick} />
+            <SidebarItem to="/admin/trash" icon={Trash2} label={t('admin.sidebar.trash', 'Corbeille')} badgeCount={0} badgeClassName={trashBadgeStyle} collapsed={isCollapsed} onClick={handleItemClick} />
           </SidebarGroup>
         )}
 

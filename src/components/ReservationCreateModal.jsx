@@ -115,7 +115,12 @@ export const ReservationCreateModal = ({ open, onClose }) => {
             <div className="space-y-2">
               <Label className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" /> {t('admin.reservation_modal.phone') || "Téléphone"}</Label>
               <Input
-                {...register('customer_phone', { required: t('common.required') || 'Requis' })}
+                type="tel"
+                {...register('customer_phone', {
+                  required: t('common.required') || 'Requis',
+                  validate: v => /^\d/.test(v.replace(/\D/g, '')) && v.replace(/\D/g, '').length >= 6 || 'Numéro invalide',
+                  onChange: e => { e.target.value = e.target.value.replace(/[^\d\s+\-().]/g, ''); }
+                })}
                 placeholder="06 12 34 56 78"
                 className="text-foreground"
               />

@@ -11,7 +11,7 @@ export const useReservationsCount = () => {
         .from('reservations')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'pending')
-        .eq('is_deleted', false); 
+        .not('is_deleted', 'is', true);
 
       if (error) throw error;
       setCount(pendingCount || 0);
@@ -30,11 +30,14 @@ export const useReservationsCount = () => {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'reservations' },
-        () => {
+        (payload) => {
+          console.log('[useReservationsCount] realtime event received:', payload);
           fetchCount();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[useReservationsCount] subscription status:', status);
+      });
 
     return () => {
       supabase.removeChannel(channel);

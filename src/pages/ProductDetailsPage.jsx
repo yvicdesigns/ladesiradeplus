@@ -112,7 +112,7 @@ export const ProductDetailsPage = () => {
         <title>{product.name} - La Desirade Plus</title>
       </Helmet>
 
-      <div className="min-h-screen bg-[#F5F5F5] flex flex-col font-sans pb-24">
+      <div className="min-h-screen bg-[#F5F5F5] flex flex-col font-sans pb-44">
         
         {/* Header Section */}
         <header className="flex items-center justify-between px-6 py-6 sticky top-0 bg-[#F5F5F5] z-50">
@@ -246,7 +246,7 @@ export const ProductDetailsPage = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="fixed bottom-0 left-0 right-0 p-6 bg-[#F5F5F5] border-t border-gray-200 z-40">
+        <div className="fixed bottom-16 left-0 right-0 p-6 bg-[#F5F5F5] border-t border-gray-200 z-30">
           <div className="flex gap-3">
             <Button 
               onClick={handleAddToCart}
