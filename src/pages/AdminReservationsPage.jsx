@@ -34,7 +34,7 @@ export const AdminReservationsPage = () => {
   const { toast } = useToast();
   const { canDelete, canCancel, isAdmin } = useManagerPermissions(ENTITY_TYPES.RESERVATION);
   const { deleteRecord, loading: deleteLoading } = useSoftDelete('reservations');
-  const { unreadCount: newReservationsCount, resetBadge: resetReservationBadge } = useNewReservationNotificationBadge({ showToast: true });
+  const { unreadCount: newReservationsCount, resetBadge: resetReservationBadge } = useNewReservationNotificationBadge({ showToast: false });
   
   const [itemsPerPage, setItemsPerPage] = useState(50);
   const [isAuthChecking, setIsAuthChecking] = useState(true);

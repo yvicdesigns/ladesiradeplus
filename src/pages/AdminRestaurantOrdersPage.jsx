@@ -96,7 +96,7 @@ import { OrdersByStatusChart } from '@/components/OrdersByStatusChart';
 const AdminRestaurantOrdersPage = () => {
   const { orders = [], loading, error, refresh } = useRestaurantOrders();
   const { updateOrderStatus, loading: updatingStatus } = useUpdateRestaurantOrderStatus();
-  const { unreadCount, resetBadge } = useNewRestaurantOrderNotificationBadge({ showToast: true });
+  const { unreadCount, resetBadge } = useNewRestaurantOrderNotificationBadge({ showToast: false });
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);

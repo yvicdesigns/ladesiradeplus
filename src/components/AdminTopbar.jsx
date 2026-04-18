@@ -13,6 +13,8 @@ import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useNewOrderNotificationBadge } from '@/hooks/useNewOrderNotificationBadge';
+import { useNewRestaurantOrderNotificationBadge } from '@/hooks/useNewRestaurantOrderNotificationBadge';
+import { useNewReservationNotificationBadge } from '@/hooks/useNewReservationNotificationBadge';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
@@ -25,6 +27,9 @@ export const AdminTopbar = ({ onMenuClick }) => {
   const navigate = useNavigate();
   
   const { badgeCount } = useNewOrderNotificationBadge({ showToast: true });
+  // These hooks run globally so notifications fire from any admin page
+  useNewRestaurantOrderNotificationBadge({ showToast: true });
+  useNewReservationNotificationBadge({ showToast: true });
   
   const [voiceAlertsEnabled, setVoiceAlertsEnabled] = useLocalStorage('voiceAlertsEnabled', true);
 
