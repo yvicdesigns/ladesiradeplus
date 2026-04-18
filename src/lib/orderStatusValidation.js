@@ -16,7 +16,7 @@ export const TERMINAL_STATUSES = ['delivered', 'served', 'cancelled', 'rejected'
 export const getStatusTransitionRules = () => {
   // Unified rules for all order types (online, dine-in, takeaway)
   return {
-    pending: ['confirmed', 'preparing', 'ready', 'cancelled', 'rejected'], // Allowing jump to ready for backwards compatibility, but normal flow is preparing
+    pending: ['confirmed', 'cancelled', 'rejected'], // Must be accepted (confirmed) by staff before any work begins
     confirmed: ['preparing', 'cancelled'],
     preparing: ['ready', 'cancelled'],
     ready: ['in_transit', 'served', 'delivered', 'cancelled'],

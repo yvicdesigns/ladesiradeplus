@@ -4,10 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { formatCurrency, formatDateTime, formatDeliveryStatusFR, getDeliveryStatusColor } from '@/lib/formatters';
-import { MapPin, Mail, CreditCard, ExternalLink, Image as ImageIcon, XCircle, Loader2, Phone, Smartphone, Maximize2, CheckCircle, Trash2 } from 'lucide-react';
+import { MapPin, Mail, CreditCard, ExternalLink, Image as ImageIcon, XCircle, Loader2, Phone, Smartphone, Maximize2, CheckCircle, Trash2, AlertTriangle, Check, X } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { PAYMENT_STATUSES, STATUS_CANCELLED, getNextStatus, getActionLabel } from '@/lib/deliveryConstants';
-import { executeWithResilience } from '@/lib/supabaseErrorHandler';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { PAYMENT_STATUSES, STATUS_CANCELLED, STATUS_PENDING, STATUS_REJECTED, getNextStatus, getActionLabel } from '@/lib/deliveryConstants';
 import { useToast } from '@/components/ui/use-toast';
 
 export const DeliveryOrderDetailModal = ({ order, open, onOpenChange, onUpdateStatus, onUpdatePayment, onDelete }) => {
@@ -33,12 +33,9 @@ export const DeliveryOrderDetailModal = ({ order, open, onOpenChange, onUpdateSt
   const handleStatusUpdate = async (status, action) => {
     setLoadingAction(action);
     try {
-      await executeWithResilience(async () => {
-         if(onUpdateStatus) {
-            console.log(`[DEBUG] Calling onUpdateStatus with ID: ${targetOrderId}`);
-            await onUpdateStatus(targetOrderId, status);
-         }
-      }, { context: 'Detail Modal Status Update', retry: true });
+      if (onUpdateStatus) {
+        await onUpdateStatus(targetOrderId, status);
+      }
     } catch (err) {
       toast({ variant: 'destructive', title: 'Erreur', description: 'Impossible de mettre à jour le statut.' });
     } finally {
@@ -98,6 +95,15 @@ export const DeliveryOrderDetailModal = ({ order, open, onOpenChange, onUpdateSt
               </Badge>
             </div>
           </DialogHeader>
+
+          {order.status === STATUS_PENDING && (
+            <Alert className="border-amber-400 bg-amber-50 mb-2">
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-amber-800 font-semibold">
+                Cette commande attend votre acceptation. Aucune préparation ne peut démarrer sans votre validation.
+              </AlertDescription>
+            </Alert>
+          )}
 
           <ScrollArea className="flex-1 pr-4">
             <div className="space-y-6">
@@ -243,26 +249,49 @@ export const DeliveryOrderDetailModal = ({ order, open, onOpenChange, onUpdateSt
               </div>
 
               <div className="flex gap-2">
-                {order.status !== STATUS_CANCELLED && order.status !== 'delivered' && (
-                  <Button 
-                    variant="destructive" 
-                    size="sm" 
-                    onClick={() => handleStatusUpdate(STATUS_CANCELLED, 'cancel')}
-                    disabled={!!loadingAction}
-                    className="font-bold"
-                  >
-                    {loadingAction === 'cancel' ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4 mr-2" />} Annuler
-                  </Button>
-                )}
-                
-                {nextStatus && (
-                   <Button 
-                      onClick={() => handleStatusUpdate(nextStatus, 'next')} 
-                      className="bg-primary text-white font-bold"
+                {order.status === STATUS_PENDING ? (
+                  <>
+                    <Button
+                      onClick={() => handleStatusUpdate('confirmed', 'accept')}
                       disabled={!!loadingAction}
-                   >
-                     {loadingAction === 'next' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null} {getActionLabel(nextStatus)}
-                   </Button>
+                      className="bg-green-600 hover:bg-green-700 text-white font-bold"
+                    >
+                      {loadingAction === 'accept' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Check className="h-4 w-4 mr-2" />}
+                      Accepter la commande
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={() => handleStatusUpdate(STATUS_REJECTED, 'reject')}
+                      disabled={!!loadingAction}
+                      className="font-bold"
+                    >
+                      {loadingAction === 'reject' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <X className="h-4 w-4 mr-2" />}
+                      Refuser
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    {order.status !== STATUS_CANCELLED && order.status !== 'delivered' && order.status !== STATUS_REJECTED && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleStatusUpdate(STATUS_CANCELLED, 'cancel')}
+                        disabled={!!loadingAction}
+                        className="font-bold"
+                      >
+                        {loadingAction === 'cancel' ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4 mr-2" />} Annuler
+                      </Button>
+                    )}
+                    {nextStatus && (
+                      <Button
+                        onClick={() => handleStatusUpdate(nextStatus, 'next')}
+                        className="bg-primary text-white font-bold"
+                        disabled={!!loadingAction}
+                      >
+                        {loadingAction === 'next' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null} {getActionLabel(nextStatus)}
+                      </Button>
+                    )}
+                  </>
                 )}
 
                 {!isPaymentConfirmed && order.status !== STATUS_CANCELLED && (

@@ -26,7 +26,7 @@ export const useReservationsCount = () => {
     fetchCount();
 
     const channel = supabase
-      .channel('reservations_count_sidebar')
+      .channel(`reservations-count-sidebar-${Date.now()}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'reservations' },

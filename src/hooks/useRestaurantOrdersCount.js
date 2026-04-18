@@ -26,7 +26,7 @@ export const useRestaurantOrdersCount = () => {
     fetchCount();
 
     const channel = supabase
-      .channel('restaurant_orders_count')
+      .channel(`restaurant-orders-count-${Date.now()}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'restaurant_orders' },
