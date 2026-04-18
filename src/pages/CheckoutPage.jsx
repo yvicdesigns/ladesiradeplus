@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Utensils, ArrowRight, Truck, CreditCard, Banknote, Smartphone, Loader2, CheckCircle, AlertCircle, MapPin, Search, LocateFixed, Navigation, AlertTriangle } from 'lucide-react';
+import { Utensils, ArrowRight, Truck, ShoppingBag, CreditCard, Banknote, Smartphone, Loader2, CheckCircle, AlertCircle, MapPin, Search, LocateFixed, Navigation, AlertTriangle } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useToast } from '@/components/ui/use-toast';
@@ -240,6 +240,9 @@ export const CheckoutPage = () => {
       if (!distanceInfo || !distanceInfo.isAvailable || distanceInfo.distance === null) newErrors.location = "Veuillez confirmer une adresse de livraison valide.";
     } else if (orderType === 'restaurant') {
       if (!formData.tableId) newErrors.tableId = "Veuillez sélectionner une table.";
+    } else if (orderType === 'takeaway') {
+      if (!formData.fullName || !formData.fullName.trim()) newErrors.fullName = t('checkout.form_incomplete');
+      if (!formData.phone || !formData.phone.trim()) newErrors.phone = t('checkout.form_incomplete');
     }
 
     if (paymentMethod === 'mobile_money') {
@@ -282,8 +285,9 @@ export const CheckoutPage = () => {
     
     const orderDetails = {
        restaurant_id: safeRestaurantId,
-       order_type: orderType,
-       table_id: formData.tableId,
+       order_type: orderType === 'takeaway' ? 'restaurant' : orderType,
+       order_method: orderType === 'takeaway' ? 'takeaway' : (orderType === 'restaurant' ? 'dine_in' : 'online'),
+       table_id: orderType === 'restaurant' ? formData.tableId : null,
        delivery_phone: isDelivery ? formData.phone : null,
        delivery_address: isDelivery ? distanceInfo?.address : null,
        product_discount_total: calculation.productDiscountTotal,
@@ -372,12 +376,15 @@ export const CheckoutPage = () => {
               <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
                 <h3 className="text-base font-bold text-gray-900 mb-4">{t('checkout.order_type')}</h3>
                 <Tabs value={orderType} onValueChange={(val) => { setOrderType(val); setErrors({}); }} className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 h-14 bg-gray-100 rounded-xl p-1">
+                  <TabsList className="grid w-full grid-cols-3 h-14 bg-gray-100 rounded-xl p-1">
                     <TabsTrigger value="delivery" className="h-full rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#D97706] data-[state=active]:shadow-sm font-bold gap-2">
                       <Truck className="h-4 w-4" /> {t('checkout.delivery')}
                     </TabsTrigger>
                     <TabsTrigger value="restaurant" className="h-full rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#D97706] data-[state=active]:shadow-sm font-bold gap-2">
                       <Utensils className="h-4 w-4" /> {t('checkout.dine_in')}
+                    </TabsTrigger>
+                    <TabsTrigger value="takeaway" className="h-full rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#D97706] data-[state=active]:shadow-sm font-bold gap-2">
+                      <ShoppingBag className="h-4 w-4" /> À emporter
                     </TabsTrigger>
                   </TabsList>
                 </Tabs>
@@ -457,7 +464,7 @@ export const CheckoutPage = () => {
                     )}
                   </div>
                 </div>
-              ) : (
+              ) : orderType === 'restaurant' ? (
                 <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
                   <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
                     <Utensils className="h-4 w-4 text-[#D97706]" /> {t('checkout.restaurant_info')}
@@ -465,11 +472,28 @@ export const CheckoutPage = () => {
                   <div className="space-y-2">
                     <Label htmlFor="tableId" className={errors.tableId ? "text-red-500" : ""}>Numéro de Table</Label>
                     <div className={errors.tableId ? "ring-2 ring-red-500 rounded-md" : ""}>
-                      <TableNumberSelector 
-                        value={formData.tableId} 
-                        onValueChange={(val) => setFormData({...formData, tableId: val})} 
+                      <TableNumberSelector
+                        value={formData.tableId}
+                        onValueChange={(val) => setFormData({...formData, tableId: val})}
                         restaurantId={safeRestaurantId}
                       />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
+                  <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                    <ShoppingBag className="h-4 w-4 text-[#D97706]" /> Informations de retrait
+                  </h3>
+                  <p className="text-sm text-muted-foreground">Votre commande sera prête à récupérer au restaurant. Nous vous contacterons quand elle sera prête.</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="fullName" className={errors.fullName ? "text-red-500" : ""}>{t('checkout.full_name')}</Label>
+                      <Input id="fullName" value={formData.fullName} onChange={(e) => setFormData({...formData, fullName: e.target.value})} className={errors.fullName ? "border-red-500" : ""} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="phone" className={errors.phone ? "text-red-500" : ""}>{t('checkout.phone')}</Label>
+                      <Input id="phone" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className={errors.phone ? "border-red-500" : ""} />
                     </div>
                   </div>
                 </div>
