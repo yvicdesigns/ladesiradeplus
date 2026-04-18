@@ -18,7 +18,8 @@ import { ReservationFilters } from '@/components/ReservationFilters';
 import { ReservationStatistics } from '@/components/ReservationStatistics';
 import { ReservationExport } from '@/components/ReservationExport';
 import { formatReservationStatus, formatTime } from '@/lib/formatters';
-import { Plus, RefreshCcw, MoreHorizontal, Trash2, AlertCircle, Loader2, X, Search, Edit, Eye, Ban } from 'lucide-react';
+import { Plus, RefreshCcw, MoreHorizontal, Trash2, AlertCircle, Loader2, X, Search, Edit, Eye, Ban, BellRing } from 'lucide-react';
+import { useNewReservationNotificationBadge } from '@/hooks/useNewReservationNotificationBadge';
 import { useToast } from '@/components/ui/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -33,6 +34,7 @@ export const AdminReservationsPage = () => {
   const { toast } = useToast();
   const { canDelete, canCancel, isAdmin } = useManagerPermissions(ENTITY_TYPES.RESERVATION);
   const { deleteRecord, loading: deleteLoading } = useSoftDelete('reservations');
+  const { unreadCount: newReservationsCount, resetBadge: resetReservationBadge } = useNewReservationNotificationBadge({ showToast: true });
   
   const [itemsPerPage, setItemsPerPage] = useState(50);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
@@ -174,6 +176,11 @@ export const AdminReservationsPage = () => {
             <div className="flex items-center gap-3 mb-2">
               <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">Réservations</h1>
               <ConnectionStatusBadge status={connectionStatus} />
+              {newReservationsCount > 0 && (
+                <Badge variant="destructive" className="animate-pulse cursor-pointer" onClick={resetReservationBadge}>
+                  <BellRing className="w-3 h-3 mr-1" /> {newReservationsCount} nouvelles
+                </Badge>
+              )}
             </div>
             <p className="text-slate-500 text-sm">Gérez toutes vos réservations de tables</p>
           </div>
