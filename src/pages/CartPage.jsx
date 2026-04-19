@@ -59,9 +59,9 @@ export const CartPage = () => {
           if (!cartItem) return;
           
           if (!dbItem.is_available) {
-             issues.push(`Le produit ${dbItem.name} n'est malheureusement plus disponible.`);
+             issues.push(t('cart.unavailable_product', { name: dbItem.name }));
           } else if (dbItem.stock_quantity !== null && cartItem.quantity > dbItem.stock_quantity) {
-             issues.push(`Stock insuffisant pour ${dbItem.name}. Seulement ${dbItem.stock_quantity} unité(s) restante(s).`);
+             issues.push(t('cart.insufficient_stock', { name: dbItem.name, count: dbItem.stock_quantity }));
              if (dbItem.stock_quantity === 0) {
                  removeFromCart(cartItem.id);
              } else {
@@ -104,21 +104,21 @@ export const CartPage = () => {
             .maybeSingle();
 
         if (error || !data) {
-            toast({ variant: "destructive", title: "Code Invalide", description: "Le code promotionnel saisi n'existe pas." });
+            toast({ variant: "destructive", title: t('cart.invalid_code_title'), description: t('cart.invalid_code_desc') });
             setActivePromoCode(null);
         } else {
             const validation = PromotionCalculationService.validatePromoCode(data, calculation.subtotalAfterProductDiscounts);
             if (validation.isValid) {
                 setActivePromoCode(data);
-                toast({ title: "Code Appliqué", description: "Votre réduction a été prise en compte avec succès." });
+                toast({ title: t('cart.code_applied_title'), description: t('cart.code_applied_desc') });
             } else {
-                toast({ variant: "destructive", title: "Code Non Applicable", description: validation.error });
+                toast({ variant: "destructive", title: t('cart.code_not_applicable'), description: validation.error });
                 setActivePromoCode(null);
             }
         }
     } catch (err) {
         console.error(err);
-        toast({ variant: "destructive", title: "Erreur Système", description: "Impossible de vérifier le code promotionnel pour le moment." });
+        toast({ variant: "destructive", title: t('cart.system_error'), description: t('cart.promo_error_desc') });
     } finally {
         setLoadingCode(false);
     }
@@ -137,7 +137,7 @@ export const CartPage = () => {
     const { exists } = await validateRestaurantExists(restaurantId);
     
     if (!exists) {
-      setRestaurantError("Veuillez sélectionner un restaurant valide.");
+      setRestaurantError(t('cart.select_restaurant'));
       setIsValidating(false);
       return;
     }
@@ -173,7 +173,7 @@ export const CartPage = () => {
           {restaurantError && (
              <Alert variant="destructive" className="bg-red-50 border-red-200">
                <AlertTriangle className="h-4 w-4 text-red-600" />
-               <AlertTitle className="text-red-800 font-bold ml-2">Restaurant Invalide</AlertTitle>
+               <AlertTitle className="text-red-800 font-bold ml-2">{t('cart.invalid_restaurant')}</AlertTitle>
                <AlertDescription className="text-red-700 ml-2 font-medium">
                  {restaurantError}
                </AlertDescription>
@@ -187,7 +187,7 @@ export const CartPage = () => {
                 <ul className="list-disc pl-4 space-y-1">
                   {stockIssues.map((issue, idx) => <li key={idx}>{issue}</li>)}
                 </ul>
-                <span className="block mt-2 text-xs italic">Les quantités ont été ajustées automatiquement pour refléter les stocks disponibles.</span>
+                <span className="block mt-2 text-xs italic">{t('cart.stock_adjusted')}</span>
               </AlertDescription>
             </Alert>
           )}
@@ -258,12 +258,12 @@ export const CartPage = () => {
           </AnimatePresence>
 
           <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200">
-             <label className="text-sm font-bold text-gray-700 mb-2 block">Code Promotionnel</label>
+             <label className="text-sm font-bold text-gray-700 mb-2 block">{t('cart.promo_code_label')}</label>
              <div className="flex gap-2">
                  <div className="relative flex-1">
                      <Tag className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                     <Input 
-                        placeholder="Entrez votre code de réduction" 
+                     <Input
+                        placeholder={t('cart.promo_placeholder')}
                         className="pl-9"
                         value={promoCodeInput}
                         onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
@@ -275,12 +275,12 @@ export const CartPage = () => {
                          <X className="w-4 h-4" />
                      </Button>
                  ) : (
-                     <Button 
-                        onClick={handleApplyCode} 
+                     <Button
+                        onClick={handleApplyCode}
                         disabled={loadingCode || !promoCodeInput}
                         className="bg-gray-900 text-white"
                      >
-                        {loadingCode ? "Traitement..." : "Appliquer"}
+                        {loadingCode ? t('common.processing') : t('common.apply')}
                      </Button>
                  )}
              </div>
@@ -290,17 +290,17 @@ export const CartPage = () => {
              <PromotionBreakdownComponent calculation={calculation} />
              
             <div className="flex justify-between text-[#4b5563] text-sm mt-3">
-              <span>{t('cart.subtotal')} (Après Remises)</span>
+              <span>{t('cart.subtotal')} ({t('cart.after_discount')})</span>
               <span>{formatCurrency(calculation.subtotalAfterProductDiscounts)}</span>
             </div>
 
             <div className="flex justify-between text-[#4b5563] text-sm italic">
-                <span>Frais de Livraison</span>
-                <span>Tarif calculé à la prochaine étape</span>
+                <span>{t('cart.delivery_fee')}</span>
+                <span>{t('cart.delivery_next_step')}</span>
             </div>
-            
+
             <div className="border-t border-dashed border-gray-200 pt-3 flex justify-between items-center">
-              <span className="font-bold text-[#111827] text-sm">Total Général à Payer</span>
+              <span className="font-bold text-[#111827] text-sm">{t('cart.total_label')}</span>
               <span className="text-lg font-bold text-[#D97706]">{formatCurrency(calculation.finalTotal)}</span>
             </div>
             

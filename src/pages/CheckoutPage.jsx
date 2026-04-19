@@ -14,7 +14,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '@/lib/formatters';
-import { DeliveryDistanceService } from '@/lib/DeliveryDistanceService';
+import { DeliveryDistanceService, setRestaurantCoordinates } from '@/lib/DeliveryDistanceService';
 import { QUARTERS } from '@/lib/BrazzavilleQuarters';
 import { useGeoLocation } from '@/hooks/useGeoLocation';
 import { useDeliveryDistance } from '@/hooks/useDeliveryDistance';
@@ -62,6 +62,10 @@ export const CheckoutPage = () => {
       if (data) {
         const cfg = data.reduce((acc, r) => { acc[r.config_key] = r.config_value; return acc; }, {});
         setMobileMoneyConfig({ mtn: cfg.mtn_mobile_money || '', airtel: cfg.airtel_mobile_money || '' });
+        // Inject restaurant GPS coordinates for delivery distance calculation
+        if (cfg.restaurant_latitude && cfg.restaurant_longitude) {
+          setRestaurantCoordinates(cfg.restaurant_latitude, cfg.restaurant_longitude);
+        }
       }
     });
   }, []);
@@ -80,7 +84,7 @@ export const CheckoutPage = () => {
   const [selectedQuarter, setSelectedQuarter] = useState('');
 
   const { loading: distanceLoading, distanceInfo, calculateFees, setDistanceInfo } = useDeliveryDistance();
-  const { location: gpsLocation, loading: gpsLoading, requestLocation } = useGeoLocation();
+  const { location: gpsLocation, loading: gpsLoading, error: gpsError, requestLocation } = useGeoLocation();
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -141,7 +145,7 @@ export const CheckoutPage = () => {
                 setAddressInput(data.address);
                 setLocationMode('address');
              }
-             toast({ title: "Client sélectionné", description: `Informations de ${data.name || 'ce client'} pré-remplies.` });
+             toast({ title: t('checkout.client_selected'), description: t('checkout.client_prefilled', { name: data.name || '' }) });
           }
        };
        fetchClient();
@@ -202,9 +206,9 @@ export const CheckoutPage = () => {
         
         setDistanceInfo(result);
         if (result.isAvailable) {
-          toast({ title: "Position Détectée", description: `Distance estimée : ${result.distance} km (Zone : ${result.tier})` });
+          toast({ title: t('checkout.position_detected'), description: t('checkout.distance_info', { distance: result.distance, tier: result.tier }) });
         } else {
-           toast({ variant: "destructive", title: "Livraison Impossible", description: result.message });
+           toast({ variant: "destructive", title: t('checkout.delivery_unavailable'), description: result.message });
         }
       }
     };
@@ -213,14 +217,14 @@ export const CheckoutPage = () => {
 
   const handleLocateAddress = async () => {
     if (!addressInput.trim()) {
-      toast({ variant: "destructive", title: "Adresse Requise", description: "Veuillez renseigner une adresse complète." });
+      toast({ variant: "destructive", title: t('checkout.address_required'), description: t('checkout.address_required_desc') });
       return;
     }
     const result = await calculateFees(addressInput);
     if (result && result.isAvailable) {
-       toast({ title: "Adresse Validée", description: `Distance : ${result.distance} km | Frais calculés : ${formatCurrency(result.fee)}` });
+       toast({ title: t('checkout.address_validated'), description: `Distance : ${result.distance} km | Frais calculés : ${formatCurrency(result.fee)}` });
     } else if (result) {
-       toast({ variant: "destructive", title: "Zone Non Desservie", description: result.message });
+       toast({ variant: "destructive", title: t('checkout.zone_unavailable'), description: result.message });
     }
   };
 
@@ -231,12 +235,12 @@ export const CheckoutPage = () => {
       if (result) {
         const finalResult = { ...result, method: 'quarter' };
         setDistanceInfo(finalResult);
-        toast({ title: "Quartier Enregistré", description: `Distance estimée : ${result.distance} km | Frais : ${formatCurrency(result.fee)}` });
+        toast({ title: t('checkout.quarter_saved'), description: `Distance estimée : ${result.distance} km | Frais : ${formatCurrency(result.fee)}` });
       } else {
-        toast({ variant: "destructive", title: "Erreur Système", description: "Impossible de calculer les frais de livraison pour ce quartier." });
+        toast({ variant: "destructive", title: t('checkout.system_error'), description: t('checkout.quarter_error_desc') });
       }
     } catch (error) {
-       toast({ variant: "destructive", title: "Erreur Inattendue", description: "Une erreur est survenue lors de la sélection du quartier." });
+       toast({ variant: "destructive", title: t('checkout.unexpected_error'), description: t('checkout.unexpected_error_desc') });
     }
   };
 
@@ -245,9 +249,9 @@ export const CheckoutPage = () => {
     if (orderType === 'delivery') {
       if (!formData.fullName || !formData.fullName.trim()) newErrors.fullName = t('checkout.form_incomplete');
       if (!formData.phone || !formData.phone.trim()) newErrors.phone = t('checkout.form_incomplete');
-      if (!distanceInfo || !distanceInfo.isAvailable || distanceInfo.distance === null) newErrors.location = "Veuillez confirmer une adresse de livraison valide.";
+      if (!distanceInfo || !distanceInfo.isAvailable || distanceInfo.distance === null) newErrors.location = t('checkout.confirm_address');
     } else if (orderType === 'restaurant') {
-      if (!formData.tableId) newErrors.tableId = "Veuillez sélectionner une table.";
+      if (!formData.tableId) newErrors.tableId = t('checkout.select_table');
     } else if (orderType === 'takeaway') {
       if (!formData.fullName || !formData.fullName.trim()) newErrors.fullName = t('checkout.form_incomplete');
       if (!formData.phone || !formData.phone.trim()) newErrors.phone = t('checkout.form_incomplete');
@@ -255,7 +259,7 @@ export const CheckoutPage = () => {
 
     if (paymentMethod === 'mobile_money') {
       if (!mobileMoneyType) newErrors.mobileMoney = t('checkout.choose_operator');
-      if (!paymentProofUrl) newErrors.paymentProof = "Le téléchargement d'une preuve de paiement est obligatoire.";
+      if (!paymentProofUrl) newErrors.paymentProof = t('checkout.upload_proof_required');
     }
 
     setErrors(newErrors);
@@ -269,7 +273,7 @@ export const CheckoutPage = () => {
   };
 
   const handleConfirmOrder = async () => {
-    if (!user) {
+    if (!user && orderType !== 'restaurant') {
       toast({ variant: 'destructive', title: t('checkout.login_required'), description: t('checkout.login_desc') });
       navigate('/login');
       return;
@@ -279,12 +283,12 @@ export const CheckoutPage = () => {
     if (!validateForm()) return;
 
     if (restaurantError || !safeRestaurantId) {
-       toast({ variant: 'destructive', title: "Action impossible", description: "Le restaurant sélectionné est invalide ou n'existe pas." });
+       toast({ variant: 'destructive', title: t('checkout.restaurant_invalid'), description: t('checkout.restaurant_invalid_desc') });
        return;
     }
 
     setLoading(true);
-    setFeedbackState("Initialisation de la transaction atomique...");
+    setFeedbackState(t('checkout.initializing'));
 
     // Formatting payload for useCreateOrder
     // Ensure we do NOT pass a delivery_fee or distances to the DB if it is a restaurant order
@@ -315,13 +319,13 @@ export const CheckoutPage = () => {
 
     const client = {
        id: preSelectedClientId,
-       user_id: user.id,
-       name: formData.fullName || user.email,
-       phone: formData.phone,
-       email: formData.email || user.email
+       user_id: user?.id || null,
+       name: formData.fullName || user?.email || 'Client Anonyme',
+       phone: formData.phone || null,
+       email: formData.email || user?.email || null
     };
 
-    setFeedbackState("Traitement sécurisé de la commande...");
+    setFeedbackState(t('checkout.secure_processing'));
     
     // Utilize atomic RPC transaction process
     const itemsPayload = calculation.items.map(i => ({...i, id: i.itemId, price: i.finalPricePerUnit}));
@@ -329,7 +333,7 @@ export const CheckoutPage = () => {
     
     if (result.success) {
       logger.info(`[CheckoutPage] Successful checkout, navigating to confirmation. Order ID: ${result.order.id}`);
-      setFeedbackState("Commande validée avec succès !");
+      setFeedbackState(t('checkout.order_success'));
       invalidateCache(); // Clear history cache
       
       const orderedItems = [...cart];
@@ -364,14 +368,14 @@ export const CheckoutPage = () => {
           {isValidatingRestaurant && (
             <div className="mb-6 p-4 rounded-xl border border-blue-200 bg-blue-50 text-blue-800 flex items-center gap-3">
               <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
-              <span className="font-medium">Vérification de la configuration du restaurant...</span>
+              <span className="font-medium">{t('checkout.config_loading')}</span>
             </div>
           )}
 
           {restaurantError && !isValidatingRestaurant && (
              <Alert variant="destructive" className="mb-6 bg-red-50 border-red-200">
                <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
-               <AlertTitle className="text-red-800 font-bold ml-2">Impossible de commander</AlertTitle>
+               <AlertTitle className="text-red-800 font-bold ml-2">{t('checkout.restaurant_invalid')}</AlertTitle>
                <AlertDescription className="text-red-700 ml-2 font-medium mt-1">
                  {restaurantError}
                </AlertDescription>
@@ -392,7 +396,7 @@ export const CheckoutPage = () => {
                       <Utensils className="h-4 w-4" /> {t('checkout.dine_in')}
                     </TabsTrigger>
                     <TabsTrigger value="takeaway" className="h-full rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#D97706] data-[state=active]:shadow-sm font-bold gap-2">
-                      <ShoppingBag className="h-4 w-4" /> À emporter
+                      <ShoppingBag className="h-4 w-4" /> {t('checkout.takeout')}
                     </TabsTrigger>
                   </TabsList>
                 </Tabs>
@@ -417,21 +421,21 @@ export const CheckoutPage = () => {
 
                   <div className="space-y-4 pt-4 border-t border-dashed mt-2">
                     <div className="flex justify-between items-center flex-wrap gap-2">
-                       <Label className="text-sm font-bold">Adresse de Livraison Détaillée</Label>
+                       <Label className="text-sm font-bold">{t('checkout.address_label')}</Label>
                        <div className="flex gap-2 text-xs">
-                          <button className={`px-2 py-1 rounded hover:bg-gray-100 ${locationMode === 'address' ? 'text-amber-600 font-bold' : 'text-gray-500'}`} onClick={() => setLocationMode('address')}>Recherche Libre</button>
+                          <button className={`px-2 py-1 rounded hover:bg-gray-100 ${locationMode === 'address' ? 'text-amber-600 font-bold' : 'text-gray-500'}`} onClick={() => setLocationMode('address')}>{t('checkout.free_search')}</button>
                           <span className="text-gray-300">|</span>
-                          <button className={`px-2 py-1 rounded hover:bg-gray-100 ${locationMode === 'quarter' ? 'text-amber-600 font-bold' : 'text-gray-500'}`} onClick={() => setLocationMode('quarter')}>Sélection par Quartier</button>
+                          <button className={`px-2 py-1 rounded hover:bg-gray-100 ${locationMode === 'quarter' ? 'text-amber-600 font-bold' : 'text-gray-500'}`} onClick={() => setLocationMode('quarter')}>{t('checkout.quarter_select')}</button>
                        </div>
                     </div>
 
                     <div className="space-y-3">
-                      <Button type="button" variant="outline" onClick={() => { setLocationMode('gps'); requestLocation(); }} disabled={gpsLoading || distanceLoading} className={`w-full h-12 flex items-center justify-center gap-2 border-2 ${locationMode === 'gps' ? 'border-green-500 bg-amber-50 text-amber-700' : 'border-gray-200 text-gray-700 hover:border-gray-300'}`} soundType="click">
-                         {gpsLoading || (locationMode === 'gps' && distanceLoading) ? <><Loader2 className="w-4 h-4 animate-spin" /> Localisation en cours de traitement...</> : <><LocateFixed className="w-4 h-4" /> 📍 Utiliser ma Position GPS Actuelle</>}
+                      <Button type="button" variant="outline" onClick={() => { setLocationMode('gps'); requestLocation(); }} disabled={gpsLoading || distanceLoading} className={`w-full h-12 flex items-center justify-center gap-2 border-2 ${locationMode === 'gps' && gpsError ? 'border-red-400 bg-red-50 text-red-700' : locationMode === 'gps' && !gpsError ? 'border-green-500 bg-amber-50 text-amber-700' : 'border-gray-200 text-gray-700 hover:border-gray-300'}`} soundType="click">
+                         {gpsLoading || (locationMode === 'gps' && distanceLoading) ? <><Loader2 className="w-4 h-4 animate-spin" /> {t('checkout.locating')}</> : gpsError && locationMode === 'gps' ? <><AlertCircle className="w-4 h-4" /> {gpsError} — {t('common.retry')}</> : <><LocateFixed className="w-4 h-4" /> 📍 {t('checkout.use_gps')}</>}
                       </Button>
 
                       <div className="relative">
-                         {locationMode !== 'gps' && <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><span className="bg-white px-2 text-xs text-gray-400 font-medium">OU</span></div>}
+                         {locationMode !== 'gps' && <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><span className="bg-white px-2 text-xs text-gray-400 font-medium">{t('common.or')}</span></div>}
                          <div className="border-t border-gray-100 my-2"></div>
                       </div>
 
@@ -439,16 +443,16 @@ export const CheckoutPage = () => {
                         <div className="flex gap-2 animate-in fade-in slide-in-from-top-1">
                           <div className="relative flex-1">
                             <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                            <Input placeholder="Saisissez votre adresse ou point de repère précis..." className={`pl-9 ${errors.location && (!distanceInfo || !distanceInfo.distance) ? 'border-red-500' : ''}`} value={addressInput} onChange={(e) => { setAddressInput(e.target.value); if (distanceInfo && distanceInfo.distance) setDistanceInfo({ ...distanceInfo, distance: null, fee: 0, isAvailable: false }); }} />
+                            <Input placeholder={t('checkout.address_placeholder')} className={`pl-9 ${errors.location && (!distanceInfo || !distanceInfo.distance) ? 'border-red-500' : ''}`} value={addressInput} onChange={(e) => { setAddressInput(e.target.value); if (distanceInfo && distanceInfo.distance) setDistanceInfo({ ...distanceInfo, distance: null, fee: 0, isAvailable: false }); }} />
                           </div>
                           <Button onClick={handleLocateAddress} disabled={distanceLoading || !addressInput} className="bg-blue-600 hover:bg-blue-700 text-white min-w-[100px]" soundType="click">
-                            {distanceLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Search className="h-4 w-4 mr-2"/> Analyser</>}
+                            {distanceLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Search className="h-4 w-4 mr-2"/> {t('checkout.analyze_btn')}</>}
                           </Button>
                         </div>
                       ) : locationMode === 'quarter' ? (
                         <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
                           <Select onValueChange={handleQuarterSelect} value={selectedQuarter}>
-                            <SelectTrigger className={errors.location && (!distanceInfo || !distanceInfo.distance) ? 'border-red-500' : ''}><SelectValue placeholder="Parcourez et sélectionnez votre quartier" /></SelectTrigger>
+                            <SelectTrigger className={errors.location && (!distanceInfo || !distanceInfo.distance) ? 'border-red-500' : ''}><SelectValue placeholder={t('checkout.quarter_placeholder')} /></SelectTrigger>
                             <SelectContent className="max-h-60">{QUARTERS.map(q => <SelectItem key={q.id} value={q.name}>{q.name}</SelectItem>)}</SelectContent>
                           </Select>
                         </div>
@@ -459,12 +463,12 @@ export const CheckoutPage = () => {
                       <div className={`p-4 rounded-xl border flex items-start gap-3 transition-colors ${distanceInfo.isAvailable ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200'}`}>
                         {distanceInfo.isAvailable ? <CheckCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" /> : <AlertCircle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />}
                         <div className="flex-1">
-                           <h4 className={`text-sm font-bold ${distanceInfo.isAvailable ? 'text-amber-900' : 'text-red-900'}`}>{distanceInfo.isAvailable ? 'Service de Livraison Disponible' : 'Zone Géographique Non Desservie'}</h4>
+                           <h4 className={`text-sm font-bold ${distanceInfo.isAvailable ? 'text-amber-900' : 'text-red-900'}`}>{distanceInfo.isAvailable ? t('checkout.delivery_available') : t('checkout.delivery_unavailable')}</h4>
                            <div className="mt-1 text-sm space-y-1">
                               {distanceInfo.address && <p className="font-medium text-gray-700">{distanceInfo.address}</p>}
                               <div className="flex flex-col gap-1 text-sm mt-2">
-                                 <div className="flex items-center gap-2"><Navigation className="h-4 w-4 text-blue-600" /><span>Distance Approximative : <strong>{distanceInfo.distance} km</strong> | Frais Estimés : <strong>{formatCurrency(distanceInfo.fee)}</strong></span></div>
-                                 <span className="text-xs text-gray-500">Classification de Zone : {distanceInfo.tier}</span>
+                                 <div className="flex items-center gap-2"><Navigation className="h-4 w-4 text-blue-600" /><span>{t('checkout.distance_display', { distance: distanceInfo.distance, fee: formatCurrency(distanceInfo.fee) })}</span></div>
+                                 <span className="text-xs text-gray-500">{t('checkout.zone_display', { tier: distanceInfo.tier })}</span>
                               </div>
                            </div>
                         </div>
@@ -478,7 +482,7 @@ export const CheckoutPage = () => {
                     <Utensils className="h-4 w-4 text-[#D97706]" /> {t('checkout.restaurant_info')}
                   </h3>
                   <div className="space-y-2">
-                    <Label htmlFor="tableId" className={errors.tableId ? "text-red-500" : ""}>Numéro de Table</Label>
+                    <Label htmlFor="tableId" className={errors.tableId ? "text-red-500" : ""}>{t('checkout.table_number')}</Label>
                     <div className={errors.tableId ? "ring-2 ring-red-500 rounded-md" : ""}>
                       <TableNumberSelector
                         value={formData.tableId}
@@ -491,9 +495,9 @@ export const CheckoutPage = () => {
               ) : (
                 <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
                   <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-                    <ShoppingBag className="h-4 w-4 text-[#D97706]" /> Informations de retrait
+                    <ShoppingBag className="h-4 w-4 text-[#D97706]" /> {t('checkout.counter_info')}
                   </h3>
-                  <p className="text-sm text-muted-foreground">Votre commande sera prête à récupérer au restaurant. Nous vous contacterons quand elle sera prête.</p>
+                  <p className="text-sm text-muted-foreground">{t('checkout.counter_desc')}</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="fullName" className={errors.fullName ? "text-red-500" : ""}>{t('checkout.full_name')}</Label>
@@ -551,7 +555,7 @@ export const CheckoutPage = () => {
                                   {/* Numéro + bouton copier */}
                                   <div className={`flex items-center justify-between rounded-xl border px-4 py-3 ${mobileMoneyType === 'mtn' ? 'bg-yellow-50 border-yellow-200' : 'bg-red-50 border-red-200'}`}>
                                     <div>
-                                      <p className="text-xs text-gray-500 mb-0.5">{mobileMoneyType === 'mtn' ? 'Numéro MTN Mobile Money' : 'Numéro Airtel Money'}</p>
+                                      <p className="text-xs text-gray-500 mb-0.5">{mobileMoneyType === 'mtn' ? t('checkout.mtn_number') : t('checkout.airtel_number')}</p>
                                       <span className={`text-xl font-mono font-bold tracking-widest ${mobileMoneyType === 'mtn' ? 'text-yellow-700' : 'text-red-700'}`}>
                                         {mobileMoneyType === 'mtn' ? mobileMoneyConfig.mtn : mobileMoneyConfig.airtel}
                                       </span>
@@ -561,39 +565,38 @@ export const CheckoutPage = () => {
                                       onClick={() => handleCopyMobileNumber(mobileMoneyType === 'mtn' ? mobileMoneyConfig.mtn : mobileMoneyConfig.airtel)}
                                       className={`flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-lg transition-all ${copiedNumber ? 'bg-green-100 text-green-700' : mobileMoneyType === 'mtn' ? 'bg-yellow-200 text-yellow-800 hover:bg-yellow-300' : 'bg-red-200 text-red-800 hover:bg-red-300'}`}
                                     >
-                                      {copiedNumber ? '✓ Copié !' : '📋 Copier'}
+                                      {copiedNumber ? t('common.copied') : t('common.copy')}
                                     </button>
                                   </div>
 
                                   {/* Instructions étape par étape */}
                                   <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 space-y-3">
-                                    <p className="text-sm font-bold text-gray-800">Comment procéder :</p>
+                                    <p className="text-sm font-bold text-gray-800">{t('checkout.how_to_pay')}</p>
                                     {mobileMoneyType === 'mtn' ? (
                                       <ol className="space-y-2 text-sm text-gray-700">
-                                        <li className="flex gap-2 items-start"><span className="font-bold text-yellow-600 flex-shrink-0 bg-yellow-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">1</span>Composez <span className="font-mono font-bold mx-1">*105#</span> sur votre téléphone MTN</li>
-                                        <li className="flex gap-2 items-start"><span className="font-bold text-yellow-600 flex-shrink-0 bg-yellow-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">2</span>Sélectionnez <span className="font-semibold mx-1">1 — Envoi d'argent</span></li>
-                                        <li className="flex gap-2 items-start"><span className="font-bold text-yellow-600 flex-shrink-0 bg-yellow-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">3</span>Sélectionnez <span className="font-semibold mx-1">1 — Abonné Mobile Money</span></li>
-                                        <li className="flex gap-2 items-start"><span className="font-bold text-yellow-600 flex-shrink-0 bg-yellow-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">4</span>Entrez le numéro : <span className="font-mono font-bold mx-1">{mobileMoneyConfig.mtn}</span></li>
-                                        <li className="flex gap-2 items-start"><span className="font-bold text-yellow-600 flex-shrink-0 bg-yellow-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">5</span>Entrez le montant à envoyer</li>
-                                        <li className="flex gap-2 items-start"><span className="font-bold text-yellow-600 flex-shrink-0 bg-yellow-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">6</span>Cliquez sur <span className="font-semibold mx-1">Envoyer / Send</span></li>
-                                        <li className="flex gap-2 items-start"><span className="font-bold text-yellow-600 flex-shrink-0 bg-yellow-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">7</span>Prenez une capture d'écran du SMS et uploadez-la ci-dessous</li>
+                                        <li className="flex gap-2 items-start"><span className="font-bold text-yellow-600 flex-shrink-0 bg-yellow-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">1</span>{t('checkout.mtn_step1')}</li>
+                                        <li className="flex gap-2 items-start"><span className="font-bold text-yellow-600 flex-shrink-0 bg-yellow-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">2</span>{t('checkout.mtn_step2')}</li>
+                                        <li className="flex gap-2 items-start"><span className="font-bold text-yellow-600 flex-shrink-0 bg-yellow-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">3</span>{t('checkout.mtn_step3')}</li>
+                                        <li className="flex gap-2 items-start"><span className="font-bold text-yellow-600 flex-shrink-0 bg-yellow-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">4</span>{t('checkout.mtn_step4', { number: mobileMoneyConfig.mtn })}</li>
+                                        <li className="flex gap-2 items-start"><span className="font-bold text-yellow-600 flex-shrink-0 bg-yellow-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">5</span>{t('checkout.mtn_step5')}</li>
+                                        <li className="flex gap-2 items-start"><span className="font-bold text-yellow-600 flex-shrink-0 bg-yellow-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">6</span>{t('checkout.mtn_step6')}</li>
+                                        <li className="flex gap-2 items-start"><span className="font-bold text-yellow-600 flex-shrink-0 bg-yellow-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">7</span>{t('checkout.mtn_step7')}</li>
                                       </ol>
                                     ) : (
                                       <ol className="space-y-2 text-sm text-gray-700">
-                                        <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">1</span>Composez <span className="font-mono font-bold mx-1">*128#</span> sur votre téléphone Airtel</li>
-                                        <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">2</span>Sélectionnez <span className="font-semibold mx-1">2 — Envoyer / Retirer Argent</span></li>
-                                        <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">3</span>Sélectionnez <span className="font-semibold mx-1">1 — Envoyer de l'argent</span></li>
-                                        <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">4</span>Sélectionnez <span className="font-semibold mx-1">1 — Airtel Money</span></li>
-                                        <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">5</span>Saisissez le numéro : <span className="font-mono font-bold mx-1">{mobileMoneyConfig.airtel}</span></li>
-                                        <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">6</span>Saisissez le montant</li>
-                                        <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">7</span>Entrez votre <span className="font-semibold mx-1">code PIN</span></li>
-                                        <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">8</span>Prenez une capture d'écran du SMS et uploadez-la ci-dessous</li>
+                                        <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">1</span>{t('checkout.airtel_step1')}</li>
+                                        <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">2</span>{t('checkout.airtel_step2')}</li>
+                                        <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">3</span>{t('checkout.airtel_step3')}</li>
+                                        <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">4</span>{t('checkout.airtel_step4')}</li>
+                                        <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">5</span>{t('checkout.airtel_step5', { number: mobileMoneyConfig.airtel })}</li>
+                                        <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">6</span>{t('checkout.airtel_step6')}</li>
+                                        <li className="flex gap-2 items-start"><span className="font-bold text-red-600 flex-shrink-0 bg-red-100 rounded-full w-5 h-5 flex items-center justify-center text-xs">7</span>{t('checkout.airtel_step7')}</li>
                                       </ol>
                                     )}
                                   </div>
 
                                   <div className="space-y-3 pt-2">
-                                    <Label className="text-sm font-bold text-gray-700">Preuve de Paiement Valide (Obligatoire)</Label>
+                                    <Label className="text-sm font-bold text-gray-700">{t('checkout.proof_label')}</Label>
                                     <PaymentProofUpload onUploadSuccess={(url) => setPaymentProofUrl(url)} onRemove={() => setPaymentProofUrl(null)} initialUrl={paymentProofUrl} />
                                   </div>
                                 </>

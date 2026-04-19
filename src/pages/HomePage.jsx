@@ -62,9 +62,9 @@ export const HomePage = () => {
     if (roleLoading) return;
     if (isAdminOrManager) {
       navigate('/admin');
-      toast({ title: "Accès Autorisé", description: "Bienvenue sur le portail d'administration.", className: "bg-amber-600 text-white font-bold" });
+      toast({ title: t('home.admin_access'), description: t('home.admin_welcome'), className: "bg-amber-600 text-white font-bold" });
     } else {
-      toast({ variant: "destructive", title: t('home.admin_denied'), description: "Privilèges insuffisants." });
+      toast({ variant: "destructive", title: t('home.admin_denied'), description: t('home.insufficient_privileges') });
     }
   };
 
@@ -148,7 +148,7 @@ export const HomePage = () => {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.4 }}>
               <div className="flex items-center gap-1.5 mb-2">
                 {[1,2,3,4,5].map(i => <Star key={i} className="h-3.5 w-3.5 fill-[#D97706] text-[#D97706]" />)}
-                <span className="text-white/60 text-xs ml-1 font-medium">Cuisine Authentique</span>
+                <span className="text-white/60 text-xs ml-1 font-medium">{t('home.authentic_cuisine')}</span>
               </div>
               <h1 className="text-3xl md:text-4xl font-extrabold text-white leading-tight tracking-tight mb-1">
                 {activeRestaurantName || t('home.hero_title')}
@@ -225,17 +225,17 @@ export const HomePage = () => {
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-around">
             <div className="text-center">
               <p className="text-lg font-extrabold text-gray-900">30–45</p>
-              <p className="text-xs text-gray-400 font-medium">min livraison</p>
+              <p className="text-xs text-gray-400 font-medium">{t('home.delivery_time')}</p>
             </div>
             <div className="w-px h-8 bg-gray-100" />
             <div className="text-center">
               <p className="text-lg font-extrabold text-[#D97706]">4.8</p>
-              <p className="text-xs text-gray-400 font-medium">Note clients</p>
+              <p className="text-xs text-gray-400 font-medium">{t('home.customer_rating')}</p>
             </div>
             <div className="w-px h-8 bg-gray-100" />
             <div className="text-center">
               <p className="text-lg font-extrabold text-gray-900">7j/7</p>
-              <p className="text-xs text-gray-400 font-medium">Ouvert</p>
+              <p className="text-xs text-gray-400 font-medium">{t('home.open_status')}</p>
             </div>
           </div>
         </div>

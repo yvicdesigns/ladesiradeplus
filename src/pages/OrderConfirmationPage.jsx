@@ -118,11 +118,11 @@ export const OrderConfirmationPage = () => {
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
         <Alert variant="destructive" className="max-w-md w-full bg-white border-red-200 shadow-xl">
           <AlertTriangle className="h-6 w-6 text-red-600 mt-0.5" />
-          <AlertTitle className="text-red-800 font-bold ml-2 text-lg">Données Indisponibles</AlertTitle>
+          <AlertTitle className="text-red-800 font-bold ml-2 text-lg">{t('confirmation.data_unavailable')}</AlertTitle>
           <AlertDescription className="ml-2 mt-2">
-            <p className="text-gray-600 mb-6">Informations du restaurant indisponibles pour cette commande.</p>
+            <p className="text-gray-600 mb-6">{t('confirmation.restaurant_info_unavailable')}</p>
             <Button onClick={() => navigate('/')} className="w-full bg-red-600 hover:bg-red-700 text-white h-11">
-              Retour à l'accueil
+              {t('confirmation.back_home_btn')}
             </Button>
           </AlertDescription>
         </Alert>
@@ -186,12 +186,10 @@ export const OrderConfirmationPage = () => {
             
             <div>
               <h1 className="text-2xl font-bold text-gray-900 flex items-center justify-center gap-2">
-                {isCounter ? "Commande Prête !" : "Commande Confirmée"}
+                {isCounter ? t('confirmation.order_ready') : t('confirmation.order_confirmed')}
               </h1>
               <p className="text-gray-500 mt-2 text-sm max-w-[250px] mx-auto">
-                {isCounter 
-                  ? "Votre commande a été enregistrée et est prête à être récupérée." 
-                  : "Votre commande a été enregistrée avec succès et est en cours de traitement."}
+                {isCounter ? t('confirmation.ready_pickup') : t('confirmation.processing_desc')}
               </p>
               <div className="mt-4 inline-block bg-slate-100 px-4 py-1.5 rounded-lg font-mono text-slate-700 font-semibold tracking-wider break-all">
                 #{formatOrderIdForDisplay(effectiveOrder.id)}
@@ -205,7 +203,7 @@ export const OrderConfirmationPage = () => {
                 {isDelivery ? <Truck className="w-5 h-5" /> : (isCounter ? <Store className="w-5 h-5" /> : <Utensils className="w-5 h-5" />)}
               </div>
               <h2 className={`font-bold text-lg ${isDelivery ? 'text-blue-900' : (isCounter ? 'text-purple-900' : 'text-amber-900')}`}>
-                {isDelivery ? 'Livraison à domicile' : (isCounter ? 'Retrait au Comptoir' : 'Consommation sur place')}
+                {isDelivery ? t('confirmation.delivery_home') : (isCounter ? t('confirmation.counter_pickup') : t('confirmation.dine_in_label'))}
               </h2>
             </div>
             
@@ -214,7 +212,7 @@ export const OrderConfirmationPage = () => {
                 <>
                   <div className="flex gap-2 text-sm text-blue-900">
                     <MapPin className="w-4 h-4 mt-0.5 text-blue-500 shrink-0" />
-                    <span className="font-medium leading-snug">{effectiveOrder.delivery_address || (deliveryInfo && deliveryInfo.address) || 'Adresse non spécifiée'}</span>
+                    <span className="font-medium leading-snug">{effectiveOrder.delivery_address || (deliveryInfo && deliveryInfo.address) || t('confirmation.no_address')}</span>
                   </div>
                   {effectiveOrder.delivery_phone && (
                     <div className="flex gap-2 text-sm text-blue-900">
@@ -231,9 +229,9 @@ export const OrderConfirmationPage = () => {
                 </>
               ) : (
                 <div className={`flex items-center justify-between ${isCounter ? 'text-purple-900' : 'text-amber-900'}`}>
-                  <span className="text-sm font-medium">{isCounter ? "Lieu de retrait" : "Numéro de Table"}</span>
+                  <span className="text-sm font-medium">{isCounter ? t('confirmation.pickup_location') : t('checkout.table_number')}</span>
                   <span className={`text-xl font-black bg-white px-3 py-1 rounded-lg shadow-sm ${isCounter ? 'text-purple-700' : ''}`}>
-                    {isCounter ? "Comptoir" : displayTableNumber}
+                    {isCounter ? t('confirmation.counter') : displayTableNumber}
                   </span>
                 </div>
               )}
@@ -241,7 +239,7 @@ export const OrderConfirmationPage = () => {
           </div>
 
           <div className="bg-slate-50 rounded-2xl p-6 text-left space-y-4 border border-slate-100">
-            <h3 className="font-bold text-sm text-slate-800 uppercase tracking-wider">Détails des articles</h3>
+            <h3 className="font-bold text-sm text-slate-800 uppercase tracking-wider">{t('confirmation.order_details')}</h3>
             
             <div className="space-y-3 max-h-[30vh] overflow-y-auto pr-2 custom-scrollbar">
               {items ? items.map((item, idx) => (
@@ -258,7 +256,7 @@ export const OrderConfirmationPage = () => {
                   </span>
                 </div>
               )) : (
-                  <p className="text-sm text-slate-400 text-center italic">Chargement des articles...</p>
+                  <p className="text-sm text-slate-400 text-center italic">{t('confirmation.items_loading')}</p>
               )}
 
               {/* Delivery Fee Line */}
@@ -266,10 +264,10 @@ export const OrderConfirmationPage = () => {
                 <div className="flex justify-between items-center text-sm pt-2 border-t border-slate-200 border-dashed">
                   <div className="flex items-center gap-2">
                     <Truck className="w-4 h-4 text-blue-500" />
-                    <span className="text-blue-700 font-medium italic">Frais de Livraison</span>
+                    <span className="text-blue-700 font-medium italic">{t('confirmation.fee')}</span>
                   </div>
                   <span className="font-semibold text-blue-900">
-                    {deliveryFee === 0 ? "Gratuite" : formatCurrency(deliveryFee)}
+                    {deliveryFee === 0 ? t('confirmation.delivery_free') : formatCurrency(deliveryFee)}
                   </span>
                 </div>
               )}
@@ -282,7 +280,7 @@ export const OrderConfirmationPage = () => {
             )}
 
             <div className="border-t border-slate-200 pt-4 flex justify-between items-end">
-               <span className="font-bold text-slate-600 uppercase text-xs tracking-wider">Total à payer</span>
+               <span className="font-bold text-slate-600 uppercase text-xs tracking-wider">{t('confirmation.total_pay')}</span>
                <span className="font-black text-2xl text-slate-900">
                  {formatCurrency(displayTotal)}
                </span>
@@ -297,7 +295,7 @@ export const OrderConfirmationPage = () => {
                     ${isDelivery ? 'border-blue-200 text-blue-600 hover:bg-blue-50' : 'border-amber-200 text-amber-600 hover:bg-amber-50'}`}
                   onClick={handleTrackingNavigation}
                >
-                  Suivre ma commande <ExternalLink className="w-5 h-5 ml-1" />
+                  {t('confirmation.track_order')} <ExternalLink className="w-5 h-5 ml-1" />
                </Button>
              )}
 
@@ -305,7 +303,7 @@ export const OrderConfirmationPage = () => {
                 onClick={() => navigate('/menu')} 
                 className={`w-full hover:bg-slate-800 text-white rounded-2xl h-12 font-bold ${isCounter ? 'bg-purple-600' : 'bg-slate-900'}`}
              >
-                Continuer mes achats
+                {t('confirmation.continue_shopping')}
              </Button>
           </div>
         </div>

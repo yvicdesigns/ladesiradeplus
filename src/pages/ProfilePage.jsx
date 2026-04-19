@@ -13,11 +13,13 @@ import { ProfilePhotoUpload } from '@/components/ProfilePhotoUpload';
 import { formatReservationStatus } from '@/lib/formatters';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 
 export const ProfilePage = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
   
   // Data states
   const [profile, setProfile] = useState(null);
@@ -68,8 +70,8 @@ export const ProfilePage = () => {
       console.error('Error fetching user data:', error);
       toast({
         variant: "destructive",
-        title: "Erreur Système",
-        description: "Impossible de charger les informations de votre profil."
+        title: t('profile.system_error'),
+        description: t('profile.load_error')
       });
     } finally {
       setLoadingProfile(false);
@@ -104,7 +106,7 @@ export const ProfilePage = () => {
       setReservations(sortedReservations);
     } catch (error) {
       console.error('Error fetching reservations:', error);
-      setReservationError('Impossible de récupérer l\'historique des réservations.');
+      setReservationError(t('profile.reservations_error'));
     } finally {
       setLoadingReservations(false);
     }
@@ -172,7 +174,7 @@ export const ProfilePage = () => {
       setNotifications(prev => prev.filter(n => n.id !== notificationId));
     } catch (error) {
       console.error('Error deleting notification:', error);
-      toast({ variant: 'destructive', title: 'Erreur', description: 'Impossible de supprimer ce message.' });
+      toast({ variant: 'destructive', title: t('profile.error_title'), description: t('profile.delete_msg_error') });
     }
   };
 
@@ -201,11 +203,11 @@ export const ProfilePage = () => {
         p_content: msgContent.trim(),
       });
       if (error) throw error;
-      toast({ title: 'Message envoyé', description: 'Le manager a reçu votre message.', className: 'bg-green-600 text-white' });
+      toast({ title: t('profile.msg_sent'), description: t('profile.msg_sent_desc'), className: 'bg-green-600 text-white' });
       setMsgTitle('');
       setMsgContent('');
     } catch (err) {
-      toast({ variant: 'destructive', title: 'Erreur', description: err.message });
+      toast({ variant: 'destructive', title: t('profile.error_title'), description: err.message });
     } finally {
       setSendingMsg(false);
     }
@@ -224,10 +226,10 @@ export const ProfilePage = () => {
   const handleSignOut = async () => {
     try {
       await signOut();
-      toast({ title: "Déconnexion Réussie", description: "À très bientôt sur Key's Food !" });
+      toast({ title: t('profile.logout_success'), description: t('profile.logout_goodbye') });
       navigate('/login');
     } catch (error) {
-      toast({ variant: "destructive", title: "Erreur de Déconnexion", description: "Une erreur technique est survenue." });
+      toast({ variant: "destructive", title: t('profile.logout_error'), description: t('profile.technical_error') });
     }
   };
 
@@ -247,8 +249,8 @@ export const ProfilePage = () => {
           <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
             <User className="w-8 h-8 text-[#D97706]" />
           </div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Espace Visiteur</h2>
-          <Button onClick={() => navigate('/login')} className="w-full bg-[#D97706] text-white shadow-lg font-bold mt-2">Se Connecter</Button>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{t('profile.visitor_space')}</h2>
+          <Button onClick={() => navigate('/login')} className="w-full bg-[#D97706] text-white shadow-lg font-bold mt-2">{t('profile.sign_in')}</Button>
         </div>
       </div>
     );
@@ -292,7 +294,7 @@ export const ProfilePage = () => {
               </>
             ) : (
               <>
-                <h1 className="text-2xl font-bold text-gray-900">{profile?.full_name || "Client Privilégié"}</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{profile?.full_name || t('profile.privileged_client')}</h1>
                 <p className="text-gray-500 text-sm font-medium">{user.email}</p>
               </>
             )}
@@ -306,7 +308,7 @@ export const ProfilePage = () => {
             disabled={loadingProfile}
           >
             <Edit2 className="w-3 h-3 mr-2" />
-            Éditer mon Profil
+            {t('profile.edit_profile')}
           </Button>
         </div>
       </motion.div>
@@ -322,7 +324,7 @@ export const ProfilePage = () => {
           className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
         >
           <div className="flex items-center justify-between mb-4">
-             <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Mes Coordonnées</h3>
+             <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">{t('profile.my_coords')}</h3>
           </div>
           
           <div className="space-y-5">
@@ -331,7 +333,7 @@ export const ProfilePage = () => {
                 <Mail className="w-5 h-5" />
               </div>
               <div className="flex-1 overflow-hidden">
-                <p className="text-xs text-gray-500 mb-0.5 font-medium">Adresse Email Principale</p>
+                <p className="text-xs text-gray-500 mb-0.5 font-medium">{t('profile.email_label')}</p>
                 {loadingProfile ? <Skeleton className="h-5 w-3/4" /> : <p className="text-gray-900 font-bold text-sm truncate">{user.email}</p>}
               </div>
             </div>
@@ -341,8 +343,8 @@ export const ProfilePage = () => {
                 <Phone className="w-5 h-5" />
               </div>
               <div className="flex-1">
-                <p className="text-xs text-gray-500 mb-0.5 font-medium">Numéro de Téléphone</p>
-                {loadingProfile ? <Skeleton className="h-5 w-1/2" /> : <p className="text-gray-900 font-bold text-sm">{profile?.phone || 'Aucun numéro enregistré'}</p>}
+                <p className="text-xs text-gray-500 mb-0.5 font-medium">{t('profile.phone_label')}</p>
+                {loadingProfile ? <Skeleton className="h-5 w-1/2" /> : <p className="text-gray-900 font-bold text-sm">{profile?.phone || t('profile.no_phone')}</p>}
               </div>
             </div>
             
@@ -351,12 +353,12 @@ export const ProfilePage = () => {
                 <MapPin className="w-5 h-5" />
               </div>
               <div className="flex-1">
-                <p className="text-xs text-gray-500 mb-0.5 font-medium">Adresse de Livraison par Défaut</p>
+                <p className="text-xs text-gray-500 mb-0.5 font-medium">{t('profile.default_address')}</p>
                 {loadingProfile ? (
                    <Skeleton className="h-5 w-3/4" />
                 ) : (
                    <p className="text-gray-900 font-bold text-sm">
-                     {customer?.address ? `${customer.address}${customer.city ? `, ${customer.city}` : ''}` : 'Aucune adresse renseignée'}
+                     {customer?.address ? `${customer.address}${customer.city ? `, ${customer.city}` : ''}` : t('profile.no_address')}
                    </p>
                 )}
               </div>
@@ -373,7 +375,7 @@ export const ProfilePage = () => {
         >
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2">
-              <Mail className="w-4 h-4 text-[#D97706]" /> Centre de Messages
+              <Mail className="w-4 h-4 text-[#D97706]" /> {t('profile.messages_center')}
               {notifications.filter(n => n.status === 'unread').length > 0 && (
                 <span className="bg-[#D97706] text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
                   {notifications.filter(n => n.status === 'unread').length}
@@ -383,7 +385,7 @@ export const ProfilePage = () => {
             <div className="flex items-center gap-1">
               {notifications.filter(n => n.status === 'unread').length > 0 && (
                 <Button variant="ghost" size="sm" onClick={markAllAsRead} className="text-xs text-[#D97706] h-8 px-2">
-                  Tout lire
+                  {t('profile.read_all')}
                 </Button>
               )}
               <Button variant="ghost" size="sm" onClick={fetchNotifications} disabled={loadingNotifications}>
@@ -398,7 +400,7 @@ export const ProfilePage = () => {
             ) : notifications.length === 0 ? (
               <div className="bg-white rounded-2xl p-6 text-center border border-gray-100 shadow-sm">
                 <Mail className="w-8 h-8 text-gray-200 mx-auto mb-2" />
-                <p className="text-gray-500 text-sm font-medium">Votre boîte de réception est vide.</p>
+                <p className="text-gray-500 text-sm font-medium">{t('profile.inbox_empty')}</p>
               </div>
             ) : (
               <AnimatePresence>
@@ -465,7 +467,7 @@ export const ProfilePage = () => {
         >
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-[#D97706]" /> Réservations de Tables
+              <Calendar className="w-4 h-4 text-[#D97706]" /> {t('profile.reservations_section')}
             </h3>
             <Button variant="ghost" size="sm" onClick={fetchReservations} disabled={loadingReservations}>
               <RefreshCw className={`w-4 h-4 ${loadingReservations ? 'animate-spin' : ''}`} />
@@ -482,8 +484,8 @@ export const ProfilePage = () => {
           ) : reservations.length === 0 ? (
             <div className="bg-white rounded-2xl p-8 text-center border border-gray-100 shadow-sm">
               <Calendar className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-900 font-bold">Vous n'avez pas de réservation active.</p>
-              <Button variant="outline" className="mt-4 text-[#D97706] font-bold" onClick={() => navigate('/reservations')}>Nouvelle Réservation</Button>
+              <p className="text-gray-900 font-bold">{t('profile.no_active_reservation')}</p>
+              <Button variant="outline" className="mt-4 text-[#D97706] font-bold" onClick={() => navigate('/reservations')}>{t('profile.new_reservation')}</Button>
             </div>
           ) : (
             <div className="space-y-3">
@@ -499,7 +501,7 @@ export const ProfilePage = () => {
                       </div>
                     </div>
                     <span className={`px-2.5 py-1 rounded-full text-xs font-bold capitalize ${formatReservationStatus(res.status)}`}>
-                      {res.status === 'pending' ? 'En attente' : res.status}
+                      {res.status === 'pending' ? t('profile.pending_status') : res.status}
                     </span>
                   </div>
                 </div>
@@ -516,14 +518,14 @@ export const ProfilePage = () => {
           className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5"
         >
           <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2 mb-4">
-            <MessageSquare className="w-4 h-4 text-[#D97706]" /> Contacter le Manager
+            <MessageSquare className="w-4 h-4 text-[#D97706]" /> {t('profile.contact_manager')}
           </h3>
           <form onSubmit={handleSendMessage} className="space-y-3">
             <input
               type="text"
               value={msgTitle}
               onChange={e => setMsgTitle(e.target.value)}
-              placeholder="Objet du message..."
+              placeholder={t('profile.message_subject_placeholder')}
               maxLength={100}
               required
               className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-300"
@@ -531,7 +533,7 @@ export const ProfilePage = () => {
             <textarea
               value={msgContent}
               onChange={e => setMsgContent(e.target.value)}
-              placeholder="Votre message..."
+              placeholder={t('profile.message_body_placeholder')}
               rows={3}
               maxLength={500}
               required
@@ -543,7 +545,7 @@ export const ProfilePage = () => {
               className="w-full bg-[#D97706] hover:bg-[#B45309] text-white font-bold h-11"
             >
               {sendingMsg ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
-              Envoyer au Manager
+              {t('profile.send_to_manager')}
             </Button>
           </form>
         </motion.div>
@@ -561,8 +563,8 @@ export const ProfilePage = () => {
                 <History className="w-5 h-5" />
               </div>
               <div className="flex-1">
-                <span className="text-gray-900 font-bold block">Historique des Achats</span>
-                <span className="text-gray-500 text-xs font-medium">Consultez vos commandes précédentes</span>
+                <span className="text-gray-900 font-bold block">{t('profile.order_history')}</span>
+                <span className="text-gray-500 text-xs font-medium">{t('profile.order_history_desc')}</span>
               </div>
               <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-[#D97706]" />
             </button>
@@ -571,8 +573,8 @@ export const ProfilePage = () => {
                 <Settings className="w-5 h-5" />
               </div>
               <div className="flex-1">
-                <span className="text-gray-900 font-bold block">Paramètres du Compte</span>
-                <span className="text-gray-500 text-xs font-medium">Préférences, alertes et sécurité</span>
+                <span className="text-gray-900 font-bold block">{t('profile.account_settings')}</span>
+                <span className="text-gray-500 text-xs font-medium">{t('profile.account_settings_desc')}</span>
               </div>
               <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-gray-600" />
             </button>
@@ -581,7 +583,7 @@ export const ProfilePage = () => {
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
           <Button variant="ghost" className="w-full bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 h-12 font-bold shadow-sm" onClick={handleSignOut}>
-            <LogOut className="w-5 h-5 mr-2" /> Déconnexion Sécurisée
+            <LogOut className="w-5 h-5 mr-2" /> {t('profile.secure_logout')}
           </Button>
         </motion.div>
       </div>

@@ -13,12 +13,14 @@ import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useTranslation } from 'react-i18next';
 
 export const ReservationsPage = () => {
   const { user } = useAuth();
   const { restaurantId } = useRestaurant();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   
   const [view, setView] = useState('list'); 
   const [reservations, setReservations] = useState([]);
@@ -36,9 +38,9 @@ export const ReservationsPage = () => {
 
   useEffect(() => {
     if (!user) return;
-    
-    const fetchReservations = async () => {
-      setLoadingList(true);
+
+    const fetchReservations = async (silent = false) => {
+      if (!silent) setLoadingList(true);
       try {
         const { data, error } = await supabase
           .from('reservations')
@@ -46,23 +48,39 @@ export const ReservationsPage = () => {
           .eq('user_id', user.id)
           .order('reservation_date', { ascending: false })
           .order('reservation_time', { ascending: false });
-          
+
         if (error) throw error;
         setReservations(data || []);
       } catch (err) {
         console.error('Error fetching reservations:', err);
-        toast({
+        if (!silent) toast({
           variant: 'destructive',
-          title: 'Erreur',
-          description: 'Impossible de charger vos réservations.'
+          title: t('reservations.error_title'),
+          description: t('reservations.load_error')
         });
       } finally {
-        setLoadingList(false);
+        if (!silent) setLoadingList(false);
       }
     };
-    
+
     if (view === 'list') {
       fetchReservations();
+
+      // Realtime subscription
+      const channel = supabase.channel(`reservations-user-${user.id}`)
+        .on('postgres_changes', {
+          event: '*', schema: 'public', table: 'reservations',
+          filter: `user_id=eq.${user.id}`
+        }, () => fetchReservations(true))
+        .subscribe();
+
+      // Polling fallback every 10s (for Android WebView where WS may be unstable)
+      const interval = setInterval(() => fetchReservations(true), 10000);
+
+      return () => {
+        supabase.removeChannel(channel);
+        clearInterval(interval);
+      };
     }
   }, [user, view, toast]);
 
@@ -71,8 +89,8 @@ export const ReservationsPage = () => {
     if (!user) {
         toast({
             variant: 'destructive',
-            title: 'Connexion requise',
-            description: 'Veuillez vous connecter pour faire une réservation.'
+            title: t('reservations.login_required'),
+            description: t('reservations.login_required_desc')
         });
         return;
     }
@@ -80,8 +98,8 @@ export const ReservationsPage = () => {
     if (!restaurantId) {
         toast({
             variant: 'destructive',
-            title: 'Erreur de configuration',
-            description: 'Impossible de déterminer le restaurant. Veuillez recharger la page.'
+            title: t('reservations.config_error'),
+            description: t('reservations.config_error_desc')
         });
         return;
     }
@@ -90,8 +108,8 @@ export const ReservationsPage = () => {
     if (!formData.date || !formData.time || !formData.name?.trim() || !formData.phone?.trim()) {
       toast({
         variant: 'destructive',
-        title: 'Champs requis',
-        description: 'Veuillez remplir la date, l\'heure, votre nom et votre téléphone.',
+        title: t('reservations.required_fields'),
+        description: t('reservations.required_fields_desc'),
       });
       return;
     }
@@ -100,8 +118,8 @@ export const ReservationsPage = () => {
     if (phoneDigits.length < 6) {
       toast({
         variant: 'destructive',
-        title: 'Numéro invalide',
-        description: 'Veuillez entrer un numéro de téléphone valide.',
+        title: t('reservations.invalid_phone'),
+        description: t('reservations.invalid_phone_desc'),
       });
       return;
     }
@@ -109,7 +127,7 @@ export const ReservationsPage = () => {
     // Compare as date strings to avoid UTC/local timezone shift issues
     const todayStr = new Date().toISOString().slice(0, 10);
     if (formData.date < todayStr) {
-      toast({ variant: 'destructive', title: 'Date invalide', description: 'La date doit être aujourd\'hui ou dans le futur.' });
+      toast({ variant: 'destructive', title: t('reservations.invalid_date'), description: t('reservations.invalid_date_desc') });
       return;
     }
 
@@ -138,8 +156,8 @@ export const ReservationsPage = () => {
       if (error) throw error;
       
       toast({
-        title: "Réservation envoyée",
-        description: "Votre demande de réservation a été enregistrée.",
+        title: t('reservations.submitted'),
+        description: t('reservations.submitted_desc'),
         className: "bg-amber-100 text-amber-800 border-amber-200"
       });
 
@@ -148,10 +166,10 @@ export const ReservationsPage = () => {
 
     } catch (e) {
       console.error('[ReservationsPage] Error:', e);
-      toast({ 
-        variant: 'destructive', 
-        title: 'Erreur',
-        description: 'Impossible de traiter votre réservation. Veuillez réessayer.',
+      toast({
+        variant: 'destructive',
+        title: t('reservations.error_title'),
+        description: t('reservations.load_error'),
         className: "bg-red-100 text-red-800 border-red-200"
       });
     } finally {
@@ -161,10 +179,10 @@ export const ReservationsPage = () => {
 
   const getStatusBadge = (status) => {
     switch (status?.toLowerCase()) {
-      case 'confirmed': return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">Confirmée</Badge>;
-      case 'pending': return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">En attente</Badge>;
-      case 'cancelled': return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Annulée</Badge>;
-      case 'completed': return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Terminée</Badge>;
+      case 'confirmed': return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">{t('reservations.status_confirmed')}</Badge>;
+      case 'pending': return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">{t('reservations.status_pending')}</Badge>;
+      case 'cancelled': return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">{t('reservations.status_cancelled')}</Badge>;
+      case 'completed': return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">{t('reservations.status_completed')}</Badge>;
       default: return <Badge variant="outline">{status}</Badge>;
     }
   };
@@ -180,10 +198,10 @@ export const ReservationsPage = () => {
       if (error) throw error;
       
       setReservations(reservations.map(r => r.id === id ? { ...r, status: 'cancelled' } : r));
-      toast({ title: "Réservation annulée", description: "La réservation a été annulée avec succès." });
+      toast({ title: t('reservations.cancelled_title'), description: t('reservations.cancelled_desc') });
     } catch (err) {
       console.error("Error cancelling:", err);
-      toast({ variant: 'destructive', title: "Erreur", description: "Impossible d'annuler la réservation." });
+      toast({ variant: 'destructive', title: t('reservations.error_title'), description: t('reservations.cancel_error') });
     }
   };
 
@@ -199,7 +217,7 @@ export const ReservationsPage = () => {
             <ArrowRight className="w-6 h-6 rotate-180" />
           </Button>
           <h1 className="text-xl font-bold text-[#111827]">
-            {view === 'create' ? 'Nouvelle Réservation' : 'Mes Réservations'}
+            {view === 'create' ? t('reservations.page_title_new') : t('reservations.page_title_list')}
           </h1>
           <div className="w-10 h-10"></div>
         </header>
@@ -208,9 +226,9 @@ export const ReservationsPage = () => {
           {view === 'list' ? (
             <div className="space-y-4">
               <div className="flex justify-between items-center mb-6">
-                <p className="text-gray-600 text-sm">Gérez vos réservations de table</p>
+                <p className="text-gray-600 text-sm">{t('reservations.subtitle')}</p>
                 <Button onClick={() => setView('create')} className="bg-[#D97706] hover:bg-[#d94e0b] text-white gap-2">
-                  <Plus className="w-4 h-4" /> Réserver
+                  <Plus className="w-4 h-4" /> {t('reservations.book_btn')}
                 </Button>
               </div>
 
@@ -234,10 +252,10 @@ export const ReservationsPage = () => {
                   <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
                     <CalendarX2 className="w-8 h-8 text-[#D97706]" />
                   </div>
-                  <h2 className="text-xl font-semibold text-gray-900 mb-2">Aucune réservation</h2>
-                  <p className="text-gray-500 mb-6 max-w-xs mx-auto">Vous n'avez pas encore de réservation de table.</p>
+                  <h2 className="text-xl font-semibold text-gray-900 mb-2">{t('reservations.empty_title')}</h2>
+                  <p className="text-gray-500 mb-6 max-w-xs mx-auto">{t('reservations.empty_desc')}</p>
                   <Button onClick={() => setView('create')} className="bg-[#D97706] hover:bg-[#d94e0b] text-white">
-                    Faire une réservation
+                    {t('reservations.new_btn')}
                   </Button>
                 </div>
               ) : (
@@ -266,7 +284,7 @@ export const ReservationsPage = () => {
                             className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
                             onClick={() => handleCancelReservation(res.id)}
                           >
-                            Annuler la réservation
+                            {t('reservations.cancel_btn')}
                           </Button>
                         </div>
                       )}
@@ -278,15 +296,15 @@ export const ReservationsPage = () => {
           ) : (
             <div className="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="bg-[#D97706] p-6 text-white text-center">
-                <h2 className="text-xl font-bold mb-2">Réserver une Table</h2>
-                <p className="opacity-90 text-sm">Assurez votre place pour une expérience inoubliable</p>
+                <h2 className="text-xl font-bold mb-2">{t('reservations.form_title')}</h2>
+                <p className="opacity-90 text-sm">{t('reservations.form_subtitle')}</p>
               </div>
               
               <form onSubmit={handleSubmit} className="p-6 space-y-5">
                 {!restaurantId && (
                   <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>Configuration du restaurant introuvable.</AlertDescription>
+                    <AlertDescription>{t('reservations.config_not_found')}</AlertDescription>
                   </Alert>
                 )}
 
@@ -298,7 +316,7 @@ export const ReservationsPage = () => {
                        value={formData.partySize}
                        onChange={e => setFormData({...formData, partySize: e.target.value})}
                        className="pl-12 h-12 rounded-xl bg-gray-50 border-gray-300 focus:bg-white focus:border-[#D97706] focus:ring-[#D97706] text-sm text-gray-900"
-                       placeholder="Nombre de personnes"
+                       placeholder={t('reservations.guests_placeholder')}
                        required
                     />
                   </div>
@@ -327,8 +345,8 @@ export const ReservationsPage = () => {
                     </div>
                   </div>
 
-                  <Input 
-                     placeholder="Votre Nom"
+                  <Input
+                     placeholder={t('reservations.name_placeholder')}
                      value={formData.name}
                      onChange={e => setFormData({...formData, name: e.target.value})}
                      className="h-12 rounded-xl bg-gray-50 border-gray-300 focus:bg-white focus:border-[#D97706] focus:ring-[#D97706] text-sm text-gray-900"
@@ -336,7 +354,7 @@ export const ReservationsPage = () => {
                   />
                    <Input
                      type="tel"
-                     placeholder="Numéro de Téléphone"
+                     placeholder={t('reservations.phone_placeholder')}
                      value={formData.phone}
                      onChange={e => {
                        const val = e.target.value.replace(/[^\d\s+\-().]/g, '');
@@ -350,7 +368,7 @@ export const ReservationsPage = () => {
                      <AlignLeft className="absolute left-4 top-3.5 h-5 w-5 text-[#D97706]" />
                      <textarea
                        className="w-full min-h-[100px] pl-12 pt-3 pr-4 rounded-xl bg-gray-50 border border-gray-300 focus:bg-white focus:border-[#D97706] focus:ring-[#D97706] focus:outline-none transition-all resize-none text-sm text-gray-900"
-                       placeholder="Demandes spéciales (allergies, chaise haute...)"
+                       placeholder={t('reservations.special_requests_placeholder')}
                        value={formData.notes}
                        onChange={e => setFormData({...formData, notes: e.target.value})}
                      />
@@ -362,7 +380,7 @@ export const ReservationsPage = () => {
                   disabled={loadingSubmit || !restaurantId}
                   className="w-full bg-[#D97706] hover:bg-[#FCD34D] h-12 rounded-xl text-base font-bold shadow-lg shadow-black/20 mt-4 text-white"
                 >
-                  {loadingSubmit ? <Loader2 className="animate-spin" /> : "Confirmer la Réservation"}
+                  {loadingSubmit ? <Loader2 className="animate-spin" /> : t('reservations.confirm_btn')}
                 </Button>
               </form>
             </div>

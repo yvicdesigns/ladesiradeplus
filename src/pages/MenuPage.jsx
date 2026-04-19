@@ -266,7 +266,7 @@ export const MenuPage = () => {
                     <Bug className="w-4 h-4" /> Menu Diagnostics
                   </h3>
                   <Button size="sm" variant="ghost" className="h-6 px-2 text-slate-400 hover:text-white" onClick={() => setShowDebug(false)}>
-                    Fermer
+                    {t('common.close')}
                   </Button>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -330,12 +330,12 @@ export const MenuPage = () => {
            <div className="px-4 py-2 mb-4">
              <Alert variant="destructive" className="border-red-200 bg-white">
                <AlertCircle className="h-5 w-5" />
-               <AlertTitle>Erreur de connexion</AlertTitle>
+               <AlertTitle>{t('menu.connection_error')}</AlertTitle>
                <AlertDescription className="flex flex-col mt-2">
-                 <span className="text-sm text-gray-600 mb-3">Impossible de charger le menu depuis le serveur. {retryCount >= 3 ? "Tentatives maximum atteintes." : ""}</span>
+                 <span className="text-sm text-gray-600 mb-3">{t('menu.load_error_desc')} {retryCount >= 3 ? t('menu.max_retries') : ""}</span>
                  <Button onClick={retry} disabled={isRetrying} className="bg-red-600 hover:bg-red-700 text-white self-start">
                    <RefreshCw className={`w-4 h-4 mr-2 ${isRetrying ? 'animate-spin' : ''}`} />
-                   {isRetrying ? 'Tentative en cours...' : 'Forcer la reconnexion'}
+                   {isRetrying ? t('menu.retrying') : t('menu.force_reconnect')}
                  </Button>
                </AlertDescription>
              </Alert>
@@ -411,8 +411,8 @@ export const MenuPage = () => {
                  <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white shadow-sm">
                    <Utensils className="w-10 h-10 text-gray-400" />
                  </div>
-                 <h3 className="text-xl text-gray-900 font-bold mb-2">Menu en préparation</h3>
-                 <p className="text-gray-500 text-sm max-w-[250px] mx-auto">Le restaurant met à jour sa carte. Revenez très bientôt pour découvrir nos délices !</p>
+                 <h3 className="text-xl text-gray-900 font-bold mb-2">{t('menu.preparing_title')}</h3>
+                 <p className="text-gray-500 text-sm max-w-[250px] mx-auto">{t('menu.preparing_desc')}</p>
               </div>
             )}
 
@@ -455,14 +455,14 @@ export const MenuPage = () => {
                         >
                           {isPromo && !cannotOrder && (
                             <div className="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-bl-xl z-10">
-                              Promo -{discount}%
+                              {t('menu.promo_badge', { discount })}
                             </div>
                           )}
-                          
+
                           {cannotOrder && (
                             <div className="absolute inset-0 bg-white/40 z-10 flex items-center justify-center backdrop-blur-[1px]">
                                <span className="bg-red-600 text-white font-bold px-3 py-1 rounded-full text-xs shadow-lg transform -rotate-12">
-                                  {isUnavailable ? 'INDISPONIBLE' : 'PRODUIT ÉPUISÉ'}
+                                  {isUnavailable ? t('menu.unavailable') : t('menu.out_of_stock')}
                                </span>
                             </div>
                           )}
@@ -482,20 +482,20 @@ export const MenuPage = () => {
                               <div className="flex items-center gap-1 bg-yellow-50 px-1.5 py-0.5 rounded-md flex-shrink-0">
                                 <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
                                 <span className="text-[10px] font-bold text-yellow-700">
-                                  {stats.count > 0 ? stats.average : 'Nouveau'}
+                                  {stats.count > 0 ? stats.average : t('product.new_label')}
                                 </span>
                               </div>
                             </div>
                             
                             <div className="flex flex-col text-xs mb-2 mt-0.5">
                               <span className="text-[#4b5563] truncate">
-                                {item.menu_categories?.name || 'Général'} • {item.preparation_time ? `${item.preparation_time} min` : 'Rapide'}
+                                {item.menu_categories?.name || t('menu.general_category')} • {item.preparation_time ? `${item.preparation_time} min` : t('menu.fast_prep')}
                               </span>
-                              
+
                               {!cannotOrder && showQuantity && (
                                  <span className={`font-bold mt-0.5 flex items-center gap-1 ${isLowStock ? 'text-yellow-600' : 'text-amber-600'}`}>
                                    {isLowStock && <AlertTriangle className="w-3 h-3" />}
-                                   Plus que {stock} en stock
+                                   {t('menu.low_stock', { count: stock })}
                                  </span>
                               )}
                             </div>
@@ -544,7 +544,7 @@ export const MenuPage = () => {
                   
                   {!itemsLoading && filteredItems.length === 0 && menuItems.length > 0 && (
                     <div className="text-center py-10 text-[#4b5563] text-sm font-medium bg-white rounded-xl border border-gray-100 shadow-sm">
-                      {selectedCategory === 'all' ? t('menu.no_items') : "Aucun produit disponible dans cette catégorie pour le moment."}
+                      {t('menu.empty_category')}
                     </div>
                   )}
                 </div>

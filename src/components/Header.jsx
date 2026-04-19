@@ -12,6 +12,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/components/ui/use-toast';
 import { useRestaurant } from '@/contexts/RestaurantContext';
+import { useTranslation } from 'react-i18next';
 
 export const Header = () => {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ export const Header = () => {
   useLanguage();
   const { toast } = useToast();
   const { settings, activeRestaurantName } = useRestaurant();
+  const { t } = useTranslation();
   const cartItemCount = getItemCount();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -63,29 +65,29 @@ export const Header = () => {
 
   const getPageTitle = () => {
     switch (location.pathname) {
-      case '/menu': return 'Menu';
-      case '/cart': return 'Panier';
-      case '/checkout': return 'Caisse';
-      case '/orders': return 'Commandes';
-      case '/reservations': return 'Réservations';
-      case '/search': return 'Recherche';
-      case '/profile': return 'Profil';
-      case '/settings': return 'Paramètres';
+      case '/menu': return t('nav.menu');
+      case '/cart': return t('nav.cart');
+      case '/checkout': return t('nav.checkout');
+      case '/orders': return t('nav.orders');
+      case '/reservations': return t('nav.reservations');
+      case '/search': return t('nav.search');
+      case '/profile': return t('nav.profile');
+      case '/settings': return t('nav.settings');
       default: return activeRestaurantName || "Key's Food";
     }
   };
 
   const navLinks = [
-    { to: '/', label: 'Accueil', icon: Home },
-    { to: '/menu', label: 'Menu', icon: Utensils },
-    { to: '/reservations', label: 'Réservations', icon: Calendar },
-    { to: '/orders', label: 'Commandes', icon: Package },
+    { to: '/', label: t('nav.home'), icon: Home },
+    { to: '/menu', label: t('nav.menu'), icon: Utensils },
+    { to: '/reservations', label: t('nav.reservations'), icon: Calendar },
+    { to: '/orders', label: t('nav.orders'), icon: Package },
   ];
 
   const handleSignOut = async () => {
     try {
       await signOut();
-      toast({ title: "Déconnexion", description: "À bientôt !" });
+      toast({ title: t('nav.logout'), description: t('nav.goodbye') });
       setIsMobileMenuOpen(false);
       setIsUserMenuOpen(false);
       navigate('/login');
@@ -143,7 +145,7 @@ export const Header = () => {
             className="w-full flex items-center gap-3 px-4 py-2.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl text-sm text-gray-400 transition-all"
           >
             <Search className="h-4 w-4 flex-shrink-0" />
-            <span>Rechercher un plat...</span>
+            <span>{t('nav.search_placeholder')}</span>
           </button>
         </div>
 
@@ -237,23 +239,23 @@ export const Header = () => {
                     className="absolute right-0 top-full mt-2 w-52 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50"
                   >
                     <div className="px-4 py-3 border-b border-gray-50">
-                      <p className="text-xs text-gray-400 font-medium">Connecté en tant que</p>
+                      <p className="text-xs text-gray-400 font-medium">{t('nav.connected_as')}</p>
                       <p className="text-sm font-bold text-gray-900 truncate">{user.email}</p>
                     </div>
                     <div className="py-1">
                       <Link to="/profile" onClick={() => setIsUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-amber-50 hover:text-[#D97706] transition-colors font-medium">
-                        <User className="h-4 w-4" /> Mon Profil
+                        <User className="h-4 w-4" /> {t('nav.my_profile')}
                       </Link>
                       <Link to="/orders" onClick={() => setIsUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-amber-50 hover:text-[#D97706] transition-colors font-medium">
-                        <Package className="h-4 w-4" /> Mes Commandes
+                        <Package className="h-4 w-4" /> {t('nav.my_orders')}
                       </Link>
                       <Link to="/settings" onClick={() => setIsUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-amber-50 hover:text-[#D97706] transition-colors font-medium">
-                        <Settings className="h-4 w-4" /> Paramètres
+                        <Settings className="h-4 w-4" /> {t('nav.settings')}
                       </Link>
                     </div>
                     <div className="border-t border-gray-50 py-1">
                       <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors font-medium">
-                        <LogOut className="h-4 w-4" /> Déconnexion
+                        <LogOut className="h-4 w-4" /> {t('nav.logout')}
                       </button>
                     </div>
                   </motion.div>
@@ -265,7 +267,7 @@ export const Header = () => {
               to="/login"
               className="hidden md:flex items-center gap-2 px-4 py-2 bg-[#D97706] hover:bg-[#B45309] text-white text-sm font-bold rounded-xl transition-all shadow-sm"
             >
-              <User className="h-4 w-4" /> Connexion
+              <User className="h-4 w-4" /> {t('nav.login')}
             </Link>
           )}
 
@@ -313,18 +315,18 @@ export const Header = () => {
               {user ? (
                 <>
                   <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)} className={`px-6 py-4 font-bold text-[15px] border-b border-gray-50 flex items-center gap-4 transition-colors ${isActive('/profile') ? 'text-[#D97706] bg-amber-50/50' : 'text-gray-700 hover:bg-gray-50'}`}>
-                    <User className="w-5 h-5 opacity-70" /> Mon Profil
+                    <User className="w-5 h-5 opacity-70" /> {t('nav.my_profile')}
                   </Link>
                   <Link to="/settings" onClick={() => setIsMobileMenuOpen(false)} className={`px-6 py-4 font-bold text-[15px] border-b border-gray-50 flex items-center gap-4 transition-colors ${isActive('/settings') ? 'text-[#D97706] bg-amber-50/50' : 'text-gray-700 hover:bg-gray-50'}`}>
-                    <Settings className="w-5 h-5 opacity-70" /> Paramètres
+                    <Settings className="w-5 h-5 opacity-70" /> {t('nav.settings')}
                   </Link>
                   <button onClick={handleSignOut} className="px-6 py-4 font-bold text-[15px] flex items-center gap-4 text-red-600 hover:bg-red-50 w-full text-left">
-                    <LogOut className="w-5 h-5 opacity-70" /> Déconnexion
+                    <LogOut className="w-5 h-5 opacity-70" /> {t('nav.logout')}
                   </button>
                 </>
               ) : (
                 <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="mx-4 my-3 px-4 py-3 bg-[#D97706] text-white font-bold flex items-center gap-3 rounded-xl justify-center hover:bg-[#B45309]">
-                  <User className="w-5 h-5" /> Connexion
+                  <User className="w-5 h-5" /> {t('nav.login')}
                 </Link>
               )}
             </nav>

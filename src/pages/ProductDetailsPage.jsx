@@ -11,6 +11,7 @@ import { formatCurrency } from '@/lib/formatters';
 import { ReviewModal } from '@/components/ReviewModal';
 import { ReviewsDisplay } from '@/components/ReviewsDisplay';
 import { useRealtimeSubscription } from '@/hooks/useRealtimeSubscription';
+import { useTranslation } from 'react-i18next';
 
 export const ProductDetailsPage = () => {
   const { id } = useParams();
@@ -19,9 +20,10 @@ export const ProductDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
-  
+
   const { addToCart, getItemCount } = useCart();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const cartItemCount = getItemCount();
 
   // Fetch reviews for rating calc
@@ -54,7 +56,7 @@ export const ProductDetailsPage = () => {
       setProduct(data);
     } catch (error) {
       console.error('Error fetching product:', error);
-      toast({ variant: 'destructive', title: 'Erreur', description: 'Produit introuvable' });
+      toast({ variant: 'destructive', title: t('product.error_title'), description: t('product.not_found') });
       navigate('/menu');
     } finally {
       setLoading(false);
@@ -75,8 +77,8 @@ export const ProductDetailsPage = () => {
     if (added) {
       toast({
         variant: 'success',
-        title: 'Ajouté au panier !',
-        description: `${quantity}x ${product.name} ajouté au panier`,
+        title: t('product.added_title'),
+        description: t('product.added_desc', { quantity, name: product.name }),
         duration: 4000,
       });
     }
@@ -124,7 +126,7 @@ export const ProductDetailsPage = () => {
           >
             <ArrowLeft className="h-6 w-6 text-[#111827]" />
           </Button>
-          <h1 className="text-xl font-bold text-[#111827]">Détails du Produit</h1>
+          <h1 className="text-xl font-bold text-[#111827]">{t('product.details_title')}</h1>
           <div className="relative" onClick={() => navigate('/cart')}>
             <Button variant="ghost" size="icon" className="hover:bg-gray-200/50 rounded-full w-10 h-10 -mr-2">
               <ShoppingCart className="h-6 w-6 text-[#111827]" />
@@ -142,7 +144,7 @@ export const ProductDetailsPage = () => {
           <div className="mx-6 bg-white rounded-[32px] p-6 shadow-sm mb-6 relative">
              {isPromo && (
                 <div className="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-bl-2xl rounded-tr-[32px] z-10">
-                  Promo -{discount}%
+                  {t('product.promo_badge', { discount })}
                 </div>
              )}
             
@@ -179,7 +181,7 @@ export const ProductDetailsPage = () => {
             <div className="pt-4 flex justify-between items-start mb-6">
               <div className="flex flex-col">
                 <h2 className="text-xl font-bold text-[#111827] leading-tight mb-1">{product.name}</h2>
-                <p className="text-sm text-[#4b5563]">La Desirade Plus Restaurant</p>
+                <p className="text-sm text-[#4b5563]">{t('product.restaurant_name')}</p>
               </div>
               <div className="flex flex-col items-end">
                 {isPromo ? (
@@ -204,7 +206,7 @@ export const ProductDetailsPage = () => {
               <div className="flex items-center gap-2 bg-[#F5F5F5] rounded-[16px] px-4 py-3 flex-1 justify-center min-w-[90px]">
                 <Star className={`w-4 h-4 ${ratingStats.count > 0 ? 'text-yellow-500 fill-yellow-500' : 'text-gray-400'}`} />
                 <span className="font-medium text-[#4b5563] text-xs">
-                  {ratingStats.count > 0 ? ratingStats.average : 'New'}
+                  {ratingStats.count > 0 ? ratingStats.average : t('product.new_label')}
                 </span>
               </div>
               <div className="flex items-center gap-2 bg-[#F5F5F5] rounded-[16px] px-4 py-3 flex-1 justify-center min-w-[100px]">
@@ -220,24 +222,24 @@ export const ProductDetailsPage = () => {
 
           {/* Details Section */}
           <div className="px-6 mb-8">
-            <h3 className="font-bold text-base text-[#111827] mb-2">Détails</h3>
+            <h3 className="font-bold text-base text-[#111827] mb-2">{t('tracking.details')}</h3>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              {product.description || "Aucune description disponible pour ce produit."}
+              {product.description || t('product.no_description')}
             </p>
           </div>
 
           {/* Reviews Section */}
           <div className="px-6 mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-base text-[#111827]">Avis Clients</h3>
-              <Button 
-                variant="outline" 
+              <h3 className="font-bold text-base text-[#111827]">{t('product.reviews_title')}</h3>
+              <Button
+                variant="outline"
                 size="sm"
                 className="gap-2 text-[#D97706] border-[#D97706] hover:bg-amber-50"
                 onClick={() => setIsReviewModalOpen(true)}
               >
                 <MessageSquarePlus className="h-4 w-4" />
-                Écrire un avis
+                {t('product.write_review')}
               </Button>
             </div>
             
@@ -252,13 +254,13 @@ export const ProductDetailsPage = () => {
               onClick={handleAddToCart}
               className="flex-1 h-[56px] rounded-[24px] bg-white border border-[#D97706] text-[#D97706] hover:bg-amber-50 font-bold text-sm tracking-wide uppercase shadow-none"
             >
-              Ajouter
+              {t('product.add_btn')}
             </Button>
-            <Button 
+            <Button
               onClick={handlePlaceOrder}
               className="flex-1 h-[56px] rounded-[24px] bg-[#D97706] hover:bg-[#FCD34D] text-white font-bold text-sm tracking-wide uppercase shadow-lg shadow-black/20 border-0"
             >
-              Commander
+              {t('product.order_btn')}
             </Button>
           </div>
         </div>
