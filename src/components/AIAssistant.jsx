@@ -127,8 +127,13 @@ export const AIAssistant = () => {
         {!open && (
           <motion.button
             initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
+            animate={{ scale: 1, opacity: 1, y: [0, -8, 0] }}
             exit={{ scale: 0, opacity: 0 }}
+            transition={{
+              scale: { duration: 0.3 },
+              opacity: { duration: 0.3 },
+              y: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
+            }}
             onClick={() => setOpen(true)}
             className="fixed right-4 z-50 w-14 h-14 bg-[#D97706] hover:bg-[#B45309] text-white rounded-full shadow-xl shadow-amber-700/30 flex items-center justify-center transition-colors"
             style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom, 16px) + 16px)' }}
