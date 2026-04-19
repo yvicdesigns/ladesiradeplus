@@ -11,7 +11,7 @@
       "Bash(python3 -c \"from PIL import Image; print\\('PIL ok'\\)\")",
       "Bash(python3)",
       "Bash(npx supabase *)",
-      "Bash(curl -s -X POST https://yeljxgewqvjkqgagkrzs.supabase.co/functions/v1/ai-assistant -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InllbGp4Z2V3cXZqa3FnYWdrcnpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MjkyNzYsImV4cCI6MjA5MDAwNTI3Nn0.eUAmv9Xmj1UH3M9INKDeYnaFFb6Asea9TmR-MghwmTo' -H 'Content-Type: application/json' -d '{\"message\":\"Bonjour, quels sont vos plats populaires ?\",\"menuItems\":[{\"name\":\"Poulet Brais\u00e9\",\"price\":3500,\"description\":\"Poulet grill\u00e9 aux \u00e9pices\",\"is_available\":true,\"is_promo\":false},{\"name\":\"Tilapia Grill\u00e9\",\"price\":4000,\"description\":\"Poisson frais grill\u00e9\",\"is_available\":true,\"is_promo\":true,\"promo_discount\":15}],\"language\":\"fr\",\"conversationHistory\":[]}')"
+      "Bash(SUPABASE_ACCESS_TOKEN=* npx supabase *)"
     ]
   }
 }
