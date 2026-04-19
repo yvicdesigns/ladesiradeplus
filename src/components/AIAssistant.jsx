@@ -33,6 +33,15 @@ const incrementQuota = () => {
   return updated;
 };
 
+const POSITION_KEY = 'ai_assistant_position';
+
+const getSavedPosition = () => {
+  try {
+    const raw = localStorage.getItem(POSITION_KEY);
+    return raw ? JSON.parse(raw) : { x: 0, y: 0 };
+  } catch { return { x: 0, y: 0 }; }
+};
+
 export const AIAssistant = () => {
   const { i18n } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -41,7 +50,10 @@ export const AIAssistant = () => {
   const [menuItems, setMenuItems] = useState([]);
   const [messages, setMessages] = useState([]);
   const [quota, setQuota] = useState(getQuota);
+  const [dragPosition, setDragPosition] = useState(getSavedPosition);
+  const [isDragging, setIsDragging] = useState(false);
   const bottomRef = useRef(null);
+  const dragRef = useRef(null);
 
   const language = i18n.language || 'fr';
   const remaining = MAX_MESSAGES - quota.count;
@@ -126,17 +138,28 @@ export const AIAssistant = () => {
       <AnimatePresence>
         {!open && (
           <motion.button
+            ref={dragRef}
+            drag
+            dragMomentum={false}
+            dragElastic={0.1}
             initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1, y: [0, -8, 0] }}
+            animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            transition={{
-              scale: { duration: 0.3 },
-              opacity: { duration: 0.3 },
-              y: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
+            style={{
+              x: dragPosition.x,
+              y: dragPosition.y,
+              bottom: 'calc(4rem + env(safe-area-inset-bottom, 16px) + 16px)',
+              right: '1rem',
             }}
-            onClick={() => setOpen(true)}
-            className="fixed right-4 z-50 w-14 h-14 bg-[#D97706] hover:bg-[#B45309] text-white rounded-full shadow-xl shadow-amber-700/30 flex items-center justify-center transition-colors"
-            style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom, 16px) + 16px)' }}
+            onDragStart={() => setIsDragging(true)}
+            onDragEnd={(_, info) => {
+              setIsDragging(false);
+              const newPos = { x: dragPosition.x + info.offset.x, y: dragPosition.y + info.offset.y };
+              setDragPosition(newPos);
+              localStorage.setItem(POSITION_KEY, JSON.stringify(newPos));
+            }}
+            onClick={() => { if (!isDragging) setOpen(true); }}
+            className="fixed z-50 w-14 h-14 bg-[#D97706] hover:bg-[#B45309] text-white rounded-full shadow-xl shadow-amber-700/30 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none"
           >
             <MessageCircle className="w-6 h-6" />
             <span className={`absolute -top-1 -right-1 w-4 h-4 ${isLimitReached ? 'bg-gray-400' : 'bg-green-500'} rounded-full border-2 border-white`} />
