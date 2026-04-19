@@ -3,6 +3,7 @@ import { MessageCircle, X, Send, Loader2, Bot, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -43,7 +44,11 @@ const getSavedPosition = () => {
 };
 
 export const AIAssistant = () => {
+  const { user } = useAuth();
   const { i18n } = useTranslation();
+
+  // Only show for authenticated users
+  if (!user) return null;
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
