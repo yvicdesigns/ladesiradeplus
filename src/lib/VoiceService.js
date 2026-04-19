@@ -1,7 +1,17 @@
 /**
  * VoiceService - A safe wrapper for Web Speech API with comprehensive error handling,
  * detailed diagnostic logging, and fallback mechanisms.
+ * On Capacitor (Android/iOS), uses the native TTS plugin instead of speechSynthesis.
  */
+import { TextToSpeech } from '@capacitor-community/text-to-speech';
+
+const isNative = () => {
+  try {
+    return typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.();
+  } catch {
+    return false;
+  }
+};
 
 // Internal memory for diagnostic logs
 const diagnosticLogs = [];
@@ -224,7 +234,30 @@ export const VoiceService = {
 
   speak: async (text, options = {}) => {
     addLog('INFO', 'Speak called', { text, options });
-    
+
+    // Use native TTS on Android/iOS (Capacitor)
+    if (isNative()) {
+      try {
+        if (options.onStart) options.onStart();
+        await TextToSpeech.speak({
+          text,
+          lang: options.lang || 'fr-FR',
+          rate: options.rate || 1.0,
+          pitch: options.pitch || 1.0,
+          volume: options.volume || 1.0,
+          category: 'ambient',
+        });
+        addLog('SUCCESS', 'Native TTS spoke successfully');
+        if (options.onEnd) options.onEnd();
+        return true;
+      } catch (err) {
+        addLog('ERROR', 'Native TTS failed, falling back to beep', err);
+        if (options.onError) options.onError(err);
+        VoiceService.playFallbackBeep();
+        return false;
+      }
+    }
+
     if (!VoiceService.isSupported()) {
       addLog('WARN', 'Speak failed - browser not supported. Triggering fallback.');
       VoiceService.playFallbackBeep();
@@ -346,6 +379,10 @@ export const VoiceService = {
 
   stop: () => {
     try {
+      if (isNative()) {
+        TextToSpeech.stop().catch(() => {});
+        return;
+      }
       if (VoiceService.isSupported() && window.speechSynthesis.speaking) {
         addLog('INFO', 'Stopping speech manually');
         window.speechSynthesis.cancel();

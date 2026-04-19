@@ -114,6 +114,14 @@ export const AIAssistant = () => {
       const data = await res.json();
       if (data.reply) {
         setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
+        // Save custom request to DB for admin review
+        if (data.customRequest) {
+          supabase.from('customer_requests').insert({
+            request_text: userMsg,
+            suggested_dish: data.customRequest,
+            status: 'new',
+          });
+        }
       } else throw new Error(data.error || 'No reply');
     } catch {
       setMessages(prev => [...prev, {

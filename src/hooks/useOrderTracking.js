@@ -213,8 +213,18 @@ export const useOrderTracking = (paramId) => {
     };
   }, [order?.id, order?.orders?.id, orderType, fetchOrder]);
 
-  return { 
-    order, 
+  // Polling fallback — refreshes every 10s while order is in an active status
+  // Ensures updates reach the client even if realtime WebSocket is unstable (e.g. Android WebView)
+  useEffect(() => {
+    const activeStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'new'];
+    if (!order || !activeStatuses.includes(order.status)) return;
+
+    const interval = setInterval(() => fetchOrder(true), 10000);
+    return () => clearInterval(interval);
+  }, [order?.status, fetchOrder]);
+
+  return {
+    order,
     loading, 
     error, 
     refresh: () => fetchOrder(false),

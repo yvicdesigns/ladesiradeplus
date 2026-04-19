@@ -14,6 +14,7 @@ import { usePersistentOrderAlert } from '@/hooks/usePersistentOrderAlert';
 import { usePersistentReservationAlert } from '@/hooks/usePersistentReservationAlert';
 import { usePersistentRestaurantOrderAlert } from '@/hooks/usePersistentRestaurantOrderAlert';
 import { useOrderAutoProgression } from '@/hooks/useOrderAutoProgression';
+import { useAdminWakeLock } from '@/hooks/useAdminWakeLock';
 
 class SidebarErrorBoundary extends React.Component {
   constructor(props) {
@@ -54,6 +55,8 @@ export const AdminLayout = ({ children }) => {
   const { pendingOrders: pendingRestaurantOrders, acknowledgeAll: acknowledgeAllRestaurant } = usePersistentRestaurantOrderAlert();
   // Flux automatique — tourne en arrière-plan sur toutes les pages admin
   useOrderAutoProgression();
+  // Garde l'écran allumé sur les routes admin (tablette de cuisine/caisse)
+  useAdminWakeLock();
 
   return (
     <div className="flex h-[100dvh] bg-background overflow-hidden font-sans text-foreground landscape:flex-row">

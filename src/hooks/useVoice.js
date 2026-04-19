@@ -19,6 +19,10 @@ export const useVoice = (role = 'client') => {
   // Called once during initialization. VoiceService now caches this internally.
   const [isSupported] = useState(() => {
     try {
+      // On native Capacitor (Android/iOS), TTS is always available via native plugin
+      if (typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.()) {
+        return true;
+      }
       if (typeof VoiceService !== 'undefined' && typeof VoiceService.isSupported === 'function') {
         return VoiceService.isSupported();
       }

@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
-import { Loader2, MessageSquare, Trash2, Upload, FileImage as ImageIcon } from 'lucide-react';
+import { Loader2, MessageSquare, Trash2, Upload, FileImage as ImageIcon, LocateFixed, MapPin, CheckCircle } from 'lucide-react';
 import { isValidAdminSettingsId, DEFAULT_ADMIN_SETTINGS_ID } from '@/lib/adminSettingsUtils';
 
 export const AdminRestaurantTab = () => {
@@ -21,6 +21,11 @@ export const AdminRestaurantTab = () => {
   const [settingsId, setSettingsId] = useState(null);
   const [restaurantId, setRestaurantId] = useState(null);
   const { toast } = useToast();
+
+  // Restaurant GPS location
+  const [restaurantCoords, setRestaurantCoords] = useState({ lat: '', lng: '' });
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const [coordsSaved, setCoordsSaved] = useState(false);
 
   const currentLogo = watch('logo_url');
   const currentBanner = watch('banner_url');
@@ -76,6 +81,20 @@ export const AdminRestaurantTab = () => {
       }
     };
     fetchSettings();
+
+    // Load saved restaurant coordinates
+    const fetchCoords = async () => {
+      const { data } = await supabase
+        .from('admin_config')
+        .select('config_key, config_value')
+        .in('config_key', ['restaurant_latitude', 'restaurant_longitude']);
+      if (data) {
+        const lat = data.find(r => r.config_key === 'restaurant_latitude')?.config_value || '';
+        const lng = data.find(r => r.config_key === 'restaurant_longitude')?.config_value || '';
+        setRestaurantCoords({ lat, lng });
+      }
+    };
+    fetchCoords();
   }, [user, reset, toast]);
 
   const handleImageUpload = async (e, field, bucket = 'restaurant-assets') => {
@@ -153,6 +172,46 @@ export const AdminRestaurantTab = () => {
     }
   };
 
+  const handleCaptureGPS = () => {
+    if (!navigator.geolocation) {
+      toast({ variant: 'destructive', description: 'GPS non supporté sur cet appareil.' });
+      return;
+    }
+    setGpsLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setRestaurantCoords({
+          lat: pos.coords.latitude.toFixed(6),
+          lng: pos.coords.longitude.toFixed(6)
+        });
+        setGpsLoading(false);
+        toast({ title: 'Position capturée', description: 'Cliquez sur "Sauvegarder la position" pour confirmer.' });
+      },
+      () => {
+        setGpsLoading(false);
+        toast({ variant: 'destructive', description: 'Impossible d\'obtenir la position GPS. Vérifiez les permissions.' });
+      },
+      { enableHighAccuracy: true, timeout: 15000 }
+    );
+  };
+
+  const handleSaveCoords = async () => {
+    const { lat, lng } = restaurantCoords;
+    if (!lat || !lng || isNaN(parseFloat(lat)) || isNaN(parseFloat(lng))) {
+      toast({ variant: 'destructive', description: 'Coordonnées invalides.' });
+      return;
+    }
+    try {
+      await supabase.from('admin_config').upsert({ config_key: 'restaurant_latitude', config_value: String(lat) }, { onConflict: 'config_key' });
+      await supabase.from('admin_config').upsert({ config_key: 'restaurant_longitude', config_value: String(lng) }, { onConflict: 'config_key' });
+      setCoordsSaved(true);
+      setTimeout(() => setCoordsSaved(false), 3000);
+      toast({ title: 'Position sauvegardée', description: `Lat: ${lat}, Lng: ${lng}` });
+    } catch (err) {
+      toast({ variant: 'destructive', description: 'Erreur lors de la sauvegarde.' });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -221,6 +280,53 @@ export const AdminRestaurantTab = () => {
                 <div className="space-y-2">
                   <Label>Full Address</Label>
                   <Input {...register('restaurant_address')} placeholder="123 Main St, Suite 100" />
+                </div>
+              </div>
+            </div>
+
+            {/* GPS Coordinates Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium border-b pb-2 flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-amber-600" /> Position GPS du Restaurant
+              </h3>
+              <p className="text-sm text-gray-500">
+                Rendez-vous à l'adresse de votre restaurant, puis cliquez sur le bouton ci-dessous pour capturer votre position. Elle sera utilisée pour calculer les frais de livraison.
+              </p>
+              <div className="flex gap-3 flex-wrap">
+                <button type="button" onClick={handleCaptureGPS} disabled={gpsLoading}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-semibold text-sm transition-all disabled:opacity-60">
+                  {gpsLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <LocateFixed className="w-4 h-4" />}
+                  {gpsLoading ? 'Localisation...' : 'Capturer ma position GPS'}
+                </button>
+                {restaurantCoords.lat && (
+                  <button type="button" onClick={handleSaveCoords}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold text-sm transition-all">
+                    {coordsSaved ? <CheckCircle className="w-4 h-4" /> : <MapPin className="w-4 h-4" />}
+                    {coordsSaved ? 'Sauvegardé !' : 'Sauvegarder la position'}
+                  </button>
+                )}
+              </div>
+              {restaurantCoords.lat && (
+                <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-sm text-green-800 font-mono flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600 shrink-0" />
+                  Lat: {restaurantCoords.lat} | Lng: {restaurantCoords.lng}
+                  {!coordsSaved && <span className="text-xs text-amber-600 font-sans ml-2">(non sauvegardé)</span>}
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs text-gray-500">Latitude (manuel)</label>
+                  <input type="number" step="any" value={restaurantCoords.lat}
+                    onChange={e => setRestaurantCoords(p => ({ ...p, lat: e.target.value }))}
+                    className="w-full h-9 px-3 border border-gray-200 rounded-lg text-sm"
+                    placeholder="-4.206210" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-gray-500">Longitude (manuel)</label>
+                  <input type="number" step="any" value={restaurantCoords.lng}
+                    onChange={e => setRestaurantCoords(p => ({ ...p, lng: e.target.value }))}
+                    className="w-full h-9 px-3 border border-gray-200 rounded-lg text-sm"
+                    placeholder="15.243300" />
                 </div>
               </div>
             </div>

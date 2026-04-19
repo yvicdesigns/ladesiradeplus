@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { LayoutDashboard, History, Utensils, Truck, CalendarDays, BarChart3, FileText, Database, Trash2, UtensilsCrossed, Grid3x3, Map, Calculator, Users, Star, Package, Send, Calendar, Bell, Settings, ChevronDown, ChevronRight, ChevronLeft, X, LogOut, ShieldCheck, Wrench, ShoppingBag, Store, Briefcase, Activity, FileImage as ImageIcon, FlaskConical, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, History, Utensils, Truck, CalendarDays, BarChart3, FileText, Database, Trash2, UtensilsCrossed, Grid3x3, Map, Calculator, Users, Star, Package, Send, Calendar, Bell, Settings, ChevronDown, ChevronRight, ChevronLeft, X, LogOut, ShieldCheck, Wrench, ShoppingBag, Store, Briefcase, Activity, FileImage as ImageIcon, FlaskConical, MessageSquare, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -218,6 +218,7 @@ export const AdminSidebar = ({ className, mobile, onClose }) => {
         <SidebarGroup icon={Briefcase} label={t('admin.sidebar.business', 'Affaires')} collapsed={isCollapsed} expanded={sections.business} onToggle={() => toggleSection('business')}>
           <SidebarItem to="/admin/reviews" icon={Star} label={t('admin.sidebar.reviews', 'Avis')} badgeCount={reviewsCount || 0} badgeClassName={badgePrimaryStyle} collapsed={isCollapsed} onClick={handleItemClick} />
           {isAdmin && <SidebarItem to="/admin/messagerie" icon={MessageSquare} label={t('admin.sidebar.messaging', 'Messagerie')} badgeCount={messagesCount || 0} badgeClassName={badgePrimaryStyle} collapsed={isCollapsed} onClick={handleItemClick} />}
+          <SidebarItem to="/admin/custom-requests" icon={Sparkles} label="Demandes IA" collapsed={isCollapsed} onClick={handleItemClick} />
         </SidebarGroup>
 
         <SidebarGroup icon={BarChart3} label={t('admin.sidebar.analytics_group', 'Analytiques')} collapsed={isCollapsed} expanded={sections.analytics} onToggle={() => toggleSection('analytics')}>

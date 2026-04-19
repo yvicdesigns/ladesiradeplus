@@ -1,12 +1,24 @@
 import { useState, useEffect, useCallback } from 'react';
 import { VoiceService } from '@/lib/VoiceService';
 
+const isNativePlatform = () => {
+  try { return typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.(); }
+  catch { return false; }
+};
+
 export function useVoiceDiagnostics() {
-  const [status, setStatus] = useState(VoiceService.getVoiceServiceStatus());
+  const [status, setStatus] = useState(() => {
+    if (isNativePlatform()) return { isSupported: true, voiceCount: 1, voicesLoaded: true };
+    return VoiceService.getVoiceServiceStatus();
+  });
   const [logs, setLogs] = useState(VoiceService.getDiagnosticLogs());
 
   const refreshDiagnostics = useCallback(() => {
-    setStatus(VoiceService.getVoiceServiceStatus());
+    if (isNativePlatform()) {
+      setStatus({ isSupported: true, voiceCount: 1, voicesLoaded: true });
+    } else {
+      setStatus(VoiceService.getVoiceServiceStatus());
+    }
     setLogs(VoiceService.getDiagnosticLogs());
   }, []);
 

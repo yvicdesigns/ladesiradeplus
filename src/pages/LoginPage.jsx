@@ -2,18 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Loader2, 
-  Mail, 
-  Lock, 
-  User, 
-  Phone, 
-  ChefHat, 
+import {
+  Loader2,
+  Mail,
+  Lock,
+  User,
+  Phone,
+  ChefHat,
   ArrowLeft,
   Eye,
   EyeOff,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  ShieldCheck
 } from 'lucide-react';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { supabase } from '@/lib/customSupabaseClient';
@@ -720,6 +721,18 @@ export const LoginPage = () => {
             </div>}
           </div>
         </motion.div>
+
+        {/* Accès admin discret */}
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.5 }}
+          onClick={() => navigate('/admin/login')}
+          className="mt-4 flex items-center gap-1.5 text-white/30 hover:text-white/60 text-xs font-medium transition-colors z-20"
+        >
+          <ShieldCheck className="w-3.5 h-3.5" />
+          Espace Administration
+        </motion.button>
       </div>
     </>
   );

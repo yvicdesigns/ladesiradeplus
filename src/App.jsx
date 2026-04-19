@@ -55,6 +55,7 @@ const AdminPromoBannerPage = lazy(() => import('./pages/AdminPromoBannerPage'));
 const AdminTablesPage = lazy(() => import('./pages/AdminTablesPage'));
 const AdminReservationsPage = lazy(() => import('./pages/AdminReservationsPage'));
 const AdminFeedbackPage = lazy(() => import('./pages/AdminFeedbackPage'));
+const AdminCustomRequestsPage = lazy(() => import('./pages/AdminCustomRequestsPage'));
 const AdminReportsPage = lazy(() => import('./pages/AdminReportsPage'));
 const AdminHistoryPage = lazy(() => import('./pages/AdminHistoryPage'));
 const AdminCalendarPage = lazy(() => import('./pages/AdminCalendarPage'));
@@ -138,6 +139,7 @@ function AppRoutes() {
           <Route path="/admin/tables" element={<ProtectedRoute requireAdmin><SuspenseWrapper><AdminTablesPage /></SuspenseWrapper></ProtectedRoute>} />
           <Route path="/admin/reservations" element={<ProtectedRoute requireAdmin><SuspenseWrapper><AdminReservationsPage /></SuspenseWrapper></ProtectedRoute>} />
           <Route path="/admin/feedback" element={<ProtectedRoute requireAdmin><SuspenseWrapper><AdminFeedbackPage /></SuspenseWrapper></ProtectedRoute>} />
+          <Route path="/admin/custom-requests" element={<ProtectedRoute requireAdmin><SuspenseWrapper><AdminCustomRequestsPage /></SuspenseWrapper></ProtectedRoute>} />
           <Route path="/admin/reports" element={<ProtectedRoute requireAdmin><SuspenseWrapper><AdminReportsPage /></SuspenseWrapper></ProtectedRoute>} />
           <Route path="/admin/history" element={<ProtectedRoute requireAdmin><SuspenseWrapper><AdminHistoryPage /></SuspenseWrapper></ProtectedRoute>} />
           <Route path="/admin/calendar" element={<ProtectedRoute requireAdmin><SuspenseWrapper><AdminCalendarPage /></SuspenseWrapper></ProtectedRoute>} />

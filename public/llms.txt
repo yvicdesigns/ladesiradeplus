@@ -1,0 +1,28 @@
+## Pages
+- [-](/home): Découvrez la cuisine authentique.
+- [- La Desirade Plus](/cart): No description available
+- [- La Desirade Plus](/checkout): No description available
+- [- La Desirade Plus](/login): No description available
+- [- La Desirade Plus](/mobilemoneypayment): No description available
+- [- Menu`} - La Desirade Plus](/qrmenu): No description available
+- [Confirmation - La Desirade Plus](/orderconfirmation): No description available
+- [Correction RLS - Administration](/adminrlsfix): No description available
+- [Demandes Clients IA — Admin](/admincustomrequests): No description available
+- [Diagnostic Clés Étrangères - Admin](/adminforeignkeydiagnostic): No description available
+- [Historique des commandes - La Desirade Plus](/history): No description available
+- [Mes Commandes - La Desirade Plus](/orders): No description available
+- [Mes Réservations - La Desirade Plus](/reservations): No description available
+- [Messagerie - Admin La Desirade Plus](/adminmessaging): No description available
+- [Messages - Admin](/adminmessage): Gestion des messages administrateur
+- [Mon Profil - Key's Food](/profile): No description available
+- [Paiement - La Desirade Plus](/paymentproof): No description available
+- [Paramètres - La Desirade Plus](/settings): No description available
+- [Recherche - La Desirade Plus](/search): No description available
+- [Réinitialiser le mot de passe - La Desirade Plus](/resetpassword): No description available
+- [RLS Configuration - Administration](/adminrlsdiagnostics): No description available
+- [RLS Debug - Administration](/adminrlsdebug): No description available
+- [Suivi de commande  - La Desirade Plus](/restaurantordertracking): No description available
+- [Suivi de Commande #](/ordertracking): No description available
+- [Tests de Corrections - Administration](/admintestcorrections): No description available
+- [Tests Exhaustifs RLS - Administration](/adminrlstest): No description available
+- [Tests Manuels QA - Admin](/adminmanualtests): No description available

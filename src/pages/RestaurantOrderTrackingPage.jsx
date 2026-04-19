@@ -2,12 +2,13 @@ import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet';
-import { Utensils, AlertCircle, ShoppingBag, Store, ArrowLeft, Receipt } from 'lucide-react';
+import { Utensils, AlertCircle, ShoppingBag, Store, ArrowLeft, Receipt, ChefHat } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { OrderTrackingTimeline } from '@/components/OrderTrackingTimeline';
 import { useOrderTracking } from '@/hooks/useOrderTracking';
 import { useTableSelection } from '@/hooks/useTableSelection';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { formatCurrency } from '@/lib/formatters';
 
 export const RestaurantOrderTrackingPage = () => {
@@ -17,6 +18,7 @@ export const RestaurantOrderTrackingPage = () => {
   
   const { order, loading, error } = useOrderTracking(id);
   const { getTableNumber } = useTableSelection();
+  const { user } = useAuth();
 
   if (loading) {
     return (
@@ -27,6 +29,39 @@ export const RestaurantOrderTrackingPage = () => {
   }
 
   if (error || !order) {
+    // Anonymous in-restaurant customer — friendly message instead of error
+    if (!user) {
+      return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+          <Card className="max-w-md w-full text-center">
+            <CardContent className="pt-8 pb-8 space-y-4">
+              <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mx-auto">
+                <ChefHat className="w-10 h-10 text-amber-500" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900">Commande reçue !</h2>
+              <p className="text-gray-500 text-sm leading-relaxed">
+                Votre commande est en cours de préparation.<br />
+                Votre serveur vous apportera votre plat à table.
+              </p>
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 leading-relaxed">
+                Vous souhaitez suivre vos commandes en temps réel ?{' '}
+                <button onClick={() => navigate('/login')} className="font-bold underline hover:text-amber-900">
+                  Connectez-vous
+                </button>
+                {' '}ou{' '}
+                <button onClick={() => navigate('/login')} className="font-bold underline hover:text-amber-900">
+                  créez un compte gratuitement
+                </button>.
+              </div>
+              <Button onClick={() => navigate('/menu')} className="w-full bg-[#D97706] hover:bg-[#B45309] text-white">
+                Retour au menu
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <Card className="max-w-md w-full text-center">
