@@ -1,10 +1,21 @@
 import { getQuarterByName } from './BrazzavilleQuarters';
 
-// Coordinates for Nkombo (Restaurant Location)
+// Default fallback coordinates (used if admin hasn't set GPS location yet)
 export const NKOMBO_COORDINATES = {
   latitude: -4.20621,
   longitude: 15.24330
 };
+
+// Runtime override — set by CheckoutPage after fetching from admin_config
+let _restaurantCoords = null;
+
+export const setRestaurantCoordinates = (lat, lng) => {
+  if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
+    _restaurantCoords = { latitude: parseFloat(lat), longitude: parseFloat(lng) };
+  }
+};
+
+export const getRestaurantCoordinates = () => _restaurantCoords || NKOMBO_COORDINATES;
 
 const NOMINATIM_API_URL = 'https://nominatim.openstreetmap.org/search';
 const OSRM_API_URL = 'https://router.project-osrm.org/route/v1/driving';
@@ -71,7 +82,7 @@ export const DeliveryDistanceService = {
    */
   getDistanceFromNkombo(coordinates) {
     if (!coordinates || !coordinates.latitude || !coordinates.longitude) return 0;
-    return this.calculateHaversineDistance(NKOMBO_COORDINATES, coordinates);
+    return this.calculateHaversineDistance(getRestaurantCoordinates(), coordinates);
   },
 
   /**
