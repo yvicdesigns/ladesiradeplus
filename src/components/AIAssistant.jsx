@@ -106,7 +106,8 @@ export const AIAssistant = ({ restaurantId }) => {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             onClick={() => setOpen(true)}
-            className="fixed bottom-24 right-4 z-50 w-14 h-14 bg-[#D97706] hover:bg-[#B45309] text-white rounded-full shadow-xl shadow-amber-700/30 flex items-center justify-center transition-colors"
+            className="fixed right-4 z-50 w-14 h-14 bg-[#D97706] hover:bg-[#B45309] text-white rounded-full shadow-xl shadow-amber-700/30 flex items-center justify-center transition-colors"
+            style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom, 16px) + 16px)' }}
           >
             <MessageCircle className="w-6 h-6" />
             <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white" />
@@ -122,8 +123,8 @@ export const AIAssistant = ({ restaurantId }) => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 40, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-20 right-4 z-50 w-[calc(100vw-2rem)] max-w-sm bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-gray-100"
-            style={{ height: '480px' }}
+            className="fixed right-4 z-50 w-[calc(100vw-2rem)] max-w-sm bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-gray-100"
+            style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom, 16px) + 16px)', height: '480px' }}
           >
             {/* Header */}
             <div className="bg-[#D97706] px-4 py-3 flex items-center justify-between flex-shrink-0">

@@ -22,7 +22,6 @@ import { PromoBanner } from '@/components/PromoBanner';
 import { useProductsWithRetry } from '@/hooks/useProductsWithRetry';
 import { useConnectionStatus } from '@/hooks/useConnectionStatus';
 import { ReviewModal } from '@/components/ReviewModal';
-import { AIAssistant } from '@/components/AIAssistant';
 import { logger } from '@/lib/logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRestaurant } from '@/contexts/RestaurantContext';
@@ -556,7 +555,6 @@ export const MenuPage = () => {
       </div>
 
       <ReviewModal open={isReviewModalOpen} onClose={() => setIsReviewModalOpen(false)} menuItem={reviewItem} />
-      <AIAssistant restaurantId={restaurantId} />
     </>
   );
 };

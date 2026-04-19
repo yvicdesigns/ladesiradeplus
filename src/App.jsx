@@ -7,6 +7,7 @@ import { MobileBottomNav } from './components/MobileBottomNav';
 import { ensureAdminSettingsExists } from './lib/adminSettingsSetup';
 import { runStartupDiagnostics } from './lib/startupDiagnostics';
 import { ConnectionStatusMonitor } from './components/ConnectionStatusMonitor';
+import { AIAssistant } from './components/AIAssistant';
 import './i18n/config';
 
 // Lazy load Client pages
@@ -82,7 +83,7 @@ const SuspenseWrapper = ({ children }) => (
 
 function AppRoutes() {
   return (
-    <div className="flex flex-col min-h-[100dvh] w-full max-w-[100vw] overflow-x-hidden bg-[#F7F7F7]">
+    <div className="flex flex-col min-h-[100dvh] w-full max-w-[100vw] overflow-x-clip bg-[#F7F7F7]">
       <Header />
       <main className="flex-1 flex flex-col w-full relative">
         <Routes>
@@ -169,6 +170,7 @@ function AppRoutes() {
         </Routes>
       </main>
       <MobileBottomNav />
+      <AIAssistant />
     </div>
   );
 }
