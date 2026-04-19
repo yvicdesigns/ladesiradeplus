@@ -143,7 +143,12 @@ export const AIAssistant = () => {
             dragMomentum={false}
             dragElastic={0.1}
             initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
+            animate={{ scale: 1, opacity: 1, y: [0, -8, 0] }}
+            transition={{
+              scale: { duration: 0.3 },
+              opacity: { duration: 0.3 },
+              y: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
+            }}
             exit={{ scale: 0, opacity: 0 }}
             style={{
               x: dragPosition.x,
