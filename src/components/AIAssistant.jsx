@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Loader2, Bot, Sparkles } from 'lucide-react';
+import { MessageCircle, X, Send, Loader2, Bot, Sparkles, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useTranslation } from 'react-i18next';
@@ -197,29 +197,27 @@ export const AIAssistant = () => {
             style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom, 16px) + 16px)', height: '480px' }}
           >
             {/* Header */}
-            <div className="bg-[#D97706] px-4 py-3 flex items-center justify-between flex-shrink-0">
+            <div className="bg-[#D97706] px-3 py-3 flex items-center justify-between flex-shrink-0">
+              <button
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white font-semibold text-sm px-3 py-1.5 rounded-xl transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" /> Retour
+              </button>
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-white" />
+                <div className="w-7 h-7 bg-white/20 rounded-full flex items-center justify-center">
+                  <Sparkles className="w-3.5 h-3.5 text-white" />
                 </div>
-                <div>
-                  <p className="text-white font-bold text-sm">Assistant IA</p>
-                  <p className="text-white/70 text-xs">La Desirade Plus</p>
-                </div>
+                <p className="text-white font-bold text-sm">Assistant IA</p>
               </div>
-              <div className="flex items-center gap-3">
-                {/* Quota indicator */}
-                <div className="flex gap-1">
-                  {Array.from({ length: MAX_MESSAGES }).map((_, i) => (
-                    <span
-                      key={i}
-                      className={`w-2 h-2 rounded-full ${i < quota.count ? 'bg-white/30' : 'bg-white'}`}
-                    />
-                  ))}
-                </div>
-                <button onClick={() => setOpen(false)} className="text-white/80 hover:text-white transition-colors">
-                  <X className="w-5 h-5" />
-                </button>
+              {/* Quota indicator */}
+              <div className="flex gap-1">
+                {Array.from({ length: MAX_MESSAGES }).map((_, i) => (
+                  <span
+                    key={i}
+                    className={`w-2 h-2 rounded-full ${i < quota.count ? 'bg-white/30' : 'bg-white'}`}
+                  />
+                ))}
               </div>
             </div>
 
