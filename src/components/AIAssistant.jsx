@@ -6,21 +6,54 @@ import { useTranslation } from 'react-i18next';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const MAX_MESSAGES = 5;
+const WINDOW_MS = 12 * 60 * 60 * 1000; // 12 heures
+const STORAGE_KEY = 'ai_assistant_quota';
 
-export const AIAssistant = ({ restaurantId }) => {
-  const { t, i18n } = useTranslation();
+const getQuota = () => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return { count: 0, resetAt: Date.now() + WINDOW_MS };
+    const quota = JSON.parse(raw);
+    if (Date.now() > quota.resetAt) {
+      const fresh = { count: 0, resetAt: Date.now() + WINDOW_MS };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
+      return fresh;
+    }
+    return quota;
+  } catch {
+    return { count: 0, resetAt: Date.now() + WINDOW_MS };
+  }
+};
+
+const incrementQuota = () => {
+  const quota = getQuota();
+  const updated = { ...quota, count: quota.count + 1 };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  return updated;
+};
+
+export const AIAssistant = () => {
+  const { i18n } = useTranslation();
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [menuItems, setMenuItems] = useState([]);
   const [messages, setMessages] = useState([]);
+  const [quota, setQuota] = useState(getQuota);
   const bottomRef = useRef(null);
 
   const language = i18n.language || 'fr';
+  const remaining = MAX_MESSAGES - quota.count;
+  const isLimitReached = remaining <= 0;
 
   const welcomeMsg = language === 'en'
     ? "👋 Hello! I'm your assistant at La Desirade Plus. What would you like to eat today? I can help you choose from our menu!"
     : "👋 Bonjour ! Je suis votre assistant La Desirade Plus. Qu'avez-vous envie de manger aujourd'hui ? Je peux vous aider à choisir parmi notre menu !";
+
+  const limitMsg = language === 'en'
+    ? "⏳ You've used your 5 messages for this session. Come back in 12 hours or go ahead and place your order!"
+    : "⏳ Vous avez utilisé vos 5 messages pour cette période. Revenez dans 12h ou passez directement votre commande !";
 
   useEffect(() => {
     if (open && menuItems.length === 0) {
@@ -29,14 +62,14 @@ export const AIAssistant = ({ restaurantId }) => {
         .select('name, price, description, is_available, is_promo, promo_discount, menu_categories(name)')
         .eq('is_available', true)
         .then(({ data }) => {
-          if (data) {
-            setMenuItems(data.map(i => ({ ...i, category: i.menu_categories?.name })));
-          }
+          if (data) setMenuItems(data.map(i => ({ ...i, category: i.menu_categories?.name })));
         });
     }
     if (open && messages.length === 0) {
       setMessages([{ role: 'assistant', content: welcomeMsg }]);
     }
+    // Refresh quota when opening
+    if (open) setQuota(getQuota());
   }, [open]);
 
   useEffect(() => {
@@ -44,17 +77,17 @@ export const AIAssistant = ({ restaurantId }) => {
   }, [messages]);
 
   const sendMessage = async () => {
-    if (!input.trim() || loading) return;
+    if (!input.trim() || loading || isLimitReached) return;
 
     const userMsg = input.trim();
     setInput('');
     setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
     setLoading(true);
 
-    // Build conversation history (last 6 exchanges max to save tokens)
-    const history = messages
-      .slice(-6)
-      .map(m => ({ role: m.role, content: m.content }));
+    const updated = incrementQuota();
+    setQuota(updated);
+
+    const history = messages.slice(-6).map(m => ({ role: m.role, content: m.content }));
 
     try {
       const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-assistant`, {
@@ -63,26 +96,17 @@ export const AIAssistant = ({ restaurantId }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
         },
-        body: JSON.stringify({
-          message: userMsg,
-          menuItems,
-          language,
-          conversationHistory: history,
-        }),
+        body: JSON.stringify({ message: userMsg, menuItems, language, conversationHistory: history }),
       });
 
       const data = await res.json();
       if (data.reply) {
         setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
-      } else {
-        throw new Error(data.error || 'No reply');
-      }
+      } else throw new Error(data.error || 'No reply');
     } catch {
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: language === 'en'
-          ? "Sorry, I'm having trouble right now. Please try again!"
-          : "Désolé, j'ai un problème en ce moment. Réessayez !",
+        content: language === 'en' ? "Sorry, I'm having trouble. Please try again!" : "Désolé, une erreur est survenue. Réessayez !",
       }]);
     } finally {
       setLoading(false);
@@ -90,11 +114,11 @@ export const AIAssistant = ({ restaurantId }) => {
   };
 
   const handleKey = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   };
+
+  // Compute hours left before reset
+  const hoursLeft = Math.ceil((quota.resetAt - Date.now()) / (1000 * 60 * 60));
 
   return (
     <>
@@ -110,7 +134,7 @@ export const AIAssistant = ({ restaurantId }) => {
             style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom, 16px) + 16px)' }}
           >
             <MessageCircle className="w-6 h-6" />
-            <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white" />
+            <span className={`absolute -top-1 -right-1 w-4 h-4 ${isLimitReached ? 'bg-gray-400' : 'bg-green-500'} rounded-full border-2 border-white`} />
           </motion.button>
         )}
       </AnimatePresence>
@@ -137,9 +161,20 @@ export const AIAssistant = ({ restaurantId }) => {
                   <p className="text-white/70 text-xs">La Desirade Plus</p>
                 </div>
               </div>
-              <button onClick={() => setOpen(false)} className="text-white/80 hover:text-white transition-colors">
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-3">
+                {/* Quota indicator */}
+                <div className="flex gap-1">
+                  {Array.from({ length: MAX_MESSAGES }).map((_, i) => (
+                    <span
+                      key={i}
+                      className={`w-2 h-2 rounded-full ${i < quota.count ? 'bg-white/30' : 'bg-white'}`}
+                    />
+                  ))}
+                </div>
+                <button onClick={() => setOpen(false)} className="text-white/80 hover:text-white transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Messages */}
@@ -173,26 +208,35 @@ export const AIAssistant = ({ restaurantId }) => {
               <div ref={bottomRef} />
             </div>
 
-            {/* Input */}
+            {/* Input or limit message */}
             <div className="p-3 bg-white border-t border-gray-100 flex-shrink-0">
-              <div className="flex gap-2 items-center bg-gray-50 rounded-2xl px-3 py-2 border border-gray-200 focus-within:border-[#D97706] transition-colors">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKey}
-                  placeholder={language === 'en' ? 'Ask me anything...' : 'Posez-moi une question...'}
-                  className="flex-1 bg-transparent text-sm outline-none text-gray-800 placeholder:text-gray-400"
-                  disabled={loading}
-                />
-                <button
-                  onClick={sendMessage}
-                  disabled={!input.trim() || loading}
-                  className="w-8 h-8 bg-[#D97706] hover:bg-[#B45309] disabled:opacity-40 text-white rounded-full flex items-center justify-center transition-colors flex-shrink-0"
-                >
-                  <Send className="w-3.5 h-3.5" />
-                </button>
-              </div>
+              {isLimitReached ? (
+                <div className="text-center text-xs text-gray-500 py-2 px-3 bg-gray-50 rounded-2xl border border-gray-200">
+                  {limitMsg}
+                  <p className="mt-1 font-semibold text-[#D97706]">
+                    {language === 'en' ? `Resets in ~${hoursLeft}h` : `Disponible dans ~${hoursLeft}h`}
+                  </p>
+                </div>
+              ) : (
+                <div className="flex gap-2 items-center bg-gray-50 rounded-2xl px-3 py-2 border border-gray-200 focus-within:border-[#D97706] transition-colors">
+                  <input
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKey}
+                    placeholder={language === 'en' ? `Ask me anything… (${remaining} left)` : `Posez votre question… (${remaining} restant${remaining > 1 ? 's' : ''})`}
+                    className="flex-1 bg-transparent text-sm outline-none text-gray-800 placeholder:text-gray-400"
+                    disabled={loading}
+                  />
+                  <button
+                    onClick={sendMessage}
+                    disabled={!input.trim() || loading}
+                    className="w-8 h-8 bg-[#D97706] hover:bg-[#B45309] disabled:opacity-40 text-white rounded-full flex items-center justify-center transition-colors flex-shrink-0"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
