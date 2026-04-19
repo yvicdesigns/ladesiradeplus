@@ -5,6 +5,30 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
+const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+
+async function saveCustomRequest(requestText: string, suggestedDish: string) {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/customer_requests`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+        'apikey': SUPABASE_SERVICE_KEY,
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify({
+        request_text: requestText,
+        suggested_dish: suggestedDish,
+        status: 'new',
+      }),
+    });
+  } catch (e) {
+    console.error('Failed to save custom request:', e);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -62,12 +86,15 @@ Example: if someone asks for "bananes frites avec manioc pilé", add:
 
     const fullText = response.content[0].type === 'text' ? response.content[0].text : '';
 
-    // Extract custom request marker if present
     const customRequestMatch = fullText.match(/\[CUSTOM_REQUEST:\s*(.+?)\]/);
     const customRequest = customRequestMatch ? customRequestMatch[1].trim() : null;
 
-    // Clean the reply (remove the marker from visible text)
     const reply = fullText.replace(/\n?\[CUSTOM_REQUEST:.*?\]/g, '').trim();
+
+    // Save directly from server using service role key — bypasses RLS
+    if (customRequest) {
+      await saveCustomRequest(message, customRequest);
+    }
 
     return new Response(
       JSON.stringify({ reply, customRequest }),
