@@ -10,8 +10,7 @@ export const useTableSelection = (restaurantId) => {
   useEffect(() => {
     const fetchTables = async () => {
       if (!restaurantId) {
-        setError("L'identifiant du restaurant est requis.");
-        setLoading(false);
+        // restaurantId not yet available — keep loading, don't error
         return;
       }
 
