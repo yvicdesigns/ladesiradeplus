@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/customSupabaseClient';
-import { Sparkles, CheckCircle, XCircle, PlusCircle, Clock, RefreshCw } from 'lucide-react';
+import { Sparkles, CheckCircle, XCircle, PlusCircle, Clock, RefreshCw, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useToast } from '@/components/ui/use-toast';
@@ -19,6 +19,7 @@ export const AdminCustomRequestsPage = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const fetchRequests = async () => {
     setLoading(true);
@@ -45,6 +46,13 @@ export const AdminCustomRequestsPage = () => {
     <>
       <Helmet><title>Demandes Clients IA — Admin</title></Helmet>
       <div className="p-6 max-w-4xl mx-auto space-y-6">
+
+        <button
+          onClick={() => navigate('/admin')}
+          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors mb-2"
+        >
+          <ArrowLeft className="w-4 h-4" /> Retour
+        </button>
 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
