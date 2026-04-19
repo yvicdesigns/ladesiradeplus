@@ -45,7 +45,7 @@ export const CheckoutPage = () => {
   const { invalidateCache } = useOrderHistory();
   
   const [loading, setLoading] = useState(false);
-  const [orderType, setOrderType] = useState('delivery');
+  const [orderType, setOrderType] = useState(() => tableInfo?.id ? 'restaurant' : 'delivery');
   const [restaurantError, setRestaurantError] = useState(null);
   const [isValidatingRestaurant, setIsValidatingRestaurant] = useState(true);
   const [safeRestaurantId, setSafeRestaurantId] = useState(null);
@@ -90,6 +90,14 @@ export const CheckoutPage = () => {
     tableId: tableInfo?.id || '',
     source_client: 'app'
   });
+
+  // Si tableInfo apparaît après le montage (navigation depuis QR), sync
+  useEffect(() => {
+    if (tableInfo?.id) {
+      setOrderType('restaurant');
+      setFormData(prev => ({ ...prev, tableId: tableInfo.id }));
+    }
+  }, [tableInfo?.id]);
   
   const [errors, setErrors] = useState({});
 

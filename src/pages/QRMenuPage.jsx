@@ -36,7 +36,7 @@ export const QRMenuPage = () => {
   
   const scannerRef = useRef(null);
   
-  const { addToCart, getItemCount, setDineIn, setDelivery } = useCart();
+  const { addToCart, getItemCount, setTableInfo } = useCart();
   const { toast } = useToast();
   const cartItemCount = getItemCount();
 
@@ -87,7 +87,7 @@ export const QRMenuPage = () => {
 
       if (data) {
         setTableInfoState(data);
-        setDineIn(data);
+        setTableInfo(data);
       } else {
         console.warn('Table not found:', error);
         // Fallback: create a temporary object
