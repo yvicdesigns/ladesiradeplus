@@ -13,6 +13,11 @@
     "load-test": "node src/tests/loadTest/loadTestRunner.js"
   },
   "dependencies": {
+    "@capacitor-community/text-to-speech": "^8.0.0",
+    "@capacitor/android": "^8.3.1",
+    "@capacitor/cli": "^8.3.1",
+    "@capacitor/core": "^8.3.1",
+    "@capacitor/splash-screen": "^8.0.1",
     "@emotion/is-prop-valid": "^1.4.0",
     "@radix-ui/react-accordion": "^1.1.2",
     "@radix-ui/react-alert-dialog": "^1.0.5",
