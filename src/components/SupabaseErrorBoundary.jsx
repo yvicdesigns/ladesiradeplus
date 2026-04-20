@@ -20,6 +20,14 @@ class SupabaseErrorBoundary extends Component {
   }
 
   static getDerivedStateFromError(error) {
+    // Stale chunk after deploy — auto-reload once instead of showing error UI
+    if (error?.message?.includes('Failed to fetch dynamically imported module') ||
+        error?.message?.includes('Importing a module script failed')) {
+      if (!sessionStorage.getItem('chunk_reload')) {
+        sessionStorage.setItem('chunk_reload', '1');
+        window.location.reload();
+      }
+    }
     return { hasError: true, error };
   }
 
