@@ -257,7 +257,7 @@ export const ProfilePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-gray-50" style={{ paddingBottom: 'calc(6rem + env(safe-area-inset-bottom, 0px))' }}>
       <Helmet><title>Mon Profil - Key's Food</title></Helmet>
 
       <EditProfileModal 

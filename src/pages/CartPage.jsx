@@ -316,7 +316,7 @@ export const CartPage = () => {
           </div>
         </div>
 
-        <div className="fixed bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-100 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-40">
+        <div className="fixed left-0 right-0 bg-white p-4 border-t border-gray-100 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-40" style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}>
           <div className="container mx-auto max-w-2xl space-y-3">
             <Button
               onClick={handleProceedToCheckout}
