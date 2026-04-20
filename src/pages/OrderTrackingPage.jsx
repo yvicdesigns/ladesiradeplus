@@ -20,7 +20,6 @@ import { useToast } from '@/components/ui/use-toast';
 import { useDeliveryZones } from '@/hooks/useDeliveryZones';
 import { SoundLink } from '@/components/SoundLink';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ConnectionStatus } from '@/components/ConnectionStatus';
 import { debugLogger, LOG_EVENTS } from '@/lib/debugLogger';
 import { useDeliveryVoiceNotification } from '@/hooks/useDeliveryVoiceNotification';
 import { executeWithResilience } from '@/lib/supabaseErrorHandler';
@@ -102,7 +101,6 @@ export const OrderTrackingPage = () => {
     orders,
     loading: dataLoading,
     error: dataError,
-    connectionStatus,
     refresh,
     retry
   } = useRealtimeDeliveryOrders({ orderId: resolvedOrderId });
@@ -206,7 +204,6 @@ export const OrderTrackingPage = () => {
     }
   };
 
-  const isConnected = connectionStatus === 'realtime';
 
   if (loading && !order) {
       return (
@@ -269,7 +266,6 @@ export const OrderTrackingPage = () => {
               </Button>
               <div className="flex flex-col items-center">
                  <h1 className="font-bold text-lg text-gray-900">Suivi de Commande</h1>
-                 <ConnectionStatus isConnected={isConnected} onRetry={refresh} />
               </div>
               <div className="flex items-center gap-2">
                  {voiceNotification && voiceNotification.isSupported && (

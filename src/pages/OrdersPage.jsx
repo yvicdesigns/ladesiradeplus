@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, ChevronRight, Package, Utensils, Truck, RefreshCw, AlertCircle } from 'lucide-react';
+import { Loader2, ChevronRight, Package, Utensils, Truck, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
@@ -9,8 +9,6 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { useVoice } from '@/hooks/useVoice';
 import { useRealtimeOrders } from '@/hooks/useRealtimeOrders';
-import { ConnectionStatusBadge, CONNECTION_STATUS } from '@/components/ConnectionStatusBadge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 
 // REALTIME ESSENTIAL: Realtime is intentionally used here for live order tracking and immediate status updates for the client
 export const OrdersPage = () => {
@@ -18,13 +16,9 @@ export const OrdersPage = () => {
   const { toast } = useToast();
   
   const { 
-    orders, 
-    loading, 
-    connectionState, 
-    lastUpdated, 
-    retryConnection, 
+    orders,
+    loading,
     refresh,
-    isPolling 
   } = useRealtimeOrders(user ? { userId: user.id } : {}, 1, 50);
 
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -131,26 +125,11 @@ export const OrdersPage = () => {
         <div className="container mx-auto max-w-2xl space-y-4 pt-6">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
              <h1 className="text-2xl font-bold text-gray-900">Mes Commandes</h1>
-             <div className="flex items-center gap-2">
-               <Button variant="outline" size="sm" onClick={refresh} disabled={loading} className="h-8 shadow-sm">
-                  <RefreshCw className={`h-3 w-3 mr-2 ${loading ? 'animate-spin' : ''}`} /> Forcer Sync.
-               </Button>
-               <ConnectionStatusBadge 
-                 status={connectionState} 
-                 lastUpdate={lastUpdated} 
-                 onReconnect={retryConnection} 
-               />
-             </div>
+             <Button variant="outline" size="sm" onClick={refresh} disabled={loading} className="h-8 shadow-sm">
+                <RefreshCw className={`h-3 w-3 mr-2 ${loading ? 'animate-spin' : ''}`} /> Actualiser
+             </Button>
           </div>
 
-          {isPolling && (
-             <Alert className="bg-amber-50 border-amber-200 mb-4 py-2">
-               <AlertCircle className="h-4 w-4 text-amber-600" />
-               <AlertDescription className="text-xs text-amber-800 ml-2">
-                 Données en mode synchronisation périodique (Realtime indisponible). Rafraîchissement automatique toutes les 5s.
-               </AlertDescription>
-             </Alert>
-          )}
           
           {orders.length === 0 && !loading ? (
             <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
