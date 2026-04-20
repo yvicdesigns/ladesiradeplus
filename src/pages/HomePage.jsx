@@ -103,7 +103,7 @@ export const HomePage = () => {
       </div>
 
       {/* Mobile/Tablet: hero + action cards */}
-      <div className="md:hidden min-h-[100dvh] w-full bg-[#F7F7F7] flex flex-col pb-24">
+      <div className="md:hidden min-h-[100dvh] w-full bg-[#F7F7F7] flex flex-col" style={{ paddingBottom: 'calc(6rem + env(safe-area-inset-bottom, 0px))' }}>
 
         {/* ── DARK HERO SECTION ── */}
         <div className="relative w-full bg-[#1A1A1A] overflow-hidden" style={{ minHeight: '52vh', maxHeight: '65vh' }}>
