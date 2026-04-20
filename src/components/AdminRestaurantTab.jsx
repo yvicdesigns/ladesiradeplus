@@ -257,17 +257,11 @@ export const AdminRestaurantTab = () => {
                   <Label className="flex items-center gap-2">
                     <MessageSquare className="w-4 h-4 text-amber-600" /> WhatsApp Number
                   </Label>
-                  <Input 
-                    {...register('whatsapp_number', { 
-                      pattern: {
-                        value: /^\+\d+$/,
-                        message: "Format must be like +33612345678 (only digits after +)"
-                      }
-                    })} 
-                    placeholder="+33612345678" 
+                  <Input
+                    {...register('whatsapp_number')}
+                    placeholder="+243812345678"
                   />
-                  <p className="text-[10px] text-muted-foreground">International format required (e.g. +33...)</p>
-                  {errors.whatsapp_number && <span className="text-red-500 text-sm">{errors.whatsapp_number.message}</span>}
+                  <p className="text-[10px] text-muted-foreground">Format international (ex: +243812345678)</p>
                 </div>
               </div>
             </div>
