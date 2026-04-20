@@ -26,6 +26,7 @@ export const ProductModal = ({ open, onClose, product = null, categories = [] })
   const [selectedCategory, setSelectedCategory] = useState('');
   const [isAvailable, setIsAvailable] = useState(true);
   const [isPromo, setIsPromo] = useState(false);
+  const [loyaltyOverride, setLoyaltyOverride] = useState('');
   const [rlsError, setRlsError] = useState(null);
   const { toast } = useToast();
 
@@ -43,12 +44,15 @@ export const ProductModal = ({ open, onClose, product = null, categories = [] })
       setIsAvailable(product.is_available ?? true);
       setIsPromo(product.is_promo || false);
       setPreviewUrl(product.image_url || '');
+      setLoyaltyOverride(product.loyalty_discount_override !== null && product.loyalty_discount_override !== undefined
+        ? String(product.loyalty_discount_override) : '');
     } else {
       reset();
       setSelectedCategory('');
       setIsAvailable(true);
       setIsPromo(false);
       setPreviewUrl('');
+      setLoyaltyOverride('');
     }
     setImageFile(null);
     setRlsError(null);
@@ -120,6 +124,7 @@ export const ProductModal = ({ open, onClose, product = null, categories = [] })
         image_url: imageUrl,
         is_promo: isPromo,
         promo_discount: isPromo ? discountVal : 0,
+        loyalty_discount_override: loyaltyOverride !== '' ? parseFloat(loyaltyOverride) : null,
         restaurant_id: validRestaurantId
       };
 
@@ -296,6 +301,29 @@ export const ProductModal = ({ open, onClose, product = null, categories = [] })
                   )}
                </div>
              )}
+          </div>
+
+          <div className="p-4 border border-green-200 bg-green-50/50 rounded-lg space-y-3">
+            <div>
+              <Label className="text-base font-semibold text-green-900">Réduction fidélité (override)</Label>
+              <p className="text-xs text-green-700/70 mt-0.5">Laisser vide = utiliser le % global. Mettre 0 = désactiver pour ce plat.</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="relative w-28">
+                <Percent className="absolute left-3 top-2.5 h-4 w-4 text-green-500" />
+                <Input
+                  type="number"
+                  min="0"
+                  max="50"
+                  step="0.5"
+                  value={loyaltyOverride}
+                  onChange={e => setLoyaltyOverride(e.target.value)}
+                  placeholder="Global"
+                  className="pl-9 bg-white border-green-200 text-foreground"
+                />
+              </div>
+              <span className="text-xs text-green-700">% sur ce plat uniquement</span>
+            </div>
           </div>
 
           <div className="space-y-2">

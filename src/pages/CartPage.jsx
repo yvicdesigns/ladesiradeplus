@@ -16,6 +16,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { validateRestaurantExists } from '@/lib/validateRestaurantExists';
 import { useRestaurant } from '@/contexts/RestaurantContext';
+import { useLoyaltyDiscount } from '@/hooks/useLoyaltyDiscount';
 
 export const CartPage = () => {
   const navigate = useNavigate();
@@ -32,9 +33,10 @@ export const CartPage = () => {
   const [stockIssues, setStockIssues] = useState([]);
   const [isValidating, setIsValidating] = useState(true);
   const [restaurantError, setRestaurantError] = useState(null);
-  
-  const deliveryFeeForCalculation = 0; 
-  const calculation = PromotionCalculationService.calculateOrderTotals(cart, activePromoCode, deliveryFeeForCalculation);
+  const { settings: loyaltySettings } = useLoyaltyDiscount();
+
+  const deliveryFeeForCalculation = 0;
+  const calculation = PromotionCalculationService.calculateOrderTotals(cart, activePromoCode, deliveryFeeForCalculation, 'delivery', loyaltySettings);
 
   useEffect(() => {
     const validateCartStock = async () => {
@@ -288,7 +290,14 @@ export const CartPage = () => {
 
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mt-6 space-y-3">
              <PromotionBreakdownComponent calculation={calculation} />
-             
+
+            {calculation.loyaltyDiscountTotal > 0 && (
+              <div className="flex justify-between text-sm text-green-700 bg-green-50 px-3 py-2 rounded-lg border border-green-100">
+                <span className="font-medium">🎁 Réduction fidélité ({loyaltySettings.percent}%)</span>
+                <span className="font-bold">-{formatCurrency(calculation.loyaltyDiscountTotal)}</span>
+              </div>
+            )}
+
             <div className="flex justify-between text-[#4b5563] text-sm mt-3">
               <span>{t('cart.subtotal')} ({t('cart.after_discount')})</span>
               <span>{formatCurrency(calculation.subtotalAfterProductDiscounts)}</span>

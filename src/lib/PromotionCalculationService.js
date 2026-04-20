@@ -89,20 +89,48 @@ export const PromotionCalculationService = {
     return Math.min(discount, subtotal);
   },
 
-  calculateOrderTotals: (cartItems, promoCode = null, deliveryFee = 0, orderType = 'delivery') => {
+  calculateOrderTotals: (cartItems, promoCode = null, deliveryFee = 0, orderType = 'delivery', loyaltySettings = null) => {
     let subtotalOriginal = 0;
     let subtotalAfterProductDiscounts = 0;
     let productDiscountTotal = 0;
 
+    const loyalty = loyaltySettings || { enabled: false, percent: 0 };
+
     const itemBreakdowns = cartItems.map(item => {
       const stats = PromotionCalculationService.calculateItemStats(item);
+
+      // Apply loyalty discount per item
+      // override: null = use global, 0 = disabled, >0 = specific %
+      let itemLoyaltyPercent = 0;
+      if (loyalty.enabled) {
+        const override = item.loyalty_discount_override;
+        if (override === null || override === undefined) {
+          itemLoyaltyPercent = loyalty.percent;
+        } else {
+          itemLoyaltyPercent = parseFloat(override);
+        }
+      }
+
+      const loyaltyAmountPerUnit = itemLoyaltyPercent > 0
+        ? stats.finalPricePerUnit * (itemLoyaltyPercent / 100)
+        : 0;
+      const loyaltyTotal = loyaltyAmountPerUnit * stats.quantity;
+      const finalAfterLoyalty = stats.finalTotal - loyaltyTotal;
+
       subtotalOriginal += stats.originalTotal;
-      subtotalAfterProductDiscounts += stats.finalTotal;
-      productDiscountTotal += stats.totalDiscountAmount;
-      return stats;
+      subtotalAfterProductDiscounts += finalAfterLoyalty;
+      productDiscountTotal += stats.totalDiscountAmount + loyaltyTotal;
+
+      return {
+        ...stats,
+        loyaltyPercent: itemLoyaltyPercent,
+        loyaltyAmountPerUnit,
+        loyaltyTotal,
+        finalTotal: finalAfterLoyalty,
+      };
     });
 
-    // Apply promo code discount on top of product discounts
+    // Apply promo code discount on top of product + loyalty discounts
     const promoCodeDiscountTotal = promoCode
       ? PromotionCalculationService.applyPromoCodeDiscount(promoCode, subtotalAfterProductDiscounts)
       : 0;
@@ -113,11 +141,14 @@ export const PromotionCalculationService = {
     const effectiveDeliveryFee = orderType === 'delivery' ? (parseFloat(deliveryFee) || 0) : 0;
     const finalTotal = subtotalAfterAllDiscounts + effectiveDeliveryFee;
 
+    const loyaltyDiscountTotal = itemBreakdowns.reduce((sum, i) => sum + (i.loyaltyTotal || 0), 0);
+
     return {
       items: itemBreakdowns,
       originalSubtotal: subtotalOriginal,
       subtotalAfterProductDiscounts,
       productDiscountTotal,
+      loyaltyDiscountTotal,
       promoCodeDiscountTotal,
       totalSavings: productDiscountTotal + promoCodeDiscountTotal,
       promoCodeApplied: promoCodeDiscountTotal > 0,
@@ -131,6 +162,10 @@ export const PromotionCalculationService = {
           name: i.name,
           savings: i.totalDiscountAmount
         })),
+        loyalty_discount: loyaltyDiscountTotal > 0 ? {
+          percent: loyalty.percent,
+          savings: loyaltyDiscountTotal
+        } : null,
         promo_code: promoCode ? {
           code: promoCode.code,
           discount_type: promoCode.discount_type,

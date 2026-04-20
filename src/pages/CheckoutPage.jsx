@@ -29,6 +29,7 @@ import { TableNumberSelector } from '@/components/TableNumberSelector';
 import { useCreateOrder } from '@/hooks/useCreateOrder';
 import { useOrderHistory } from '@/hooks/useOrderHistory';
 import { logger } from '@/lib/logger';
+import { useLoyaltyDiscount } from '@/hooks/useLoyaltyDiscount';
 
 export const CheckoutPage = () => {
   const navigate = useNavigate();
@@ -43,6 +44,7 @@ export const CheckoutPage = () => {
   const { restaurantId } = useRestaurant();
   const { submitOrder } = useCreateOrder();
   const { invalidateCache } = useOrderHistory();
+  const { settings: loyaltySettings } = useLoyaltyDiscount();
   
   const [loading, setLoading] = useState(false);
   const [orderType, setOrderType] = useState(() => tableInfo?.id ? 'restaurant' : 'delivery');
@@ -109,8 +111,8 @@ export const CheckoutPage = () => {
   
   // Calculate final totals - Pass orderType specifically to avoid phantom delivery fees on 'restaurant' orders
   const calculation = useMemo(() => {
-     return PromotionCalculationService.calculateOrderTotals(cart, activePromoCode, deliveryFee, orderType);
-  }, [cart, activePromoCode, deliveryFee, orderType]);
+     return PromotionCalculationService.calculateOrderTotals(cart, activePromoCode, deliveryFee, orderType, loyaltySettings);
+  }, [cart, activePromoCode, deliveryFee, orderType, loyaltySettings]);
 
   useEffect(() => {
     const checkRestaurantId = async () => {
@@ -619,6 +621,13 @@ export const CheckoutPage = () => {
               />
               
               <PromotionBreakdownComponent calculation={calculation} />
+
+              {calculation.loyaltyDiscountTotal > 0 && (
+                <div className="flex justify-between items-center text-sm text-green-700 bg-green-50 px-4 py-3 rounded-xl border border-green-100 mt-3">
+                  <span className="font-medium">🎁 Réduction fidélité ({loyaltySettings.percent}%)</span>
+                  <span className="font-bold">-{formatCurrency(calculation.loyaltyDiscountTotal)}</span>
+                </div>
+              )}
 
               <div className="mt-6 sticky top-24">
                 <Button

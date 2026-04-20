@@ -11,7 +11,15 @@
       "Bash(python3 -c \"from PIL import Image; print\\('PIL ok'\\)\")",
       "Bash(python3)",
       "Bash(npx supabase *)",
-      "Bash(SUPABASE_ACCESS_TOKEN=* npx supabase *)"
+      "Bash(SUPABASE_ACCESS_TOKEN=* npx supabase *)",
+      "Bash(git filter-branch --force --tree-filter 'python3 -c \" *)",
+      "Bash(git stash *)",
+      "Bash(curl -s -X POST https://yeljxgewqvjkqgagkrzs.supabase.co/functions/v1/ai-assistant -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InllbGp4Z2V3cXZqa3FnYWdrcnpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MjkyNzYsImV4cCI6MjA5MDAwNTI3Nn0.eUAmv9Xmj1UH3M9INKDeYnaFFb6Asea9TmR-MghwmTo' -H 'Content-Type: application/json' -d '{\"message\":\"jaimerai des bananes frites avec du manioc pile\",\"menuItems\":[{\"name\":\"Poulet Braisé\",\"price\":3500,\"is_available\":true,\"is_promo\":false}],\"language\":\"fr\",\"conversationHistory\":[]}')",
+      "Bash(curl -s -X POST https://yeljxgewqvjkqgagkrzs.supabase.co/rest/v1/customer_requests -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InllbGp4Z2V3cXZqa3FnYWdrcnpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MjkyNzYsImV4cCI6MjA5MDAwNTI3Nn0.eUAmv9Xmj1UH3M9INKDeYnaFFb6Asea9TmR-MghwmTo' -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InllbGp4Z2V3cXZqa3FnYWdrcnpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MjkyNzYsImV4cCI6MjA5MDAwNTI3Nn0.eUAmv9Xmj1UH3M9INKDeYnaFFb6Asea9TmR-MghwmTo' -H 'Content-Type: application/json' -H 'Prefer: return=representation' -d '{\"request_text\":\"test\",\"suggested_dish\":\"Bananes frites\",\"status\":\"new\"}')",
+      "Bash(curl -s -X POST https://yeljxgewqvjkqgagkrzs.supabase.co/functions/v1/ai-assistant -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InllbGp4Z2V3cXZqa3FnYWdrcnpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MjkyNzYsImV4cCI6MjA5MDAwNTI3Nn0.eUAmv9Xmj1UH3M9INKDeYnaFFb6Asea9TmR-MghwmTo' -H 'Content-Type: application/json' -d '{\"message\":\"jaimerai du foufou avec de la sauce gombo\",\"menuItems\":[{\"name\":\"Poulet Braisé\",\"price\":3500,\"is_available\":true,\"is_promo\":false}],\"language\":\"fr\",\"conversationHistory\":[]}')",
+      "Bash(curl -s 'https://yeljxgewqvjkqgagkrzs.supabase.co/rest/v1/customer_requests?select=request_text,suggested_dish,status,created_at&order=created_at.desc&limit=3' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InllbGp4Z2V3cXZqa3FnYWdrcnpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MjkyNzYsImV4cCI6MjA5MDAwNTI3Nn0.eUAmv9Xmj1UH3M9INKDeYnaFFb6Asea9TmR-MghwmTo' -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InllbGp4Z2V3cXZqa3FnYWdrcnpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MjkyNzYsImV4cCI6MjA5MDAwNTI3Nn0.eUAmv9Xmj1UH3M9INKDeYnaFFb6Asea9TmR-MghwmTo')",
+      "Bash(cat)",
+      "Bash(python3 /tmp/check_hooks.py)"
     ]
   }
 }
