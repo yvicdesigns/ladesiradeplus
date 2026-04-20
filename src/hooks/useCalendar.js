@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useToast } from '@/components/ui/use-toast';
 import { useRealtimeSubscription } from './useRealtimeSubscription';
@@ -38,11 +38,27 @@ export const useCalendar = () => {
   const updateEventStatus = (id, status) => updateEvent(id, { status });
 
   // --- Business Hours ---
-  const updateBusinessHours = (id, data) => genericAction(() => supabase.from('business_hours').update({ ...data, updated_at: new Date() }).eq('id', id), "Business hours updated");
-  // Helper to ensure all days exist (idempotent init could be done elsewhere, but useful to have access)
-  const ensureBusinessHours = async () => {
-      // Logic to insert default rows for 0-6 if not exist could go here if needed
-  };
+  const updateBusinessHours = (id, data) => genericAction(() => supabase.from('business_hours').update({ ...data, updated_at: new Date() }).eq('id', id), "Horaires mis à jour");
+
+  // Auto-init: insert default rows for all 7 days if the table is empty
+  useEffect(() => {
+    if (loadingBusinessHours) return;
+    if (businessHours && businessHours.length > 0) return;
+    const defaults = [
+      { day_of_week: 0, opening_time: '11:00', closing_time: '22:00', is_open: true },
+      { day_of_week: 1, opening_time: '11:00', closing_time: '22:00', is_open: false }, // Lundi fermé
+      { day_of_week: 2, opening_time: '11:00', closing_time: '22:00', is_open: true },
+      { day_of_week: 3, opening_time: '11:00', closing_time: '22:00', is_open: true },
+      { day_of_week: 4, opening_time: '11:00', closing_time: '22:00', is_open: true },
+      { day_of_week: 5, opening_time: '11:00', closing_time: '22:00', is_open: true },
+      { day_of_week: 6, opening_time: '11:00', closing_time: '22:00', is_open: true },
+    ];
+    supabase.from('business_hours').insert(defaults).then(({ error }) => {
+      if (error) console.error('[useCalendar] Failed to init business_hours:', error.message);
+    });
+  }, [businessHours, loadingBusinessHours]);
+
+  const ensureBusinessHours = async () => {};
 
   // --- Special Hours ---
   const createSpecialHours = (data) => genericAction(() => supabase.from('special_hours').insert([data]), "Special hours added");
