@@ -7,6 +7,32 @@ import { supabase } from '@/lib/customSupabaseClient';
  * @param {string} folder - The folder path (optional)
  * @returns {Promise<string>} - The public URL of the uploaded file
  */
+export const uploadVideo = async (file, bucket = 'restaurant-logos') => {
+  if (!file) throw new Error('No file provided');
+
+  const validTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
+  if (!validTypes.includes(file.type)) {
+    throw new Error('Format invalide. Utilisez MP4 ou WEBM.');
+  }
+
+  const maxSize = 50 * 1024 * 1024; // 50MB
+  if (file.size > maxSize) {
+    throw new Error('La vidéo dépasse 50 MB.');
+  }
+
+  const fileExt = file.name.split('.').pop();
+  const fileName = `video_${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(bucket)
+    .upload(fileName, file, { cacheControl: '3600', upsert: false });
+
+  if (uploadError) throw new Error(`Upload échoué: ${uploadError.message}`);
+
+  const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(fileName);
+  return publicUrl;
+};
+
 export const uploadImage = async (file, bucket = 'menu-images', folder = '') => {
   if (!file) throw new Error('No file provided');
 

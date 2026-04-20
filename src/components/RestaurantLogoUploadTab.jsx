@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
-import { uploadImage } from '@/lib/imageUpload';
+import { uploadImage, uploadVideo } from '@/lib/imageUpload';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { Loader2, Upload, Trash2, Image as ImageIcon } from 'lucide-react';
+import { Loader2, Upload, Trash2, Image as ImageIcon, Video } from 'lucide-react';
 import { handleRLSError } from '@/lib/rlsErrorHandler';
 import { DEFAULT_ADMIN_SETTINGS_ID } from '@/lib/adminSettingsUtils';
 
@@ -16,7 +16,9 @@ export const RestaurantLogoUploadTab = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
   const [currentLogo, setCurrentLogo] = useState(null);
+  const [currentVideo, setCurrentVideo] = useState(null);
   const [settingsId, setSettingsId] = useState(null);
   const [restaurantId, setRestaurantId] = useState(null);
 
@@ -31,7 +33,7 @@ export const RestaurantLogoUploadTab = () => {
       // Fetched restaurant_id to satisfy NOT NULL constraints on updates/upserts
       const { data, error } = await supabase
         .from('admin_settings')
-        .select('id, logo_url, restaurant_id')
+        .select('id, logo_url, banner_video_url, restaurant_id')
         .eq('admin_id', user.id)
         .maybeSingle();
 
@@ -43,6 +45,7 @@ export const RestaurantLogoUploadTab = () => {
       if (data) {
         setSettingsId(data.id);
         setCurrentLogo(data.logo_url);
+        setCurrentVideo(data.banner_video_url);
         setRestaurantId(data.restaurant_id);
       }
     } catch (error) {
@@ -111,6 +114,50 @@ export const RestaurantLogoUploadTab = () => {
       setUploading(false);
       // Reset input
       e.target.value = null;
+    }
+  };
+
+  const handleVideoChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      setUploadingVideo(true);
+      if (!settingsId) throw new Error("Initialisez d'abord les paramètres restaurant.");
+      const publicUrl = await uploadVideo(file, 'restaurant-logos');
+      const { error } = await supabase.from('admin_settings').update({
+        banner_video_url: publicUrl,
+        admin_id: user.id,
+        restaurant_id: restaurantId || DEFAULT_ADMIN_SETTINGS_ID,
+        updated_at: new Date().toISOString(),
+      }).eq('id', settingsId);
+      if (error) throw error;
+      setCurrentVideo(publicUrl);
+      toast({ title: "Vidéo uploadée", description: "La vidéo de bannière a été mise à jour.", className: "bg-amber-500 text-white" });
+    } catch (error) {
+      toast({ variant: "destructive", title: "Échec", description: error.message });
+    } finally {
+      setUploadingVideo(false);
+      e.target.value = null;
+    }
+  };
+
+  const handleDeleteVideo = async () => {
+    if (!settingsId) return;
+    try {
+      setUploadingVideo(true);
+      const { error } = await supabase.from('admin_settings').update({
+        banner_video_url: null,
+        admin_id: user.id,
+        restaurant_id: restaurantId || DEFAULT_ADMIN_SETTINGS_ID,
+        updated_at: new Date().toISOString(),
+      }).eq('id', settingsId);
+      if (error) throw error;
+      setCurrentVideo(null);
+      toast({ title: "Vidéo supprimée", description: "L'image fixe sera affichée à la place." });
+    } catch (error) {
+      toast({ variant: "destructive", title: "Erreur", description: error.message });
+    } finally {
+      setUploadingVideo(false);
     }
   };
 
@@ -235,6 +282,38 @@ export const RestaurantLogoUploadTab = () => {
                  </Button>
                )}
             </div>
+          </div>
+        </div>
+
+        {/* Video Banner Section */}
+        <div className="border-t pt-6 mt-2">
+          <h3 className="font-semibold text-gray-900 mb-1 flex items-center gap-2"><Video className="w-4 h-4 text-[#D97706]" /> Vidéo de Bannière</h3>
+          <p className="text-sm text-gray-500 mb-4">Remplace l'image fixe par une vidéo en fond sur la page d'accueil. Format MP4 recommandé, max 50 MB.</p>
+
+          {currentVideo ? (
+            <div className="mb-4 rounded-xl overflow-hidden border border-gray-200 bg-black relative" style={{ aspectRatio: '16/7' }}>
+              <video src={currentVideo} autoPlay muted loop playsInline className="w-full h-full object-cover opacity-80" />
+              <span className="absolute top-2 left-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full">Aperçu</span>
+            </div>
+          ) : (
+            <div className="mb-4 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center" style={{ aspectRatio: '16/7' }}>
+              <p className="text-sm text-gray-400">Aucune vidéo — l'image bannière est utilisée</p>
+            </div>
+          )}
+
+          <div className="flex gap-2 max-w-sm">
+            <Button asChild variant="outline" className="flex-1 cursor-pointer relative overflow-hidden" disabled={uploadingVideo}>
+              <div>
+                {uploadingVideo ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
+                {uploadingVideo ? 'Upload...' : (currentVideo ? 'Changer la vidéo' : 'Ajouter une vidéo')}
+                <Input type="file" accept="video/mp4,video/webm" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleVideoChange} disabled={uploadingVideo} />
+              </div>
+            </Button>
+            {currentVideo && (
+              <Button variant="destructive" size="icon" onClick={handleDeleteVideo} disabled={uploadingVideo}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
 

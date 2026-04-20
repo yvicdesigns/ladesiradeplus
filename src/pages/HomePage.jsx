@@ -41,6 +41,7 @@ export const HomePage = () => {
 
   const restaurantLogo = settings?.logo_url;
   const restaurantBanner = settings?.banner_url;
+  const restaurantBannerVideo = settings?.banner_video_url;
 
   useEffect(() => {
     logger.info('[HomePage] Mounted. Current User:', user?.email || 'Guest');
@@ -108,15 +109,22 @@ export const HomePage = () => {
         {/* ── DARK HERO SECTION ── */}
         <div className="relative w-full bg-[#1A1A1A] overflow-hidden" style={{ minHeight: '52vh', maxHeight: '65vh' }}>
 
-          {/* Background food image */}
-          {restaurantBanner && (
+          {/* Background video or image */}
+          {restaurantBannerVideo ? (
+            <video
+              src={restaurantBannerVideo}
+              autoPlay muted loop playsInline
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{ opacity: 0.55 }}
+            />
+          ) : restaurantBanner ? (
             <img
               src={restaurantBanner}
               alt="Restaurant"
               className="absolute inset-0 w-full h-full object-cover"
               style={{ opacity: 0.55 }}
             />
-          )}
+          ) : null}
 
           {/* Dark gradient overlay — always present */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/20 z-10" />
