@@ -57,22 +57,14 @@ export const AIAssistant = () => {
   const bottomRef = useRef(null);
   const dragRef = useRef(null);
 
-  // Only show for authenticated users
-  if (!user) return null;
-
   const language = i18n.language || 'fr';
-  const remaining = MAX_MESSAGES - quota.count;
-  const isLimitReached = remaining <= 0;
 
   const welcomeMsg = language === 'en'
     ? "👋 Hello! I'm your assistant at La Desirade Plus. What would you like to eat today? I can help you choose from our menu!"
     : "👋 Bonjour ! Je suis votre assistant La Desirade Plus. Qu'avez-vous envie de manger aujourd'hui ? Je peux vous aider à choisir parmi notre menu !";
 
-  const limitMsg = language === 'en'
-    ? "⏳ You've used your 5 messages for this session. Come back in 12 hours or go ahead and place your order!"
-    : "⏳ Vous avez utilisé vos 5 messages pour cette période. Revenez dans 12h ou passez directement votre commande !";
-
   useEffect(() => {
+    if (!user) return;
     if (open && menuItems.length === 0) {
       supabase
         .from('menu_items')
@@ -85,13 +77,22 @@ export const AIAssistant = () => {
     if (open && messages.length === 0) {
       setMessages([{ role: 'assistant', content: welcomeMsg }]);
     }
-    // Refresh quota when opening
     if (open) setQuota(getQuota());
-  }, [open]);
+  }, [open, user]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Only show for authenticated users — after all hooks
+  if (!user) return null;
+
+  const remaining = MAX_MESSAGES - quota.count;
+  const isLimitReached = remaining <= 0;
+
+  const limitMsg = language === 'en'
+    ? "⏳ You've used your 5 messages for this session. Come back in 12 hours or go ahead and place your order!"
+    : "⏳ Vous avez utilisé vos 5 messages pour cette période. Revenez dans 12h ou passez directement votre commande !";
 
   const sendMessage = async () => {
     if (!input.trim() || loading || isLimitReached) return;
