@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { uploadImage, uploadVideo } from '@/lib/imageUpload';
+import { clearAdminSettingsCache } from '@/lib/adminSettingsCache';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -132,7 +133,9 @@ export const RestaurantLogoUploadTab = () => {
       }).eq('id', settingsId);
       if (error) throw error;
       setCurrentVideo(publicUrl);
+      clearAdminSettingsCache();
       toast({ title: "Vidéo uploadée", description: "La vidéo de bannière a été mise à jour.", className: "bg-amber-500 text-white" });
+      setTimeout(() => window.location.reload(), 1200);
     } catch (error) {
       toast({ variant: "destructive", title: "Échec", description: error.message });
     } finally {
@@ -153,7 +156,9 @@ export const RestaurantLogoUploadTab = () => {
       }).eq('id', settingsId);
       if (error) throw error;
       setCurrentVideo(null);
+      clearAdminSettingsCache();
       toast({ title: "Vidéo supprimée", description: "L'image fixe sera affichée à la place." });
+      setTimeout(() => window.location.reload(), 1200);
     } catch (error) {
       toast({ variant: "destructive", title: "Erreur", description: error.message });
     } finally {
