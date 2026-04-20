@@ -45,7 +45,9 @@ export const RestaurantOrderDetailModal = ({ order, open, onOpenChange, onUpdate
   
   if (!order) return null;
 
-  const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+  const items = order.order_items?.length
+    ? order.order_items
+    : (typeof order.items === 'string' ? JSON.parse(order.items) : order.items) || [];
   const showPaymentProofSection = order.payment_screenshot_url;
   const isDelivery = order.type === 'delivery'; 
   const zoneInfo = order.zone_id ? getZoneDetails(order.zone_id) : null;
@@ -236,22 +238,31 @@ export const RestaurantOrderDetailModal = ({ order, open, onOpenChange, onUpdate
                 <h4 className="font-semibold text-slate-800">Détail de la Commande ({items?.length || 0} articles)</h4>
               </div>
               <div className="p-5 space-y-4">
-                {items && items.map((item, idx) => (
-                  <div key={idx} className="flex justify-between items-start sm:items-center text-sm border-b border-slate-100 pb-4 last:border-0 last:pb-0">
-                    <div className="flex items-start sm:items-center gap-3">
-                      <span className="bg-amber-100 text-amber-700 font-bold px-2 py-1 rounded text-xs">
-                        x{item.quantity}
-                      </span>
-                      <div>
-                        <p className="font-medium text-slate-800">{item.name}</p>
-                        {item.notes && <p className="text-xs text-slate-500 italic mt-1 bg-slate-50 p-1.5 rounded inline-block">Note: {item.notes}</p>}
+                {items && items.map((item, idx) => {
+                  const itemName = item.menu_items?.name || item.name || 'Produit Inconnu';
+                  const itemImage = item.menu_items?.image_url;
+                  return (
+                    <div key={idx} className="flex justify-between items-start sm:items-center text-sm border-b border-slate-100 pb-4 last:border-0 last:pb-0">
+                      <div className="flex items-start sm:items-center gap-3">
+                        {itemImage ? (
+                          <img src={itemImage} alt={itemName} className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-slate-100" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
+                            <span className="text-lg">🍽️</span>
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-medium text-slate-800">{itemName}</p>
+                          <span className="bg-amber-100 text-amber-700 font-bold px-1.5 py-0.5 rounded text-xs">x{item.quantity}</span>
+                          {item.notes && <p className="text-xs text-slate-500 italic mt-1 bg-slate-50 p-1.5 rounded inline-block">Note: {item.notes}</p>}
+                        </div>
                       </div>
+                      <span className="font-bold text-slate-700 whitespace-nowrap ml-4">
+                        {formatCurrency(item.price * item.quantity)}
+                      </span>
                     </div>
-                    <span className="font-bold text-slate-700 whitespace-nowrap ml-4">
-                      {formatCurrency(item.price * item.quantity)}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               
               <div className="bg-slate-50 p-5 border-t border-slate-200 flex flex-col gap-2">

@@ -202,14 +202,22 @@ export const DeliveryOrderDetailModal = ({ order, open, onOpenChange, onUpdateSt
                     const itemName = item.menu_items?.name || item.name || 'Produit Inconnu';
                     const itemPrice = item.price || item.menu_items?.price || 0;
                     const itemQuantity = item.quantity || 1;
-                    
+                    const itemImage = item.menu_items?.image_url;
+
                     return (
                       <div key={idx} className="flex justify-between items-center text-sm border-b border-gray-200 pb-2 last:border-0 last:pb-0">
                         <div className="flex items-center gap-3">
-                          <span className="bg-primary/10 text-primary font-bold px-2 py-1 rounded text-xs">
-                            x{itemQuantity}
-                          </span>
-                          <span className="font-medium text-gray-800">{itemName}</span>
+                          {itemImage ? (
+                            <img src={itemImage} alt={itemName} className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-gray-100" />
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
+                              <span className="text-lg">🍽️</span>
+                            </div>
+                          )}
+                          <div>
+                            <span className="font-medium text-gray-800">{itemName}</span>
+                            <span className="ml-2 bg-primary/10 text-primary font-bold px-1.5 py-0.5 rounded text-xs">x{itemQuantity}</span>
+                          </div>
                         </div>
                         <span className="font-bold text-gray-900">{formatCurrency(itemPrice * itemQuantity)}</span>
                       </div>

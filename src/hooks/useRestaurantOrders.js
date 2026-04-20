@@ -54,7 +54,11 @@ export const useRestaurantOrders = () => {
             table_id,
             order_method,
             customer_name,
-            tables (table_number)
+            tables (table_number),
+            order_items (
+              id, quantity, price,
+              menu_items (name, image_url, description)
+            )
           )
         `)
         .order('created_at', { ascending: false });
@@ -67,7 +71,8 @@ export const useRestaurantOrders = () => {
         total: order.orders?.total || 0,
         table_number: order.orders?.tables?.table_number,
         customer_name: order.orders?.customer_name,
-        order_method: order.orders?.order_method || 'unknown'
+        order_method: order.orders?.order_method || 'unknown',
+        order_items: order.orders?.order_items || []
       }));
 
       // Cache update

@@ -71,15 +71,28 @@ export const OrderDetail = ({ order, loading }) => {
           <CardHeader className="bg-gray-50 border-b pb-4"><CardTitle className="text-sm font-bold uppercase text-gray-600 flex items-center gap-2"><Package className="w-4 h-4"/> Récapitulatif ({order.order_items?.length || 0} articles)</CardTitle></CardHeader>
           <CardContent className="pt-4 space-y-4">
             <div className="space-y-3">
-              {order.order_items?.map((item) => (
-                <div key={item.id} className="flex justify-between items-start text-sm">
-                  <div className="flex gap-2">
-                    <span className="font-bold text-gray-900">{item.quantity}x</span>
-                    <span className="text-gray-700">{item.menu_items?.name || 'Article inconnu'}</span>
+              {order.order_items?.map((item) => {
+                const itemName = item.menu_items?.name || 'Article inconnu';
+                const itemImage = item.menu_items?.image_url;
+                return (
+                  <div key={item.id} className="flex justify-between items-center text-sm">
+                    <div className="flex items-center gap-3">
+                      {itemImage ? (
+                        <img src={itemImage} alt={itemName} className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-gray-100" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
+                          <span className="text-base">🍽️</span>
+                        </div>
+                      )}
+                      <div>
+                        <span className="font-medium text-gray-700">{itemName}</span>
+                        <span className="ml-2 text-xs font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">x{item.quantity}</span>
+                      </div>
+                    </div>
+                    <span className="font-medium text-gray-900 whitespace-nowrap">{Number(item.price * item.quantity).toFixed(2)} FCFA</span>
                   </div>
-                  <span className="font-medium text-gray-900 whitespace-nowrap">{Number(item.price * item.quantity).toFixed(2)} FCFA</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
             <Separator />
             <div className="flex justify-between items-center text-lg font-bold text-gray-900">

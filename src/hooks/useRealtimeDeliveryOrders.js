@@ -46,7 +46,7 @@ export const useRealtimeDeliveryOrders = (options = {}) => {
             id, total, status, type, created_at, customer_name, customer_phone, delivery_address, is_deleted, user_id,
             order_items (
               id, quantity, price,
-              menu_items (name)
+              menu_items (name, image_url, description)
             )
           )
         `, { count: 'exact' });
