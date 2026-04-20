@@ -426,7 +426,7 @@
     "mtn_step5": "Entrez le montant à envoyer",
     "mtn_step6": "Cliquez sur Envoyer / Send",
     "mtn_step7": "Prenez une capture d'écran du SMS et uploadez-la ci-dessous",
-    "airtel_step1": "Composez *555# sur votre téléphone Airtel",
+    "airtel_step1": "Composez *128# sur votre téléphone Airtel",
     "airtel_step2": "Sélectionnez 1 — Airtel Money",
     "airtel_step3": "Sélectionnez 2 — Envoyer de l'argent",
     "airtel_step4": "Entrez le numéro : {{number}}",
