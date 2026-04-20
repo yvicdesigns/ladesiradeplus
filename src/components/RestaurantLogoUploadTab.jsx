@@ -123,14 +123,11 @@ export const RestaurantLogoUploadTab = () => {
     if (!file) return;
     try {
       setUploadingVideo(true);
-      if (!settingsId) throw new Error("Initialisez d'abord les paramètres restaurant.");
       const publicUrl = await uploadVideo(file, 'restaurant-logos');
       const { error } = await supabase.from('admin_settings').update({
         banner_video_url: publicUrl,
-        admin_id: user.id,
-        restaurant_id: restaurantId || DEFAULT_ADMIN_SETTINGS_ID,
         updated_at: new Date().toISOString(),
-      }).eq('id', settingsId);
+      }).eq('admin_id', user.id);
       if (error) throw error;
       setCurrentVideo(publicUrl);
       clearAdminSettingsCache();
@@ -145,15 +142,12 @@ export const RestaurantLogoUploadTab = () => {
   };
 
   const handleDeleteVideo = async () => {
-    if (!settingsId) return;
     try {
       setUploadingVideo(true);
       const { error } = await supabase.from('admin_settings').update({
         banner_video_url: null,
-        admin_id: user.id,
-        restaurant_id: restaurantId || DEFAULT_ADMIN_SETTINGS_ID,
         updated_at: new Date().toISOString(),
-      }).eq('id', settingsId);
+      }).eq('admin_id', user.id);
       if (error) throw error;
       setCurrentVideo(null);
       clearAdminSettingsCache();
