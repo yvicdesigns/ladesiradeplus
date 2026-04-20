@@ -75,7 +75,7 @@ export const EventsTab = ({ events, createEvent, updateEvent, deleteEvent, dupli
 
 // --- Business Hours Tab ---
 export const BusinessHoursTab = ({ hours, updateHours }) => {
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const days = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
     const [modal, setModal] = useState(null);
 
     // Sort by day index 0-6
@@ -85,16 +85,16 @@ export const BusinessHoursTab = ({ hours, updateHours }) => {
         <div className="space-y-4">
              <Card>
                 <Table>
-                    <TableHeader><TableRow><TableHead>Day</TableHead><TableHead>Status</TableHead><TableHead>Hours</TableHead><TableHead>Break</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                    <TableHeader><TableRow><TableHead>Jour</TableHead><TableHead>Statut</TableHead><TableHead>Horaires</TableHead><TableHead>Pause</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
                     <TableBody>
                         {sortedHours.map(h => (
-                            <TableRow key={h.id}>
-                                <TableCell className="font-medium">{days[h.day_of_week]}</TableCell>
+                            <TableRow key={h.id} className={!h.is_open ? 'opacity-50' : ''}>
+                                <TableCell className="font-semibold">{days[h.day_of_week]}</TableCell>
                                 <TableCell>
-                                    <Badge variant={h.is_open ? 'default' : 'secondary'}>{h.is_open ? 'Open' : 'Closed'}</Badge>
+                                    <Badge variant={h.is_open ? 'default' : 'secondary'}>{h.is_open ? 'Ouvert' : 'Fermé'}</Badge>
                                 </TableCell>
-                                <TableCell>{h.is_open ? `${h.opening_time?.substring(0,5)} - ${h.closing_time?.substring(0,5)}` : '-'}</TableCell>
-                                <TableCell>{h.break_start ? `${h.break_start?.substring(0,5)} - ${h.break_end?.substring(0,5)}` : '-'}</TableCell>
+                                <TableCell>{h.is_open ? `${h.opening_time?.substring(0,5)} – ${h.closing_time?.substring(0,5)}` : '—'}</TableCell>
+                                <TableCell>{h.break_start ? `${h.break_start?.substring(0,5)} – ${h.break_end?.substring(0,5)}` : '—'}</TableCell>
                                 <TableCell className="text-right">
                                     <Button size="icon" variant="ghost" onClick={() => setModal({ type: 'edit', data: h })}><Edit className="w-4 h-4"/></Button>
                                 </TableCell>
@@ -120,11 +120,11 @@ export const ClosuresTab = ({ closures, createClosure, updateClosure, deleteClos
     return (
         <div className="space-y-4">
             <div className="flex justify-end">
-                 <Button onClick={() => setModal({ type: 'create' })}><Plus className="w-4 h-4 mr-2" /> Add Closure</Button>
+                 <Button onClick={() => setModal({ type: 'create' })}><Plus className="w-4 h-4 mr-2" /> Ajouter une fermeture</Button>
             </div>
             <Card>
                 <Table>
-                    <TableHeader><TableRow><TableHead>Reason</TableHead><TableHead>Type</TableHead><TableHead>Start Date</TableHead><TableHead>End Date</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                    <TableHeader><TableRow><TableHead>Motif</TableHead><TableHead>Type</TableHead><TableHead>Date début</TableHead><TableHead>Date fin</TableHead><TableHead>Statut</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
                     <TableBody>
                         {closures.map(c => (
                             <TableRow key={c.id}>

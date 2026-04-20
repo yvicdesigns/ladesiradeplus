@@ -23,8 +23,21 @@ export const HomePage = () => {
 
   const [isAdminOrManager, setIsAdminOrManager] = useState(false);
   const [roleLoading, setRoleLoading] = useState(true);
+  const [openDaysLabel, setOpenDaysLabel] = useState('...');
 
   useSound();
+
+  useEffect(() => {
+    supabase
+      .from('business_hours')
+      .select('day_of_week, is_open')
+      .order('day_of_week')
+      .then(({ data }) => {
+        if (!data || data.length === 0) { setOpenDaysLabel('7j/7'); return; }
+        const openCount = data.filter(d => d.is_open).length;
+        setOpenDaysLabel(openCount === 7 ? '7j/7' : `${openCount}j/7`);
+      });
+  }, []);
 
   const restaurantLogo = settings?.logo_url;
   const restaurantBanner = settings?.banner_url;
@@ -234,7 +247,7 @@ export const HomePage = () => {
             </div>
             <div className="w-px h-8 bg-gray-100" />
             <div className="text-center">
-              <p className="text-lg font-extrabold text-gray-900">7j/7</p>
+              <p className="text-lg font-extrabold text-gray-900">{openDaysLabel}</p>
               <p className="text-xs text-gray-400 font-medium">{t('home.open_status')}</p>
             </div>
           </div>
