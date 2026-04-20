@@ -11,9 +11,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2, MessageSquare, Trash2, Upload, FileImage as ImageIcon, LocateFixed, MapPin, CheckCircle } from 'lucide-react';
 import { isValidAdminSettingsId, DEFAULT_ADMIN_SETTINGS_ID } from '@/lib/adminSettingsUtils';
+import { useRestaurant } from '@/contexts/RestaurantContext';
 
 export const AdminRestaurantTab = () => {
   const { user } = useAuth();
+  const { refreshSettings } = useRestaurant();
   const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm();
   const [loading, setLoading] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -160,6 +162,7 @@ export const AdminRestaurantTab = () => {
         description: "Restaurant information updated.",
         className: "bg-amber-500 text-white"
       });
+      await refreshSettings();
     } catch (error) {
       console.error('Save settings error:', error);
       toast({

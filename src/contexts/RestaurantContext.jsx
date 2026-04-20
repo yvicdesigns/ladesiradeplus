@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getAdminSettingsCached } from '@/lib/adminSettingsCache';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { getAdminSettingsCached, clearAdminSettingsCache } from '@/lib/adminSettingsCache';
 import { VALID_RESTAURANT_ID, getValidatedRestaurantId } from '@/lib/restaurantValidation';
 
 const RestaurantContext = createContext({
@@ -17,41 +17,29 @@ export const RestaurantProvider = ({ children }) => {
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    let isMounted = true;
-    
-    const fetchSettings = async () => {
-      setLoading(true);
-      console.log('[RestaurantContext] Initializing with Restaurant ID:', restaurantId);
-      
-      // Uses the new caching layer and fast RPC
-      const cachedSettings = await getAdminSettingsCached(restaurantId);
-      
-      if (isMounted) {
-        if (cachedSettings) {
-          setSettings(cachedSettings);
-          if (cachedSettings.restaurant_name) {
-            setActiveRestaurantName(cachedSettings.restaurant_name);
-          }
-        } else {
-           console.warn('[RestaurantContext] No settings found for restaurant:', restaurantId);
-        }
-        setLoading(false);
-      }
-    };
-
-    fetchSettings();
-    
-    return () => { isMounted = false; };
+  const fetchSettings = useCallback(async (forceRefresh = false) => {
+    setLoading(true);
+    if (forceRefresh) clearAdminSettingsCache();
+    const cachedSettings = await getAdminSettingsCached(restaurantId, forceRefresh);
+    if (cachedSettings) {
+      setSettings(cachedSettings);
+      if (cachedSettings.restaurant_name) setActiveRestaurantName(cachedSettings.restaurant_name);
+    }
+    setLoading(false);
   }, [restaurantId]);
 
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
+
   return (
-    <RestaurantContext.Provider value={{ 
-      restaurantId, 
+    <RestaurantContext.Provider value={{
+      restaurantId,
       activeRestaurantName,
       settings,
       loading,
-      error: null
+      error: null,
+      refreshSettings: () => fetchSettings(true),
     }}>
       {children}
     </RestaurantContext.Provider>
