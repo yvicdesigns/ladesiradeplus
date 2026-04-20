@@ -88,13 +88,13 @@ class SupabaseErrorBoundary extends Component {
           <Alert variant="destructive" className="max-w-2xl w-full bg-white shadow-lg border-red-200">
             <Database className="h-6 w-6 text-red-600 mt-1" />
             <AlertTitle className="text-red-800 font-bold ml-2 text-lg">
-              Erreur de connexion à la base de données
+              Une erreur inattendue s'est produite
             </AlertTitle>
             <AlertDescription className="ml-2 mt-3 flex flex-col gap-4">
               <p className="text-gray-700">
-                {isCritical 
-                  ? "Des erreurs répétées ont été détectées. Veuillez contacter le support technique ou vérifier la configuration du serveur Supabase." 
-                  : "Erreur de connexion - Vérifiez votre connexion Internet ou la disponibilité du serveur."}
+                {isCritical
+                  ? "Des erreurs répétées ont été détectées. Veuillez contacter le support technique."
+                  : "L'application a rencontré un problème. Appuyez sur Réessayer pour continuer."}
               </p>
               
               <div className="flex flex-wrap gap-3">
