@@ -20,8 +20,6 @@ export const AdminRestaurantTab = () => {
   const [loading, setLoading] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
-  const [settingsId, setSettingsId] = useState(null);
-  const [restaurantId, setRestaurantId] = useState(null);
   const { toast } = useToast();
 
   // Restaurant GPS location
@@ -46,18 +44,14 @@ export const AdminRestaurantTab = () => {
         const { data, error } = await supabase
           .from('admin_settings')
           .select('*')
-          .eq('admin_id', user.id)
+          .eq('id', DEFAULT_ADMIN_SETTINGS_ID)
           .maybeSingle();
           
         if (error) throw error;
 
         if (data) {
-          setSettingsId(data.id);
-          setRestaurantId(data.restaurant_id);
-          reset(data); 
+          reset(data);
         } else {
-          setSettingsId(null);
-          setRestaurantId(DEFAULT_ADMIN_SETTINGS_ID);
           reset({
             restaurant_name: '',
             cuisine_type: '',
@@ -128,32 +122,21 @@ export const AdminRestaurantTab = () => {
       setLoading(true);
       
       // Explicitly construct payload to guarantee ALL NOT NULL fields are present
-      const payload = { 
-        ...data, 
-        admin_id: user.id, // Strictly required NOT NULL
-        restaurant_id: restaurantId || DEFAULT_ADMIN_SETTINGS_ID, // Strictly required NOT NULL
-        updated_at: new Date().toISOString() // Strictly required NOT NULL
+      const payload = {
+        ...data,
+        updated_at: new Date().toISOString(),
       };
-      
-      if (settingsId) {
-        // Ensure settingsId is valid UUID before update
-        if (!isValidAdminSettingsId(settingsId)) {
-           throw new Error("Invalid Settings ID (Not a UUID). Update aborted to prevent crash.");
-        }
-        payload.id = settingsId;
-      }
-      
+
       const { data: savedData, error } = await supabase
         .from('admin_settings')
-        .upsert(payload)
+        .update(payload)
+        .eq('id', DEFAULT_ADMIN_SETTINGS_ID)
         .select()
         .single();
 
       if (error) throw error;
 
       if (savedData) {
-        setSettingsId(savedData.id);
-        setRestaurantId(savedData.restaurant_id);
         reset(savedData);
       }
 
