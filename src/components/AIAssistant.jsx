@@ -46,9 +46,6 @@ const getSavedPosition = () => {
 export const AIAssistant = () => {
   const { user } = useAuth();
   const { i18n } = useTranslation();
-
-  // Only show for authenticated users
-  if (!user) return null;
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -59,6 +56,9 @@ export const AIAssistant = () => {
   const [isDragging, setIsDragging] = useState(false);
   const bottomRef = useRef(null);
   const dragRef = useRef(null);
+
+  // Only show for authenticated users
+  if (!user) return null;
 
   const language = i18n.language || 'fr';
   const remaining = MAX_MESSAGES - quota.count;
