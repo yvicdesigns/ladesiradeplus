@@ -127,7 +127,7 @@ export const RestaurantLogoUploadTab = () => {
       const { error } = await supabase.from('admin_settings').update({
         banner_video_url: publicUrl,
         updated_at: new Date().toISOString(),
-      }).eq('admin_id', user.id);
+      }).eq('id', DEFAULT_ADMIN_SETTINGS_ID);
       if (error) throw error;
       setCurrentVideo(publicUrl);
       clearAdminSettingsCache();
@@ -147,7 +147,7 @@ export const RestaurantLogoUploadTab = () => {
       const { error } = await supabase.from('admin_settings').update({
         banner_video_url: null,
         updated_at: new Date().toISOString(),
-      }).eq('admin_id', user.id);
+      }).eq('id', DEFAULT_ADMIN_SETTINGS_ID);
       if (error) throw error;
       setCurrentVideo(null);
       clearAdminSettingsCache();
