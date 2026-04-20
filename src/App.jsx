@@ -8,6 +8,7 @@ import { ensureAdminSettingsExists } from './lib/adminSettingsSetup';
 import { runStartupDiagnostics } from './lib/startupDiagnostics';
 import { ConnectionStatusMonitor } from './components/ConnectionStatusMonitor';
 import { AIAssistant } from './components/AIAssistant';
+import { WhatsAppButton } from './components/WhatsAppButton';
 import './i18n/config';
 
 // Lazy load Client pages
@@ -173,6 +174,7 @@ function AppRoutes() {
       </main>
       <MobileBottomNav />
       <AIAssistant />
+      <WhatsAppButton />
     </div>
   );
 }
