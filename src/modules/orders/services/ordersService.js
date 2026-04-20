@@ -143,14 +143,19 @@ export const ordersService = {
 
   async cancelOrder(orderId, reason) {
     try {
-      // For safe cancellation, we update status instead of deleting to preserve history
-      const { data, error } = await supabase.rpc('update_delivery_order_status', {
-        p_order_id: orderId,
-        p_new_status: 'cancelled'
-      });
-      
-      if (error) throw error;
-      if (!data.success) throw new Error(data.message);
+      // Update orders table (client-facing status)
+      const { error: orderError } = await supabase
+        .from('orders')
+        .update({ status: 'cancelled' })
+        .eq('id', orderId);
+      if (orderError) throw orderError;
+
+      // Update delivery_orders table (admin-facing status)
+      const { error: deliveryError } = await supabase
+        .from('delivery_orders')
+        .update({ status: 'cancelled' })
+        .eq('order_id', orderId);
+      if (deliveryError) throw deliveryError;
 
       return { success: true, message: 'Order cancelled successfully' };
     } catch (err) {
