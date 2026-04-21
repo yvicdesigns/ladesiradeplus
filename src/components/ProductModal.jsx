@@ -64,12 +64,10 @@ export const ProductModal = ({ open, onClose, product = null, categories = [] })
   }, [product, open, reset, setValue]);
 
   useEffect(() => {
-    if (existingVariants.length > 0) {
-      setLocalVariants(existingVariants.map(v => ({
-        ...v,
-        options: v.menu_item_variant_options || []
-      })));
-    }
+    setLocalVariants(existingVariants.map(v => ({
+      ...v,
+      options: v.menu_item_variant_options || []
+    })));
   }, [existingVariants]);
 
   const handleImageChange = (e) => {
