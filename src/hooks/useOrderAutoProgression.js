@@ -158,12 +158,13 @@ export const useOrderAutoProgression = () => {
     try {
       const { data, error } = await supabase
         .from('order_items')
-        .select('menu_items(preparation_time)')
+        .select('menu_items(preparation_time, category_id, menu_categories(is_beverage))')
         .eq('order_id', orderId);
 
       if (error || !data || data.length === 0) return fallbackMin;
 
       const times = data
+        .filter(item => !item.menu_items?.menu_categories?.is_beverage) // skip beverages
         .map(item => item.menu_items?.preparation_time)
         .filter(t => t && t > 0);
 

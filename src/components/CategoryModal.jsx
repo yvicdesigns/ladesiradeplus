@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
-import { Upload, AlertCircle } from 'lucide-react';
+import { Upload, AlertCircle, GlassWater } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { useTranslation } from 'react-i18next';
 import { useRestaurant } from '@/contexts/RestaurantContext';
 import { getValidatedRestaurantId } from '@/lib/restaurantValidation';
@@ -21,6 +22,7 @@ export const CategoryModal = ({ open, onClose, category = null }) => {
   const [loading, setLoading] = useState(false);
   const [imageFile, setImageFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
+  const [isBeverage, setIsBeverage] = useState(false);
   const [dbError, setDbError] = useState(null);
   const { toast } = useToast();
 
@@ -29,9 +31,11 @@ export const CategoryModal = ({ open, onClose, category = null }) => {
       setValue('name', category.name || '');
       setValue('description', category.description || '');
       setPreviewUrl(category.image_url || '');
+      setIsBeverage(category.is_beverage || false);
     } else {
       reset();
       setPreviewUrl('');
+      setIsBeverage(false);
     }
     setImageFile(null);
     setDbError(null);
@@ -62,6 +66,7 @@ export const CategoryModal = ({ open, onClose, category = null }) => {
         name: data.name,
         description: data.description || null,
         image_url: imageUrl,
+        is_beverage: isBeverage,
         restaurant_id: validRestaurantId
       };
 
@@ -149,6 +154,17 @@ export const CategoryModal = ({ open, onClose, category = null }) => {
               placeholder={t('admin.category_modal.desc_placeholder', { defaultValue: 'Description optionnelle' })}
               className="bg-background border-input min-h-[100px] text-foreground"
             />
+          </div>
+
+          <div className="flex items-center justify-between p-4 border border-blue-200 bg-blue-50/50 rounded-lg">
+            <div className="flex items-center gap-3">
+              <GlassWater className="h-5 w-5 text-blue-600" />
+              <div>
+                <Label className="text-base font-semibold text-blue-900">Catégorie Boisson</Label>
+                <p className="text-xs text-blue-700/70 mt-0.5">Les produits de cette catégorie auront un temps de préparation = 0 automatiquement.</p>
+              </div>
+            </div>
+            <Switch checked={isBeverage} onCheckedChange={setIsBeverage} className="data-[state=checked]:bg-blue-500" />
           </div>
 
           <div className="space-y-2">

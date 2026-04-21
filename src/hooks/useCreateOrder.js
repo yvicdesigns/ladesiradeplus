@@ -6,6 +6,7 @@ import { validateRestaurantIdBeforeOrderCreation } from '@/lib/restaurantValidat
 import { logger } from '@/lib/logger';
 import { OrderIdSyncService } from '@/lib/OrderIdSyncService';
 import { notifyAdminsNewOrder } from '@/lib/notifyNewOrder';
+import { validateIngredientStock, deductIngredientStock } from '@/hooks/useMenuItemIngredients';
 
 export const useCreateOrder = () => {
   const [menuItems, setMenuItems] = useState([]);
@@ -66,6 +67,15 @@ export const useCreateOrder = () => {
         if (dbItem && dbItem.stock_quantity !== null && dbItem.stock_quantity < cartItem.quantity) {
           throw new Error(`Stock insuffisant pour "${dbItem.name}".`);
         }
+      }
+
+      // 1b. Ingredient stock validation (shared ingredients across dishes)
+      const ingredientCheck = await validateIngredientStock(cart);
+      if (!ingredientCheck.valid) {
+        const msg = ingredientCheck.errors.map(e =>
+          `"${e.name}" : ${e.available}${e.unit ? ' ' + e.unit : ''} disponible(s), ${e.needed}${e.unit ? ' ' + e.unit : ''} nécessaire(s)`
+        ).join('\n');
+        throw new Error(`Stock d'ingrédients insuffisant :\n${msg}`);
       }
 
       // 2. Prepare RPC Payloads
@@ -156,6 +166,9 @@ export const useCreateOrder = () => {
           });
         }
       }
+
+      // 4b. Deduct ingredient stock
+      await deductIngredientStock(cart, createdOrderId);
 
       // 5. Increment promo code usage_count if a promo code was used
       if (orderDetails.promo_code_id) {

@@ -10,13 +10,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/components/ui/use-toast';
-import { Upload, Percent, AlertCircle } from 'lucide-react';
+import { Upload, Percent, AlertCircle, Plus, Trash2, FlaskConical } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useRestaurant } from '@/contexts/RestaurantContext';
 import { getValidatedRestaurantId } from '@/lib/restaurantValidation';
 import { VariantsEditor } from '@/components/VariantsEditor';
 import { useMenuItemVariants, saveVariants } from '@/hooks/useMenuItemVariants';
+import { useMenuItemIngredients } from '@/hooks/useMenuItemIngredients';
 
 export const ProductModal = ({ open, onClose, product = null, categories = [] }) => {
   const { t } = useTranslation();
@@ -31,7 +32,10 @@ export const ProductModal = ({ open, onClose, product = null, categories = [] })
   const [loyaltyOverride, setLoyaltyOverride] = useState('');
   const [rlsError, setRlsError] = useState(null);
   const [localVariants, setLocalVariants] = useState([]);
+  const [localIngredients, setLocalIngredients] = useState([]);
+  const [allIngredients, setAllIngredients] = useState([]);
   const { variants: existingVariants } = useMenuItemVariants(product?.id);
+  const { links: existingIngredientLinks, saveLinks } = useMenuItemIngredients(product?.id);
   const { toast } = useToast();
 
   const safeCategories = Array.isArray(categories) ? categories : [];
@@ -69,6 +73,27 @@ export const ProductModal = ({ open, onClose, product = null, categories = [] })
       options: v.menu_item_variant_options || []
     })));
   }, [existingVariants]);
+
+  useEffect(() => {
+    setLocalIngredients(existingIngredientLinks.map(l => ({
+      ingredient_id: l.ingredient_id,
+      name: l.ingredients?.name || '',
+      quantity_per_serving: l.quantity_per_serving,
+      unit: l.unit || l.ingredients?.unit || '',
+      current_stock: l.ingredients?.current_stock,
+    })));
+  }, [existingIngredientLinks]);
+
+  useEffect(() => {
+    supabase.from('ingredients').select('id, name, unit, current_stock').order('name')
+      .then(({ data }) => setAllIngredients(data || []));
+  }, [open]);
+
+  // Auto prep_time=0 when selected category is beverage
+  const selectedCategoryObj = safeCategories.find(c => c.id === selectedCategory);
+  useEffect(() => {
+    if (selectedCategoryObj?.is_beverage) setValue('preparation_time', 0);
+  }, [selectedCategory, selectedCategoryObj?.is_beverage, setValue]);
 
   const handleImageChange = (e) => {
     const file = e.target?.files?.[0];
@@ -168,12 +193,11 @@ export const ProductModal = ({ open, onClose, product = null, categories = [] })
         throw error;
       }
 
-      // Save variants
+      // Save variants + ingredient links
       const savedId = product?.id || (await supabase.from('menu_items').select('id').eq('name', data.name).eq('restaurant_id', getValidatedRestaurantId(restaurantId)).maybeSingle().then(r => r.data?.id));
-      if (savedId && localVariants.length > 0) {
+      if (savedId) {
         await saveVariants(savedId, localVariants);
-      } else if (savedId) {
-        await saveVariants(savedId, []);
+        await saveLinks(savedId, localIngredients.filter(l => l.ingredient_id));
       }
 
       toast({
@@ -376,6 +400,66 @@ export const ProductModal = ({ open, onClose, product = null, categories = [] })
           {/* Variants Section */}
           <div className="p-4 border border-blue-200 bg-blue-50/30 rounded-lg">
             <VariantsEditor variants={localVariants} onChange={setLocalVariants} />
+          </div>
+
+          {/* Ingredients Section */}
+          <div className="p-4 border border-purple-200 bg-purple-50/30 rounded-lg space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FlaskConical className="h-4 w-4 text-purple-600" />
+                <span className="font-semibold text-purple-900 text-sm">Ingrédients partagés (Stock commun)</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setLocalIngredients(prev => [...prev, { ingredient_id: '', name: '', quantity_per_serving: 1, unit: '', current_stock: null }])}
+                className="flex items-center gap-1 text-xs text-purple-700 hover:text-purple-900 bg-purple-100 hover:bg-purple-200 px-2 py-1 rounded-md transition-colors"
+              >
+                <Plus className="h-3 w-3" /> Ajouter
+              </button>
+            </div>
+            <p className="text-xs text-purple-600/80">Liez les ingrédients partagés entre plats. Ex: "viande" partagée entre Mafé et Bouillon.</p>
+            {localIngredients.length === 0 && (
+              <p className="text-xs text-slate-400 italic text-center py-2">Aucun ingrédient lié — ce plat a son propre stock indépendant.</p>
+            )}
+            <div className="space-y-2">
+              {localIngredients.map((link, i) => (
+                <div key={i} className="flex items-center gap-2 bg-white rounded-lg border border-purple-100 p-2">
+                  <select
+                    value={link.ingredient_id}
+                    onChange={e => {
+                      const ing = allIngredients.find(a => a.id === e.target.value);
+                      setLocalIngredients(prev => prev.map((l, idx) => idx === i ? {
+                        ...l, ingredient_id: e.target.value,
+                        name: ing?.name || '', unit: ing?.unit || '', current_stock: ing?.current_stock ?? null
+                      } : l));
+                    }}
+                    className="flex-1 text-sm border border-slate-200 rounded-md px-2 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-1 focus:ring-purple-400"
+                  >
+                    <option value="">-- Choisir un ingrédient --</option>
+                    {allIngredients.map(ing => (
+                      <option key={ing.id} value={ing.id}>{ing.name} {ing.unit ? `(${ing.unit})` : ''} — stock: {ing.current_stock ?? '∞'}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={link.quantity_per_serving}
+                    onChange={e => setLocalIngredients(prev => prev.map((l, idx) => idx === i ? { ...l, quantity_per_serving: e.target.value } : l))}
+                    className="w-20 text-sm border border-slate-200 rounded-md px-2 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-1 focus:ring-purple-400"
+                    placeholder="Qté"
+                  />
+                  <span className="text-xs text-slate-500 w-10 truncate">{link.unit || 'unité'}</span>
+                  <button
+                    type="button"
+                    onClick={() => setLocalIngredients(prev => prev.filter((_, idx) => idx !== i))}
+                    className="text-red-400 hover:text-red-600 p-1 rounded"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-muted/20">
