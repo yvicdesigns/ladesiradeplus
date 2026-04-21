@@ -18,41 +18,56 @@ export function useClients(filters = {}, page = 1, limit = 50) {
     if (!isMounted.current) return;
     setLoading(true);
     try {
-      const fetchOp = async () => {
-        let query = supabase
-          .from('customers')
-          .select('*', { count: 'exact' })
-          .or('is_deleted.eq.false,is_deleted.is.null');
-        
-        if (filters && filters.search) {
-          query = query.or(`name.ilike.%${filters.search}%,email.ilike.%${filters.search}%,phone.ilike.%${filters.search}%`);
-        }
-        
-        if (limit === 'all') {
-          query = query.order('name', { ascending: true }).limit(1000);
-        } else {
-          const safePage = Math.max(1, page || 1);
-          const safeLimit = Math.max(1, limit || 50);
-          const from = (safePage - 1) * safeLimit;
-          const to = from + safeLimit - 1;
-          query = query.order('created_at', { ascending: false }).range(from, to);
-        }
+      // Fetch manual customers (admin-added)
+      let customersQuery = supabase
+        .from('customers')
+        .select('*')
+        .or('is_deleted.eq.false,is_deleted.is.null');
 
-        const { data, count, error: fetchError } = await query;
-        if (fetchError) throw fetchError;
-        return { data, count };
-      };
+      // Fetch real app users (profiles with role=customer)
+      let profilesQuery = supabase
+        .from('profiles')
+        .select('id, user_id, full_name, email, phone, created_at, photo_url')
+        .eq('role', 'customer');
 
-      const result = await retryWithExponentialBackoff(async () => {
-        return await withTimeout(fetchOp, TIMEOUT_CONFIG.QUERY_TIMEOUT);
-      });
+      if (filters?.search) {
+        const s = filters.search;
+        customersQuery = customersQuery.or(`name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%`);
+        profilesQuery = profilesQuery.or(`full_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%`);
+      }
 
-      if (!result.success) throw result.error;
+      const [customersRes, profilesRes] = await Promise.all([
+        customersQuery.order('created_at', { ascending: false }).limit(500),
+        profilesQuery.order('created_at', { ascending: false }).limit(500),
+      ]);
+
+      if (customersRes.error) throw customersRes.error;
+      if (profilesRes.error) throw profilesRes.error;
+
+      const manualCustomers = (customersRes.data || []);
+
+      // Convert profiles to same shape as customers, skip those already in customers (matched by user_id)
+      const manualUserIds = new Set(manualCustomers.map(c => c.user_id).filter(Boolean));
+      const profileCustomers = (profilesRes.data || [])
+        .filter(p => !manualUserIds.has(p.user_id))
+        .map(p => ({
+          id: p.id,
+          user_id: p.user_id,
+          name: p.full_name || p.email || 'Client',
+          email: p.email,
+          phone: p.phone,
+          photo_url: p.photo_url,
+          created_at: p.created_at,
+          source_client: 'app',
+          is_deleted: false,
+        }));
+
+      const merged = [...manualCustomers, ...profileCustomers]
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
       if (isMounted.current) {
-        const safeData = Array.isArray(result.data.data) ? result.data.data : [];
-        setClients(safeData);
-        setTotalCount(result.data.count || safeData.length);
+        setClients(merged);
+        setTotalCount(merged.length);
         setError(null);
       }
     } catch (err) {
