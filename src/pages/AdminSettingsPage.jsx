@@ -84,16 +84,13 @@ export const AdminSettingsPage = () => {
     setSearchParams({ tab: value }, { replace: true });
   };
 
+  const isManager = role === 'manager';
+  const managerAllowedTabs = ['profile', 'restaurant', 'logo', 'hours', 'notifications', 'delivery-alerts', 'loyalty', 'users', 'mobile-money', 'data'];
+
   useEffect(() => {
-    if (!authLoading && role !== 'admin') {
-      toast({
-        variant: "destructive",
-        title: "Accès refusé",
-        description: "Les managers ne peuvent pas accéder aux paramètres système."
-      });
-      const timer = setTimeout(() => {
-        navigate('/admin');
-      }, 2000);
+    if (!authLoading && role !== 'admin' && role !== 'manager') {
+      toast({ variant: "destructive", title: "Accès refusé", description: "Vous n'avez pas accès aux paramètres." });
+      const timer = setTimeout(() => navigate('/admin'), 2000);
       return () => clearTimeout(timer);
     }
   }, [role, authLoading, navigate, toast]);
@@ -157,13 +154,13 @@ export const AdminSettingsPage = () => {
     );
   }
 
-  if (role !== 'admin') {
+  if (role !== 'admin' && role !== 'manager') {
     return (
       <AdminLayout>
         <div className="flex flex-col items-center justify-center h-[70vh] gap-4">
           <ShieldAlert className="h-16 w-16 text-destructive" />
           <h2 className="text-2xl font-bold">Accès Refusé</h2>
-          <p className="text-muted-foreground text-center max-w-md">Les managers ne peuvent pas accéder aux paramètres système. Veuillez contacter un administrateur.</p>
+          <p className="text-muted-foreground text-center max-w-md">Vous n'avez pas accès aux paramètres.</p>
         </div>
       </AdminLayout>
     );
@@ -241,15 +238,15 @@ export const AdminSettingsPage = () => {
                 <TabsTrigger value="logo">{t('admin.settings.tabs.logo', 'Logo')}</TabsTrigger>
                 <TabsTrigger value="hours">{t('admin.settings.tabs.hours', 'Heures')}</TabsTrigger>
                 <TabsTrigger value="notifications">{t('admin.settings.tabs.notifications', 'Notifications')}</TabsTrigger>
-                <TabsTrigger value="sound">{t('admin.settings.tabs.sound', 'Sons')}</TabsTrigger>
+                {!isManager && <TabsTrigger value="sound">{t('admin.settings.tabs.sound', 'Sons')}</TabsTrigger>}
                 <TabsTrigger value="delivery-alerts">{t('admin.settings.tabs.delivery_alerts', 'Livraison')}</TabsTrigger>
                 <TabsTrigger value="loyalty">Fidélité</TabsTrigger>
-                <TabsTrigger value="workflow">Flux Auto</TabsTrigger>
+                {!isManager && <TabsTrigger value="workflow">Flux Auto</TabsTrigger>}
                 <TabsTrigger value="users">{t('admin.settings.tabs.users', 'Utilisateurs')}</TabsTrigger>
                 <TabsTrigger value="mobile-money">{t('admin.settings.tabs.mobile_money', 'Paiements Mobiles')}</TabsTrigger>
-                <TabsTrigger value="security">{t('admin.settings.tabs.security', 'Sécurité')}</TabsTrigger>
+                {!isManager && <TabsTrigger value="security">{t('admin.settings.tabs.security', 'Sécurité')}</TabsTrigger>}
                 <TabsTrigger value="data">{t('admin.settings.tabs.data', 'Données')}</TabsTrigger>
-                <TabsTrigger value="reset">{t('admin.settings.tabs.reset', 'Réinitialisation')}</TabsTrigger>
+                {!isManager && <TabsTrigger value="reset">{t('admin.settings.tabs.reset', 'Réinitialisation')}</TabsTrigger>}
               </TabsList>
               <ScrollBar orientation="horizontal" className="h-2" />
             </ScrollArea>
