@@ -12,6 +12,7 @@ import { ReviewModal } from '@/components/ReviewModal';
 import { ReviewsDisplay } from '@/components/ReviewsDisplay';
 import { useRealtimeSubscription } from '@/hooks/useRealtimeSubscription';
 import { useTranslation } from 'react-i18next';
+import { useMenuItemVariants } from '@/hooks/useMenuItemVariants';
 
 export const ProductDetailsPage = () => {
   const { id } = useParams();
@@ -20,8 +21,10 @@ export const ProductDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [selectedVariants, setSelectedVariants] = useState({});
 
   const { addToCart, getItemCount } = useCart();
+  const { variants } = useMenuItemVariants(id);
   const { toast } = useToast();
   const { t } = useTranslation();
   const cartItemCount = getItemCount();
@@ -68,27 +71,52 @@ export const ProductDetailsPage = () => {
     return price * (1 - discount / 100);
   };
 
-  const handleAddToCart = async () => {
-    // We pass the product and the exact quantity to the addToCart function.
-    // This replaces the previous implementation which looped and called it multiple times,
-    // which caused race conditions with the React state updates inside the CartContext.
-    const added = await addToCart(product, quantity);
-    
-    if (added) {
-      toast({
-        variant: 'success',
-        title: t('product.added_title'),
-        description: t('product.added_desc', { quantity, name: product.name }),
-        duration: 4000,
+  const variantPriceAdjustment = useMemo(() => {
+    return variants.reduce((total, v) => {
+      const selectedOptionId = selectedVariants[v.id];
+      if (!selectedOptionId) return total;
+      const option = v.menu_item_variant_options?.find(o => o.id === selectedOptionId);
+      return total + (option?.price_adjustment || 0);
+    }, 0);
+  }, [variants, selectedVariants]);
+
+  const allRequiredSelected = useMemo(() => {
+    return variants.filter(v => v.is_required).every(v => selectedVariants[v.id]);
+  }, [variants, selectedVariants]);
+
+  const buildCartItem = () => {
+    const variantLabels = variants
+      .filter(v => selectedVariants[v.id])
+      .map(v => {
+        const option = v.menu_item_variant_options?.find(o => o.id === selectedVariants[v.id]);
+        return { variantName: v.name, optionId: selectedVariants[v.id], optionLabel: option?.label, priceAdjustment: option?.price_adjustment || 0 };
       });
+    return {
+      ...product,
+      selectedVariants: variantLabels,
+      variantKey: JSON.stringify(selectedVariants),
+      price: (product.is_promo ? getDiscountedPrice(product.price, product.promo_discount) : product.price) + variantPriceAdjustment,
+    };
+  };
+
+  const handleAddToCart = async () => {
+    if (variants.length > 0 && !allRequiredSelected) {
+      toast({ variant: 'destructive', title: 'Choix requis', description: 'Veuillez sélectionner toutes les options obligatoires.' });
+      return;
+    }
+    const added = await addToCart(buildCartItem(), quantity);
+    if (added) {
+      toast({ variant: 'success', title: t('product.added_title'), description: t('product.added_desc', { quantity, name: product.name }), duration: 4000 });
     }
   };
 
   const handlePlaceOrder = async () => {
-    const added = await addToCart(product, quantity);
-    if (added) {
-      navigate('/checkout');
+    if (variants.length > 0 && !allRequiredSelected) {
+      toast({ variant: 'destructive', title: 'Choix requis', description: 'Veuillez sélectionner toutes les options obligatoires.' });
+      return;
     }
+    const added = await addToCart(buildCartItem(), quantity);
+    if (added) navigate('/checkout');
   };
 
   const handleImageError = (e) => {
@@ -190,12 +218,12 @@ export const ProductDetailsPage = () => {
                             {formatCurrency(Number(product.price))}
                         </span>
                         <div className="text-2xl font-bold text-[#D97706]">
-                            {formatCurrency(discountedPrice)}
+                            {formatCurrency(discountedPrice + variantPriceAdjustment)}
                         </div>
                     </>
                 ) : (
                     <div className="text-2xl font-bold text-[#D97706]">
-                        {formatCurrency(Number(product.price))}
+                        {formatCurrency(Number(product.price) + variantPriceAdjustment)}
                     </div>
                 )}
               </div>
@@ -219,6 +247,44 @@ export const ProductDetailsPage = () => {
               </div>
             </div>
           </div>
+
+          {/* Variants Section */}
+          {variants.length > 0 && (
+            <div className="mx-6 mb-6 space-y-4">
+              {variants.map(variant => (
+                <div key={variant.id}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="font-bold text-sm text-[#111827]">{variant.name}</h3>
+                    {variant.is_required && <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">Obligatoire</span>}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {(variant.menu_item_variant_options || []).map(option => {
+                      const isSelected = selectedVariants[variant.id] === option.id;
+                      return (
+                        <button
+                          key={option.id}
+                          type="button"
+                          onClick={() => setSelectedVariants(prev => ({ ...prev, [variant.id]: option.id }))}
+                          className={`px-4 py-2 rounded-2xl text-sm font-medium border-2 transition-all ${
+                            isSelected
+                              ? 'border-[#D97706] bg-[#D97706] text-white shadow-md'
+                              : 'border-gray-200 bg-white text-gray-700 hover:border-amber-300'
+                          }`}
+                        >
+                          {option.label}
+                          {option.price_adjustment > 0 && (
+                            <span className={`ml-1 text-xs ${isSelected ? 'text-white/80' : 'text-amber-600'}`}>
+                              +{option.price_adjustment.toLocaleString('fr-FR')}F
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Details Section */}
           <div className="px-6 mb-8">

@@ -40,15 +40,16 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  const getCartKey = (item) => `${item.id}__${item.variantKey || ''}`;
+
   const addToCart = async (item, quantity = 1) => {
-    // Ensure item has the necessary properties. 
-    // We spread all item data (including promo info) to properly handle discounts downstream.
-    const existingItemIndex = cart.findIndex((cartItem) => cartItem.id === item.id);
+    const cartKey = getCartKey(item);
+    const existingItemIndex = cart.findIndex((cartItem) => getCartKey(cartItem) === cartKey);
     const currentQtyInCart = existingItemIndex >= 0 ? cart[existingItemIndex].quantity : 0;
     const requestedQty = currentQtyInCart + quantity;
 
     const validation = await validateStock(item.id, requestedQty);
-    
+
     if (!validation.valid) {
       toast({
         variant: "destructive",
@@ -63,13 +64,17 @@ export const CartProvider = ({ children }) => {
       newCart[existingItemIndex].quantity = requestedQty;
       setCart(newCart);
     } else {
-      setCart([...cart, { ...item, quantity }]);
+      setCart([...cart, { ...item, quantity, cartKey }]);
     }
     return true;
   };
 
-  const removeFromCart = (itemId) => {
-    setCart(cart.filter((item) => item.id !== itemId));
+  const removeFromCart = (itemId, variantKey) => {
+    if (variantKey !== undefined) {
+      setCart(cart.filter((item) => !(item.id === itemId && (item.variantKey || '') === variantKey)));
+    } else {
+      setCart(cart.filter((item) => item.id !== itemId));
+    }
   };
 
   const updateQuantity = async (itemId, quantity) => {

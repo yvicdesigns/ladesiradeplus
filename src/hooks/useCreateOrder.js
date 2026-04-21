@@ -73,7 +73,8 @@ export const useCreateOrder = () => {
         menu_item_id: item.id || item.menu_item_id,
         quantity: item.quantity,
         price: item.price || item.finalPricePerUnit || 0,
-        notes: item.notes || null
+        notes: item.notes || null,
+        selected_variants: item.selectedVariants?.length > 0 ? JSON.stringify(item.selectedVariants) : null,
       }));
 
       let deliveryPayload = null;

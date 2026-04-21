@@ -15,6 +15,8 @@ import { useTranslation } from 'react-i18next';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useRestaurant } from '@/contexts/RestaurantContext';
 import { getValidatedRestaurantId } from '@/lib/restaurantValidation';
+import { VariantsEditor } from '@/components/VariantsEditor';
+import { useMenuItemVariants, saveVariants } from '@/hooks/useMenuItemVariants';
 
 export const ProductModal = ({ open, onClose, product = null, categories = [] }) => {
   const { t } = useTranslation();
@@ -28,6 +30,8 @@ export const ProductModal = ({ open, onClose, product = null, categories = [] })
   const [isPromo, setIsPromo] = useState(false);
   const [loyaltyOverride, setLoyaltyOverride] = useState('');
   const [rlsError, setRlsError] = useState(null);
+  const [localVariants, setLocalVariants] = useState([]);
+  const { variants: existingVariants } = useMenuItemVariants(product?.id);
   const { toast } = useToast();
 
   const safeCategories = Array.isArray(categories) ? categories : [];
@@ -53,10 +57,20 @@ export const ProductModal = ({ open, onClose, product = null, categories = [] })
       setIsPromo(false);
       setPreviewUrl('');
       setLoyaltyOverride('');
+      setLocalVariants([]);
     }
     setImageFile(null);
     setRlsError(null);
   }, [product, open, reset, setValue]);
+
+  useEffect(() => {
+    if (existingVariants.length > 0) {
+      setLocalVariants(existingVariants.map(v => ({
+        ...v,
+        options: v.menu_item_variant_options || []
+      })));
+    }
+  }, [existingVariants]);
 
   const handleImageChange = (e) => {
     const file = e.target?.files?.[0];
@@ -154,6 +168,14 @@ export const ProductModal = ({ open, onClose, product = null, categories = [] })
            throw new Error("Erreur: Restaurant non configuré ou invalide. Veuillez contacter l'administrateur.");
         }
         throw error;
+      }
+
+      // Save variants
+      const savedId = product?.id || (await supabase.from('menu_items').select('id').eq('name', data.name).eq('restaurant_id', getValidatedRestaurantId(restaurantId)).maybeSingle().then(r => r.data?.id));
+      if (savedId && localVariants.length > 0) {
+        await saveVariants(savedId, localVariants);
+      } else if (savedId) {
+        await saveVariants(savedId, []);
       }
 
       toast({
@@ -351,6 +373,11 @@ export const ProductModal = ({ open, onClose, product = null, categories = [] })
                 </p>
               </div>
             </div>
+          </div>
+
+          {/* Variants Section */}
+          <div className="p-4 border border-blue-200 bg-blue-50/30 rounded-lg">
+            <VariantsEditor variants={localVariants} onChange={setLocalVariants} />
           </div>
 
           <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-muted/20">
