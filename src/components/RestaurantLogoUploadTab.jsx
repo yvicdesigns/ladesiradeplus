@@ -124,12 +124,14 @@ export const RestaurantLogoUploadTab = () => {
     if (!file) return;
     try {
       setUploadingVideo(true);
+      const rowId = settingsId || DEFAULT_ADMIN_SETTINGS_ID;
       const publicUrl = await uploadVideo(file, 'restaurant-logos');
-      const { error } = await supabase.from('admin_settings').update({
+      const { data: updated, error } = await supabase.from('admin_settings').update({
         banner_video_url: publicUrl,
         updated_at: new Date().toISOString(),
-      }).eq('id', DEFAULT_ADMIN_SETTINGS_ID);
+      }).eq('id', rowId).select('id').single();
       if (error) throw error;
+      if (!updated) throw new Error('Mise à jour bloquée — vérifiez les permissions Supabase RLS.');
       setCurrentVideo(publicUrl);
       toast({ title: "Vidéo uploadée", description: "La vidéo de bannière a été mise à jour.", className: "bg-amber-500 text-white" });
       await refreshSettings();
@@ -144,10 +146,11 @@ export const RestaurantLogoUploadTab = () => {
   const handleDeleteVideo = async () => {
     try {
       setUploadingVideo(true);
+      const rowId = settingsId || DEFAULT_ADMIN_SETTINGS_ID;
       const { error } = await supabase.from('admin_settings').update({
         banner_video_url: null,
         updated_at: new Date().toISOString(),
-      }).eq('id', DEFAULT_ADMIN_SETTINGS_ID);
+      }).eq('id', rowId);
       if (error) throw error;
       setCurrentVideo(null);
       toast({ title: "Vidéo supprimée", description: "L'image fixe sera affichée à la place." });
