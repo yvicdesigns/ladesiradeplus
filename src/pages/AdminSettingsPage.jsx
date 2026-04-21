@@ -40,7 +40,7 @@ export const AdminSettingsPage = () => {
   const { settings: workflowSettings, updateSettings: updateWorkflowSettings, saving: workflowSaving, dbAvailable: workflowDbAvailable } = useOrderAutoProgression();
   
   const [initStatus, setInitStatus] = useState(null);
-  const [isChecking, setIsChecking] = useState(true);
+  const [isChecking, setIsChecking] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
   const [rlsError, setRlsError] = useState(null);
   
