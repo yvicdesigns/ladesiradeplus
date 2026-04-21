@@ -182,10 +182,24 @@ export const AdminDeliveryOrdersTable = ({
                         </div>
                     </TableCell>
                     
-                    <TableCell>
-                      <Badge variant="secondary" className="text-xs font-normal">
-                        {itemsCount} items
-                      </Badge>
+                    <TableCell className="max-w-[200px]">
+                      <div className="flex flex-wrap gap-1">
+                        {(order.order_items || []).slice(0, 3).map((item, i) => (
+                          <div key={i} className="flex items-center gap-1 bg-slate-50 border border-slate-100 rounded-lg px-1.5 py-0.5">
+                            {item.menu_items?.image_url
+                              ? <img src={item.menu_items.image_url} className="w-5 h-5 rounded object-cover flex-shrink-0" alt="" />
+                              : <span className="text-xs">🍽️</span>}
+                            <span className="text-xs font-medium text-slate-700 truncate max-w-[70px]">{item.menu_items?.name || item.name || '?'}</span>
+                            <span className="text-xs text-amber-600 font-bold">x{item.quantity}</span>
+                          </div>
+                        ))}
+                        {(order.order_items || []).length > 3 && (
+                          <span className="text-xs text-slate-400 self-center">+{order.order_items.length - 3}</span>
+                        )}
+                        {(order.order_items || []).length === 0 && (
+                          <span className="text-xs text-slate-400 italic">Voir détails</span>
+                        )}
+                      </div>
                     </TableCell>
                     
                     <TableCell>

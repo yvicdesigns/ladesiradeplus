@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from '@/lib/customSupabaseClient';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +23,18 @@ export const RestaurantOrderDetailModal = ({ order, open, onOpenChange, onUpdate
   const [isPaymentUpdating, setIsPaymentUpdating] = useState(false);
   const [isStatusUpdating, setIsStatusUpdating] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
+  const [fetchedItems, setFetchedItems] = useState([]);
+
+  useEffect(() => {
+    if (!open || !order?.order_id && !order?.id) return;
+    const orderId = order.order_id || order.id;
+    supabase
+      .from('order_items')
+      .select('id, quantity, price, notes, selected_variants, menu_item_id, menu_items(name, image_url, description)')
+      .eq('order_id', orderId)
+      .eq('is_deleted', false)
+      .then(({ data }) => { if (data) setFetchedItems(data); });
+  }, [open, order?.order_id, order?.id]);
   
   // Robust orderMethod extraction with fallback
   const orderMethod = order?.order_method || order?.orders?.order_method || 'unknown';
@@ -45,9 +58,9 @@ export const RestaurantOrderDetailModal = ({ order, open, onOpenChange, onUpdate
   
   if (!order) return null;
 
-  const items = order.order_items?.length
-    ? order.order_items
+  const rawItems = order.order_items?.length ? order.order_items
     : (typeof order.items === 'string' ? JSON.parse(order.items) : order.items) || [];
+  const items = fetchedItems.length > 0 ? fetchedItems : rawItems;
   const showPaymentProofSection = order.payment_screenshot_url;
   const isDelivery = order.type === 'delivery'; 
   const zoneInfo = order.zone_id ? getZoneDetails(order.zone_id) : null;
@@ -241,20 +254,32 @@ export const RestaurantOrderDetailModal = ({ order, open, onOpenChange, onUpdate
                 {items && items.map((item, idx) => {
                   const itemName = item.menu_items?.name || item.name || 'Produit Inconnu';
                   const itemImage = item.menu_items?.image_url;
+                  const variants = item.selected_variants
+                    ? (typeof item.selected_variants === 'string' ? JSON.parse(item.selected_variants) : item.selected_variants)
+                    : [];
                   return (
-                    <div key={idx} className="flex justify-between items-start sm:items-center text-sm border-b border-slate-100 pb-4 last:border-0 last:pb-0">
-                      <div className="flex items-start sm:items-center gap-3">
+                    <div key={idx} className="flex justify-between items-start text-sm border-b border-slate-100 pb-4 last:border-0 last:pb-0">
+                      <div className="flex items-start gap-3">
                         {itemImage ? (
-                          <img src={itemImage} alt={itemName} className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-slate-100" />
+                          <img src={itemImage} alt={itemName} className="w-14 h-14 rounded-xl object-cover flex-shrink-0 border border-slate-100 shadow-sm" />
                         ) : (
-                          <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
-                            <span className="text-lg">🍽️</span>
+                          <div className="w-14 h-14 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0 border border-amber-100">
+                            <span className="text-2xl">🍽️</span>
                           </div>
                         )}
                         <div>
-                          <p className="font-medium text-slate-800">{itemName}</p>
+                          <p className="font-semibold text-slate-800">{itemName}</p>
                           <span className="bg-amber-100 text-amber-700 font-bold px-1.5 py-0.5 rounded text-xs">x{item.quantity}</span>
-                          {item.notes && <p className="text-xs text-slate-500 italic mt-1 bg-slate-50 p-1.5 rounded inline-block">Note: {item.notes}</p>}
+                          {variants.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {variants.map((v, vi) => (
+                                <span key={vi} className="text-xs bg-blue-50 text-blue-700 border border-blue-100 px-1.5 py-0.5 rounded-full">
+                                  {v.variantName}: {v.optionLabel}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          {item.notes && <p className="text-xs text-slate-500 italic mt-1 bg-slate-50 p-1.5 rounded">Note: {item.notes}</p>}
                         </div>
                       </div>
                       <span className="font-bold text-slate-700 whitespace-nowrap ml-4">

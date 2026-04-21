@@ -639,7 +639,8 @@ const AdminRestaurantOrdersPage = () => {
                     </div>
                   </th>
                   <th className="px-6 py-4">Type</th>
-                  <th 
+                  <th className="px-6 py-4">Articles</th>
+                  <th
                     className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition-colors select-none group"
                     onClick={() => handleSort('total')}
                   >
@@ -699,6 +700,25 @@ const AdminRestaurantOrdersPage = () => {
                             <Store className="w-3 h-3" />
                             {getOrderMethodLabel(method)}
                           </Badge>
+                        </td>
+                        <td className="px-6 py-4 max-w-[220px]">
+                          <div className="flex flex-wrap gap-1">
+                            {(order.items || []).slice(0, 3).map((item, i) => (
+                              <div key={i} className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-lg px-2 py-1">
+                                {item.menu_items?.image_url
+                                  ? <img src={item.menu_items.image_url} className="w-5 h-5 rounded object-cover" alt="" />
+                                  : <span className="text-sm">🍽️</span>}
+                                <span className="text-xs font-medium text-slate-700 truncate max-w-[80px]">{item.menu_items?.name || item.name || '?'}</span>
+                                <span className="text-xs text-amber-600 font-bold">x{item.quantity}</span>
+                              </div>
+                            ))}
+                            {(order.items || []).length > 3 && (
+                              <span className="text-xs text-slate-400 self-center">+{order.items.length - 3}</span>
+                            )}
+                            {(order.items || []).length === 0 && (
+                              <span className="text-xs text-slate-400 italic">Voir détails</span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="font-bold text-slate-900">{formatCurrency(order.total || order.orders?.total)}</div>

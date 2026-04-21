@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '@/lib/customSupabaseClient';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -7,6 +8,18 @@ import { Utensils, Truck, User, Phone, MapPin, AlignLeft, Calendar, Receipt, Sto
 import { Button } from '@/components/ui/button';
 
 export const OrderDetailModal = ({ order, open, onClose }) => {
+  const [fetchedItems, setFetchedItems] = useState([]);
+
+  useEffect(() => {
+    if (!open || !order?.id) return;
+    supabase
+      .from('order_items')
+      .select('id, quantity, price, notes, selected_variants, menu_item_id, menu_items(name, image_url)')
+      .eq('order_id', order.id)
+      .eq('is_deleted', false)
+      .then(({ data }) => { if (data) setFetchedItems(data); });
+  }, [open, order?.id]);
+
   if (!order) return null;
 
   const isDelivery = order.order_type === 'delivery' || order.type === 'delivery';
@@ -93,29 +106,57 @@ export const OrderDetailModal = ({ order, open, onClose }) => {
                 <Receipt className="w-4 h-4 text-slate-500" /> Détails des articles
               </h3>
               
-              <div className="space-y-3">
-                {order.items && order.items.length > 0 ? (
-                  order.items.map((item, idx) => (
-                    <div key={idx} className="flex justify-between items-start py-2 border-b border-slate-50 last:border-0">
-                      <div className="flex gap-3">
-                        <span className="bg-slate-100 text-slate-700 font-bold px-2 py-0.5 rounded text-sm h-fit">
-                          {item.quantity}x
-                        </span>
-                        <div>
-                          <p className="font-medium text-slate-900">{item.name || item.menu_item?.name || 'Produit'}</p>
-                          {item.notes && <p className="text-xs text-slate-500 italic mt-0.5">Note: {item.notes}</p>}
-                        </div>
+              {(() => {
+                const rawItems = order.items || [];
+                const displayItems = fetchedItems.length > 0 ? fetchedItems : rawItems;
+                return (
+                  <div className="space-y-3">
+                    {displayItems.length > 0 ? (
+                      displayItems.map((item, idx) => {
+                        const itemName = item.menu_items?.name || item.name || item.menu_item?.name || 'Produit';
+                        const itemImage = item.menu_items?.image_url;
+                        const variants = item.selected_variants
+                          ? (typeof item.selected_variants === 'string' ? JSON.parse(item.selected_variants) : item.selected_variants)
+                          : [];
+                        return (
+                          <div key={idx} className="flex justify-between items-start py-2 border-b border-slate-50 last:border-0">
+                            <div className="flex gap-3">
+                              {itemImage ? (
+                                <img src={itemImage} alt={itemName} className="w-12 h-12 rounded-lg object-cover flex-shrink-0 border border-slate-100" />
+                              ) : (
+                                <div className="w-12 h-12 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0 border border-amber-100">
+                                  <span className="text-xl">🍽️</span>
+                                </div>
+                              )}
+                              <div>
+                                <p className="font-medium text-slate-900">{itemName}</p>
+                                <span className="bg-slate-100 text-slate-700 font-bold px-1.5 py-0.5 rounded text-xs">{item.quantity}x</span>
+                                {variants.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {variants.map((v, vi) => (
+                                      <span key={vi} className="text-xs bg-blue-50 text-blue-700 border border-blue-100 px-1.5 py-0.5 rounded-full">
+                                        {v.variantName}: {v.optionLabel}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                                {item.notes && <p className="text-xs text-slate-500 italic mt-0.5">Note: {item.notes}</p>}
+                              </div>
+                            </div>
+                            <span className="font-semibold text-slate-700 whitespace-nowrap ml-2">
+                              {formatCurrency(item.price * item.quantity)}
+                            </span>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="text-center py-4 text-slate-500 text-sm italic">
+                        Détails des articles non disponibles dans cette vue.
                       </div>
-                      <span className="font-semibold text-slate-700">
-                        {formatCurrency(item.price * item.quantity)}
-                      </span>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-4 text-slate-500 text-sm italic">
-                    Détails des articles non disponibles dans cette vue.
+                    )}
                   </div>
-                )}
+                );
+              })()}
               </div>
               
               <div className="flex justify-between items-center pt-4 bg-slate-50 p-4 rounded-xl mt-4 border border-slate-100">

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from '@/lib/customSupabaseClient';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,18 +14,25 @@ import { useToast } from '@/components/ui/use-toast';
 export const DeliveryOrderDetailModal = ({ order, open, onOpenChange, onUpdateStatus, onUpdatePayment, onDelete }) => {
   const [loadingAction, setLoadingAction] = useState(null);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [fetchedItems, setFetchedItems] = useState([]);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (open && order) {
-      console.log('[DEBUG] DeliveryOrderDetailModal opened. Complete order object:', order);
-    }
-  }, [open, order]);
+    if (!open || !order) return;
+    const orderId = order.order_id || order.id;
+    supabase
+      .from('order_items')
+      .select('id, quantity, price, notes, selected_variants, menu_item_id, menu_items(name, image_url, description)')
+      .eq('order_id', orderId)
+      .eq('is_deleted', false)
+      .then(({ data }) => { if (data) setFetchedItems(data); });
+  }, [open, order?.order_id, order?.id]);
 
   if (!order) return null;
 
   const deliveryData = order.delivery_orders?.[0] || order;
-  const items = order.order_items || (typeof order.items === 'string' ? JSON.parse(order.items) : order.items) || [];
+  const rawItems = order.order_items || (typeof order.items === 'string' ? JSON.parse(order.items) : order.items) || [];
+  const items = fetchedItems.length > 0 ? fetchedItems : rawItems;
   const nextStatus = getNextStatus(order.status);
 
   // CRITICAL FIX: Ensure we use orders.id (order_id) and not delivery_orders.id
