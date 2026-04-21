@@ -9,6 +9,7 @@ import { TIMEOUT_CONFIG } from '@/lib/timeoutConfig';
 import { logAudit } from '@/lib/auditLogUtils';
 import { AUDIT_ACTIONS } from '@/constants/AUDIT_ACTIONS';
 import { globalCircuitBreaker } from '@/lib/CircuitBreaker';
+import { initPushNotifications, removePushToken } from '@/lib/pushNotificationService';
 
 const AuthContext = createContext({
   user: null,
@@ -114,6 +115,7 @@ export const AuthProvider = ({ children }) => {
         setUser(currentUser);
         setRole(currentUser.role);
         setIsAdmin(profileData?.isAdmin || false);
+        initPushNotifications(currentUser.id);
       }
     } else {
       clearAuthState();
@@ -245,6 +247,7 @@ export const AuthProvider = ({ children }) => {
       console.warn("Could not log audit on signout", e);
     }
     
+    try { const { data: { session: s } } = await supabase.auth.getSession(); if (s?.user) await removePushToken(s.user.id); } catch (_) {}
     await clearAuthSession();
     clearAuthState();
     if (!window.location.pathname.includes('/admin/login')) {

@@ -5,6 +5,7 @@ import { useRestaurant } from '@/contexts/RestaurantContext';
 import { validateRestaurantIdBeforeOrderCreation } from '@/lib/restaurantValidation';
 import { logger } from '@/lib/logger';
 import { OrderIdSyncService } from '@/lib/OrderIdSyncService';
+import { notifyAdminsNewOrder } from '@/lib/notifyNewOrder';
 
 export const useCreateOrder = () => {
   const [menuItems, setMenuItems] = useState([]);
@@ -169,6 +170,8 @@ export const useCreateOrder = () => {
             .eq('id', orderDetails.promo_code_id);
         }
       }
+
+      notifyAdminsNewOrder({ orderType: type, customerName: client?.name || 'Client Anonyme', total: totalToUse });
 
       return { success: true, order: rpcResult.order };
 

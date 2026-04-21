@@ -13,6 +13,7 @@ import SoundButtonWrapper from '@/components/SoundButtonWrapper';
 import { logger } from '@/lib/logger';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRestaurant } from '@/contexts/RestaurantContext';
+import { InstallAppBanner } from '@/components/InstallAppBanner';
 
 export const HomePage = () => {
   const navigate = useNavigate();
@@ -93,6 +94,7 @@ export const HomePage = () => {
 
   return (
     <>
+      <InstallAppBanner />
       <Helmet>
         <title>{activeRestaurantName || t('home.hero_title')} - {t('home.hero_subtitle')}</title>
         <meta name="description" content="Découvrez la cuisine authentique." />
