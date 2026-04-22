@@ -3,6 +3,8 @@ import { Helmet } from 'react-helmet';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
+import { App } from '@capacitor/app';
 import {
   Loader2,
   Mail,
@@ -262,24 +264,47 @@ export const LoginPage = () => {
   const isNativeApp = Capacitor.isNativePlatform();
 
   const handleGoogleLogin = async () => {
-    if (isNativeApp) {
-      toast({
-        title: 'Google non disponible dans l\'app',
-        description: 'Utilisez email + mot de passe. La connexion Google est disponible sur le site web.',
-        className: 'bg-blue-50 border-blue-200',
-      });
-      return;
-    }
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/menu`,
-          queryParams: { access_type: 'offline', prompt: 'select_account' },
-        },
-      });
-      if (error) throw error;
+      if (isNativeApp) {
+        // Native Android: open Google auth in in-app browser, handle deep link callback
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: 'com.ladesiradeplus.app://auth/callback',
+            skipBrowserRedirect: true,
+          },
+        });
+        if (error) throw error;
+        if (!data?.url) throw new Error('URL de connexion manquante');
+
+        // Open Google auth in Capacitor in-app browser
+        await Browser.open({ url: data.url, windowName: '_self' });
+
+        // Listen for the deep link callback when Google redirects back
+        const listener = await App.addListener('appUrlOpen', async ({ url }) => {
+          await listener.remove();
+          await Browser.close();
+          if (url.startsWith('com.ladesiradeplus.app://auth')) {
+            const { error: sessionError } = await supabase.auth.exchangeCodeForSession(url);
+            if (sessionError) {
+              toast({ variant: 'destructive', title: 'Erreur Google', description: sessionError.message });
+            }
+          }
+          setLoading(false);
+        });
+      } else {
+        // Web: standard redirect flow
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: `${window.location.origin}/menu`,
+            queryParams: { access_type: 'offline', prompt: 'select_account' },
+          },
+        });
+        if (error) throw error;
+        // loading stays true — page will redirect
+      }
     } catch (error) {
       toast({
         variant: 'destructive',
