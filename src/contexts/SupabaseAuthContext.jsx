@@ -205,11 +205,11 @@ export const AuthProvider = ({ children }) => {
     const result = await retryWithExponentialBackoff(async () => {
       const res = await withTimeout(
         () => supabase.auth.signInWithPassword({ email, password }),
-        5000
+        15000
       );
       if (res.error) throw res.error;
       return res;
-    }, 2, 1000, 'signIn');
+    }, 3, 1500, 'signIn');
 
     if (!result.success) {
       throw result.error;
@@ -227,13 +227,27 @@ export const AuthProvider = ({ children }) => {
     const result = await retryWithExponentialBackoff(async () => {
       const res = await withTimeout(
         () => supabase.auth.signUp({ email, password, options }),
-        5000
+        15000
       );
       if (res.error) throw res.error;
       return res;
-    }, 2, 1000, 'signUp');
+    }, 3, 1500, 'signUp');
 
     if (!result.success) throw result.error;
+
+    // Ensure profile exists (trigger should handle it, but belt-and-suspenders)
+    const newUser = result.data?.data?.user;
+    if (newUser?.id) {
+      const fullName = options?.data?.full_name || options?.data?.name || '';
+      await supabase.from('profiles').upsert({
+        user_id: newUser.id,
+        email: newUser.email,
+        full_name: fullName,
+        phone: options?.data?.phone || null,
+        role: 'customer',
+      }, { onConflict: 'user_id', ignoreDuplicates: true });
+    }
+
     return result.data;
   }, []);
 

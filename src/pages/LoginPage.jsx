@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Capacitor } from '@capacitor/core';
 import {
   Loader2,
   Mail,
@@ -198,17 +199,25 @@ export const LoginPage = () => {
 
       if (authData?.user) {
         try {
-           const { error: customerError } = await supabase
-             .from('customers')
-             .insert({
-               user_id: authData.user.id,
-               email: formData.email,
-               name: formData.fullName,
-               phone: formData.phone,
-               registration_date: new Date().toISOString()
-             });
-             
-           if (customerError) console.warn("Could not create customer record immediately:", customerError);
+          // Ensure profile exists (trigger should handle it, but belt-and-suspenders)
+          await supabase.from('profiles').upsert({
+            user_id: authData.user.id,
+            email: formData.email,
+            full_name: formData.fullName,
+            phone: formData.phone || null,
+            role: 'customer',
+          }, { onConflict: 'user_id', ignoreDuplicates: true });
+        } catch (err) {
+          console.warn("Profile upsert skipped:", err);
+        }
+        try {
+           await supabase.from('customers').insert({
+             user_id: authData.user.id,
+             email: formData.email,
+             name: formData.fullName,
+             phone: formData.phone,
+             registration_date: new Date().toISOString()
+           });
         } catch (err) {
            console.warn("Customer creation skipped:", err);
         }
@@ -250,13 +259,24 @@ export const LoginPage = () => {
     }
   };
 
+  const isNativeApp = Capacitor.isNativePlatform();
+
   const handleGoogleLogin = async () => {
+    if (isNativeApp) {
+      toast({
+        title: 'Google non disponible dans l\'app',
+        description: 'Utilisez email + mot de passe. La connexion Google est disponible sur le site web.',
+        className: 'bg-blue-50 border-blue-200',
+      });
+      return;
+    }
     setLoading(true);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/menu`,
+          queryParams: { access_type: 'offline', prompt: 'select_account' },
         },
       });
       if (error) throw error;
