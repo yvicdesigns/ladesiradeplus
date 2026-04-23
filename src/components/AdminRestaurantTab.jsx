@@ -25,7 +25,8 @@ export const AdminRestaurantTab = () => {
   // Restaurant GPS location
   const [restaurantCoords, setRestaurantCoords] = useState({ lat: '', lng: '' });
   const [gpsLoading, setGpsLoading] = useState(false);
-  const [coordsSaved, setCoordsSaved] = useState(false);
+  const [coordsSaved, setCoordsSaved] = useState(false); // animation 3s du bouton
+  const [coordsPersistedToDb, setCoordsPersistedToDb] = useState(false); // vrai sauvegarde en base
 
   const currentLogo = watch('logo_url');
   const currentBanner = watch('banner_url');
@@ -88,6 +89,7 @@ export const AdminRestaurantTab = () => {
         const lat = data.find(r => r.config_key === 'restaurant_latitude')?.config_value || '';
         const lng = data.find(r => r.config_key === 'restaurant_longitude')?.config_value || '';
         setRestaurantCoords({ lat, lng });
+        if (lat && lng) setCoordsPersistedToDb(true);
       }
     };
     fetchCoords();
@@ -170,6 +172,7 @@ export const AdminRestaurantTab = () => {
           lat: pos.coords.latitude.toFixed(6),
           lng: pos.coords.longitude.toFixed(6)
         });
+        setCoordsPersistedToDb(false);
         setGpsLoading(false);
         toast({ title: 'Position capturée', description: 'Cliquez sur "Sauvegarder la position" pour confirmer.' });
       },
@@ -231,6 +234,7 @@ export const AdminRestaurantTab = () => {
     const savedLng = verify.find(r => r.config_key === 'restaurant_longitude')?.config_value;
     setRestaurantCoords({ lat: savedLat || lat, lng: savedLng || lng });
 
+    setCoordsPersistedToDb(true);
     setCoordsSaved(true);
     setTimeout(() => setCoordsSaved(false), 3000);
     toast({ title: 'Position sauvegardée ✓', description: `Lat: ${savedLat}, Lng: ${savedLng}` });
@@ -328,7 +332,7 @@ export const AdminRestaurantTab = () => {
                 <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-sm text-green-800 font-mono flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-green-600 shrink-0" />
                   Lat: {restaurantCoords.lat} | Lng: {restaurantCoords.lng}
-                  {!coordsSaved && <span className="text-xs text-amber-600 font-sans ml-2">(non sauvegardé)</span>}
+                  {!coordsPersistedToDb && <span className="text-xs text-amber-600 font-sans ml-2">(non sauvegardé)</span>}
                 </div>
               )}
               <div className="grid grid-cols-2 gap-4">
