@@ -188,24 +188,31 @@ export const AdminRestaurantTab = () => {
       return;
     }
 
-    const { error: errLat } = await supabase
-      .from('admin_config')
-      .upsert({ config_key: 'restaurant_latitude', config_value: String(lat) }, { onConflict: 'config_key' });
+    // UPDATE or INSERT for each coord (avoids needing a unique constraint)
+    for (const [key, value] of [['restaurant_latitude', String(lat)], ['restaurant_longitude', String(lng)]]) {
+      const { data: existing } = await supabase
+        .from('admin_config')
+        .select('id')
+        .eq('config_key', key)
+        .maybeSingle();
 
-    if (errLat) {
-      console.error('[GPS Save] Error saving latitude:', errLat);
-      toast({ variant: 'destructive', description: `Erreur sauvegarde latitude: ${errLat.message}` });
-      return;
-    }
+      let saveError;
+      if (existing?.id) {
+        ({ error: saveError } = await supabase
+          .from('admin_config')
+          .update({ config_value: value })
+          .eq('config_key', key));
+      } else {
+        ({ error: saveError } = await supabase
+          .from('admin_config')
+          .insert({ config_key: key, config_value: value }));
+      }
 
-    const { error: errLng } = await supabase
-      .from('admin_config')
-      .upsert({ config_key: 'restaurant_longitude', config_value: String(lng) }, { onConflict: 'config_key' });
-
-    if (errLng) {
-      console.error('[GPS Save] Error saving longitude:', errLng);
-      toast({ variant: 'destructive', description: `Erreur sauvegarde longitude: ${errLng.message}` });
-      return;
+      if (saveError) {
+        console.error(`[GPS Save] Error saving ${key}:`, saveError);
+        toast({ variant: 'destructive', description: `Erreur sauvegarde GPS: ${saveError.message}` });
+        return;
+      }
     }
 
     // Verify the save by re-fetching
