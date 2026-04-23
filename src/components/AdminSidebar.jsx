@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { LayoutDashboard, History, Utensils, Truck, CalendarDays, BarChart3, FileText, Database, Trash2, UtensilsCrossed, Grid3x3, Map, Calculator, Users, Star, Package, Send, Calendar, Bell, Settings, ChevronDown, ChevronRight, ChevronLeft, X, LogOut, ShieldCheck, Wrench, ShoppingBag, Store, Briefcase, Activity, FileImage as ImageIcon, FlaskConical, MessageSquare, Sparkles } from 'lucide-react';
+import { LayoutDashboard, History, Utensils, Truck, CalendarDays, BarChart3, FileText, Database, Trash2, UtensilsCrossed, Grid3x3, Map, Calculator, Users, Star, Package, Send, Calendar, Bell, Settings, ChevronDown, ChevronRight, ChevronLeft, X, LogOut, ShieldCheck, Wrench, ShoppingBag, Store, Briefcase, Activity, FileImage as ImageIcon, FlaskConical, MessageSquare, Sparkles, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -224,6 +224,7 @@ export const AdminSidebar = ({ className, mobile, onClose }) => {
         <SidebarGroup icon={BarChart3} label={t('admin.sidebar.analytics_group', 'Analytiques')} collapsed={isCollapsed} expanded={sections.analytics} onToggle={() => toggleSection('analytics')}>
           <SidebarItem to="/admin/analytics" icon={BarChart3} label={t('admin.sidebar.analytics', 'Analytiques')} collapsed={isCollapsed} onClick={handleItemClick} />
           <SidebarItem to="/admin/reports" icon={FileText} label={t('admin.sidebar.reports', 'Rapports')} collapsed={isCollapsed} onClick={handleItemClick} />
+          {(isAdmin || isManager) && <SidebarItem to="/admin/finances" icon={Wallet} label="Finances" collapsed={isCollapsed} onClick={handleItemClick} />}
         </SidebarGroup>
 
         <SidebarGroup icon={Calendar} label={t('admin.sidebar.engagement', 'Engagement')} collapsed={isCollapsed} expanded={sections.engagement} onToggle={() => toggleSection('engagement')}>

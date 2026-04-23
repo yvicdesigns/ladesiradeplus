@@ -69,6 +69,7 @@ const AdminActivityLogsPage = lazy(() => import('./pages/AdminActivityLogsPage')
 const AdminAnalyticsPage = lazy(() => import('./pages/AdminAnalyticsPage'));
 const AdminDeliveryPage = lazy(() => import('./pages/AdminDeliveryPage'));
 const AdminFeeCalculatorPage = lazy(() => import('./pages/AdminFeeCalculatorPage'));
+const AdminFinancePage = lazy(() => import('./pages/AdminFinancePage'));
 
 // QA / Tests
 const AdminManualTestsPage = lazy(() => import('./pages/AdminManualTestsPage'));
@@ -153,6 +154,7 @@ function AppRoutes() {
           <Route path="/admin/analytics" element={<ProtectedRoute requireAdmin><SuspenseWrapper><AdminAnalyticsPage /></SuspenseWrapper></ProtectedRoute>} />
           <Route path="/admin/delivery" element={<ProtectedRoute requireAdmin><SuspenseWrapper><AdminDeliveryPage /></SuspenseWrapper></ProtectedRoute>} />
           <Route path="/admin/calculateur-frais" element={<ProtectedRoute requireAdmin><SuspenseWrapper><AdminFeeCalculatorPage /></SuspenseWrapper></ProtectedRoute>} />
+          <Route path="/admin/finances" element={<ProtectedRoute requireAdmin><SuspenseWrapper><AdminFinancePage /></SuspenseWrapper></ProtectedRoute>} />
           
           {/* QA / Tests manuels */}
           <Route path="/admin/tests" element={<ProtectedRoute requireAdmin><SuspenseWrapper><AdminManualTestsPage /></SuspenseWrapper></ProtectedRoute>} />

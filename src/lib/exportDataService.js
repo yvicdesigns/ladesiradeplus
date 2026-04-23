@@ -94,6 +94,40 @@ export const exportDataService = {
     }
   },
   
+  exportFinance: ({ recettes, depenses, totalDepenses, solde }, formatType, periodLabel) => {
+    const filename = `finances_${periodLabel || format(new Date(), 'yyyy-MM-dd')}`;
+    const summary = [
+      { Rubrique: 'Recettes (commandes)', Montant: formatCurrency(recettes) },
+      { Rubrique: 'Total Dépenses', Montant: formatCurrency(totalDepenses) },
+      { Rubrique: 'Solde Net', Montant: formatCurrency(solde) },
+    ];
+
+    if (formatType === 'excel') {
+      const wb = XLSX.utils.book_new();
+      const summaryWs = XLSX.utils.json_to_sheet(summary);
+      XLSX.utils.book_append_sheet(wb, summaryWs, 'Résumé');
+      const detailData = depenses.map(e => ({
+        Date: e.expense_date,
+        Catégorie: e.category,
+        Description: e.description || '',
+        Montant: e.amount,
+      }));
+      const detailWs = XLSX.utils.json_to_sheet(detailData);
+      XLSX.utils.book_append_sheet(wb, detailWs, 'Dépenses');
+      XLSX.writeFile(wb, `${filename}.xlsx`);
+      return;
+    }
+
+    if (formatType === 'pdf') {
+      const headers = ['Date', 'Catégorie', 'Description', 'Montant'];
+      const body = depenses.map(e => [e.expense_date, e.category, e.description || '—', formatCurrency(Number(e.amount))]);
+      body.push(['', '', 'TOTAL DÉPENSES', formatCurrency(totalDepenses)]);
+      body.push(['', '', 'RECETTES', formatCurrency(recettes)]);
+      body.push(['', '', 'SOLDE NET', formatCurrency(solde)]);
+      return exportToPDF(headers, body, `Rapport Financier — ${periodLabel}`, filename);
+    }
+  },
+
   exportTrashItems: (items, formatType, type) => {
     const filename = `trash_${type}_${format(new Date(), 'yyyy-MM-dd')}`;
     const cleanData = items.map(i => ({
