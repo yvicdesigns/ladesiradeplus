@@ -81,13 +81,14 @@ export function useRealtimeRestaurantOrders({
       if (isMounted.current) {
         const safeData = Array.isArray(data) ? data : [];
         let formattedData = safeData.map(ro => ({
-          ...ro, 
-          table_number: ro?.orders?.tables?.table_number || 'N/A', 
-          customer_name: ro?.orders?.customer_name || 'Client', 
-          items: ro?.orders?.order_items || [], 
-          parent_status: ro?.orders?.status || 'pending', 
+          ...ro,
+          table_number: ro?.orders?.tables?.table_number || 'N/A',
+          customer_name: ro?.orders?.customer_name || 'Client',
+          items: ro?.orders?.order_items || [],
+          parent_status: ro?.orders?.status || 'pending',
           type: ro?.orders?.type || 'dine_in',
-          order_method: ro?.orders?.order_method || 'online'
+          order_method: ro?.orders?.order_method || 'online',
+          total: ro?.orders?.total || 0,
         }));
         
         if (!includeDeleted) {
