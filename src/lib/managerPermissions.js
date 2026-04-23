@@ -16,27 +16,29 @@ export const ENTITY_TYPES = {
   CUSTOMER: 'customer',
   PAYMENT: 'payment',
   REFUND: 'refund',
-  STOCK_MANAGEMENT: 'stock_management'
+  STOCK_MANAGEMENT: 'stock_management',
+  INVENTORY: 'inventory',
+  INGREDIENT: 'ingredient',
 };
 
 /**
  * Checks if a manager can delete a specific entity type
- * Managers generally CANNOT delete operational data (orders, reservations)
- * But CAN delete menu items (as per requirements) and manage stock
  */
 export const canManagerDelete = (entityType) => {
   switch (entityType) {
     case ENTITY_TYPES.MENU:
-    case ENTITY_TYPES.STOCK_MANAGEMENT: 
-      return true; 
-    case ENTITY_TYPES.RESERVATION:
+    case ENTITY_TYPES.STOCK_MANAGEMENT:
+    case ENTITY_TYPES.INVENTORY:
+    case ENTITY_TYPES.INGREDIENT:
     case ENTITY_TYPES.ORDER:
     case ENTITY_TYPES.DELIVERY:
-    case ENTITY_TYPES.USER:
+    case ENTITY_TYPES.RESERVATION:
     case ENTITY_TYPES.CUSTOMER:
+      return true;
+    case ENTITY_TYPES.USER:
     case ENTITY_TYPES.PAYMENT:
     case ENTITY_TYPES.REFUND:
-      return false; // Cannot delete these
+      return false; // Admin uniquement
     default:
       return false;
   }
@@ -46,9 +48,14 @@ export const canManagerDelete = (entityType) => {
  * Checks if a manager can cancel an entity (soft delete or status change)
  */
 export const canManagerCancel = (entityType) => {
-  // Managers can cancel reservations instead of deleting
-  if (entityType === ENTITY_TYPES.RESERVATION) return true;
-  return false;
+  switch (entityType) {
+    case ENTITY_TYPES.ORDER:
+    case ENTITY_TYPES.DELIVERY:
+    case ENTITY_TYPES.RESERVATION:
+      return true;
+    default:
+      return false;
+  }
 };
 
 /**

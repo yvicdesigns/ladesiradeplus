@@ -12,7 +12,7 @@ import { supabase } from '@/lib/customSupabaseClient';
 import {
   Package, History, FlaskConical, Search, Edit2, AlertTriangle,
   PackageX, CheckCircle2, RefreshCw, TrendingDown, Utensils,
-  GlassWater, ChevronDown, ChevronRight, Plus
+  GlassWater, ChevronDown, ChevronRight, Plus, Trash2
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -177,7 +177,7 @@ function PlatStockTab() {
 // ──────────────────────────────────────────────
 // TAB 2 — Ingrédients partagés
 // ──────────────────────────────────────────────
-function IngredientRow({ ingredient, linkedDishes, onAdjust }) {
+function IngredientRow({ ingredient, linkedDishes, onAdjust, onDelete }) {
   const [expanded, setExpanded] = useState(false);
   const stock = ingredient.current_stock;
   const pct = ingredient.max_stock ? Math.min(100, Math.round((stock / ingredient.max_stock) * 100)) : null;
@@ -220,9 +220,14 @@ function IngredientRow({ ingredient, linkedDishes, onAdjust }) {
         </TableCell>
         <TableCell className="text-center"><StatusBadge value={stock} /></TableCell>
         <TableCell className="text-right">
-          <Button variant="outline" size="sm" onClick={() => onAdjust(ingredient)} className="gap-1.5 text-purple-700 hover:bg-purple-50 border-purple-200">
-            <Edit2 className="h-3.5 w-3.5" /> Réappro
-          </Button>
+          <div className="flex items-center justify-end gap-2">
+            <Button variant="outline" size="sm" onClick={() => onAdjust(ingredient)} className="gap-1.5 text-purple-700 hover:bg-purple-50 border-purple-200">
+              <Edit2 className="h-3.5 w-3.5" /> Réappro
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => onDelete(ingredient)} className="text-red-600 hover:bg-red-50 border-red-200 hover:border-red-300">
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
         </TableCell>
       </TableRow>
 
@@ -247,15 +252,21 @@ function IngredientRow({ ingredient, linkedDishes, onAdjust }) {
   );
 }
 
+const UNITS = ['portions', 'kg', 'g', 'L', 'cl', 'ml', 'unités', 'litres', 'pièces'];
+
 function SharedIngredientsTab() {
   const { toast } = useToast();
   const [ingredients, setIngredients] = useState([]);
   const [links, setLinks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [showAll, setShowAll] = useState(false);
   const [adjustItem, setAdjustItem] = useState(null);
   const [adjustQty, setAdjustQty] = useState('');
   const [adjustSaving, setAdjustSaving] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newIng, setNewIng] = useState({ name: '', unit: 'portions', current_stock: '', category: '', min_stock: '' });
 
   const load = async () => {
     setLoading(true);
@@ -275,9 +286,7 @@ function SharedIngredientsTab() {
     return ingredients.filter(i => i.name.toLowerCase().includes(search.toLowerCase()) || (i.category || '').toLowerCase().includes(search.toLowerCase()));
   }, [ingredients, search]);
 
-  // only show ingredients that are linked to at least one dish (or all if no filter)
-  const linkedOnly = filtered.filter(ing => links.some(l => l.ingredient_id === ing.id));
-  const unlinkedCount = ingredients.length - linkedOnly.length;
+  const unlinkedCount = ingredients.filter(ing => !links.some(l => l.ingredient_id === ing.id)).length;
 
   const handleAdjust = async () => {
     if (!adjustItem || adjustQty === '') return;
@@ -298,7 +307,43 @@ function SharedIngredientsTab() {
     load();
   };
 
+  const handleDelete = async (ing) => {
+    if (!window.confirm(`Supprimer "${ing.name}" ? Cette action est irréversible.`)) return;
+    const { error } = await supabase.from('ingredients').update({ is_deleted: true }).eq('id', ing.id);
+    if (error) {
+      toast({ variant: 'destructive', title: 'Erreur', description: error.message });
+    } else {
+      toast({ title: 'Ingrédient supprimé', description: `"${ing.name}" a été supprimé.` });
+      load();
+    }
+  };
+
+  const handleCreate = async () => {
+    if (!newIng.name.trim()) return;
+    setCreating(true);
+    const { error } = await supabase.from('ingredients').insert({
+      id: crypto.randomUUID(),
+      name: newIng.name.trim(),
+      unit: newIng.unit || 'unités',
+      current_stock: parseFloat(newIng.current_stock) || 0,
+      min_stock: parseFloat(newIng.min_stock) || 0,
+      category: newIng.category || null,
+      created_at: new Date().toISOString(),
+    });
+    setCreating(false);
+    if (error) {
+      toast({ variant: 'destructive', title: 'Erreur', description: error.message });
+    } else {
+      toast({ title: 'Ingrédient créé !', description: `${newIng.name} ajouté avec succès.` });
+      setShowCreate(false);
+      setNewIng({ name: '', unit: 'portions', current_stock: '', category: '', min_stock: '' });
+      load();
+    }
+  };
+
   const criticalCount = ingredients.filter(i => i.current_stock !== null && i.current_stock < CRITICAL).length;
+  const linkedOnly = filtered.filter(ing => links.some(l => l.ingredient_id === ing.id));
+  const displayList = showAll ? filtered : linkedOnly;
 
   return (
     <div className="space-y-5">
@@ -317,11 +362,20 @@ function SharedIngredientsTab() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input placeholder="Rechercher un ingrédient..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
         </div>
+        <button
+          onClick={() => setShowAll(v => !v)}
+          className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors flex items-center gap-2 ${showAll ? 'bg-purple-50 border-purple-300 text-purple-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+        >
+          {showAll ? 'Liés seulement' : `Voir tout (${ingredients.length})`}
+        </button>
+        <Button onClick={() => setShowCreate(true)} className="gap-2 bg-purple-600 hover:bg-purple-700 text-white">
+          <Plus className="h-4 w-4" /> Nouvel ingrédient
+        </Button>
         <Button variant="outline" size="sm" onClick={load} className="gap-2"><RefreshCw className="h-4 w-4" /></Button>
       </div>
 
-      {unlinkedCount > 0 && !search && (
-        <p className="text-xs text-slate-400 italic">{unlinkedCount} ingrédient{unlinkedCount > 1 ? 's' : ''} non liés à aucun plat — gérés séparément dans l'inventaire.</p>
+      {unlinkedCount > 0 && !search && !showAll && (
+        <p className="text-xs text-slate-400 italic">{unlinkedCount} ingrédient{unlinkedCount > 1 ? 's' : ''} créé{unlinkedCount > 1 ? 's' : ''} mais pas encore liés à un plat.</p>
       )}
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
@@ -340,25 +394,112 @@ function SharedIngredientsTab() {
               Array.from({ length: 3 }).map((_, i) => (
                 <TableRow key={i}><TableCell colSpan={5} className="h-14 animate-pulse bg-slate-50/60" /></TableRow>
               ))
-            ) : linkedOnly.length === 0 ? (
+            ) : displayList.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="h-32 text-center">
                   <FlaskConical className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-                  <p className="text-slate-400">Aucun ingrédient partagé configuré.</p>
-                  <p className="text-xs text-slate-400 mt-1">Ouvrez un plat dans le menu admin et liez-y un ingrédient.</p>
+                  <p className="text-slate-400">Aucun ingrédient trouvé.</p>
+                  <button onClick={() => setShowCreate(true)} className="text-xs text-purple-600 hover:underline mt-1">+ Créer un ingrédient</button>
                 </TableCell>
               </TableRow>
-            ) : linkedOnly.map(ing => (
+            ) : displayList.map(ing => (
               <IngredientRow
                 key={ing.id}
                 ingredient={ing}
                 linkedDishes={links.filter(l => l.ingredient_id === ing.id)}
                 onAdjust={(ing) => { setAdjustItem(ing); setAdjustQty(String(ing.current_stock ?? 0)); }}
+                onDelete={handleDelete}
               />
             ))}
           </TableBody>
         </Table>
       </div>
+
+      {/* Create ingredient modal */}
+      {showCreate && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-100 rounded-lg"><FlaskConical className="h-5 w-5 text-purple-600" /></div>
+              <div>
+                <h3 className="font-bold text-slate-900">Nouvel ingrédient</h3>
+                <p className="text-sm text-slate-500">Ajouter un ingrédient partagé au stock</p>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-slate-600 mb-1 block">Nom *</label>
+                <input
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                  placeholder="Ex: Viande de bœuf"
+                  value={newIng.name}
+                  onChange={e => setNewIng(v => ({ ...v, name: e.target.value }))}
+                  autoFocus
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-slate-600 mb-1 block">Unité</label>
+                  <select
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white"
+                    value={newIng.unit}
+                    onChange={e => setNewIng(v => ({ ...v, unit: e.target.value }))}
+                  >
+                    {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-600 mb-1 block">Stock initial</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                    placeholder="0"
+                    value={newIng.current_stock}
+                    onChange={e => setNewIng(v => ({ ...v, current_stock: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-slate-600 mb-1 block">Stock minimum</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                    placeholder="0"
+                    value={newIng.min_stock}
+                    onChange={e => setNewIng(v => ({ ...v, min_stock: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-600 mb-1 block">Catégorie</label>
+                  <input
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                    placeholder="Ex: Viandes"
+                    value={newIng.category}
+                    onChange={e => setNewIng(v => ({ ...v, category: e.target.value }))}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => { setShowCreate(false); setNewIng({ name: '', unit: 'portions', current_stock: '', category: '', min_stock: '' }); }}>
+                Annuler
+              </Button>
+              <Button
+                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+                onClick={handleCreate}
+                disabled={creating || !newIng.name.trim()}
+              >
+                {creating ? 'Création...' : 'Créer'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Adjust modal */}
       {adjustItem && (

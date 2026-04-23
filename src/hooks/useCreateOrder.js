@@ -187,7 +187,17 @@ export const useCreateOrder = () => {
 
       notifyAdminsNewOrder({ orderType: type, customerName: client?.name || 'Client Anonyme', total: totalToUse });
 
-      return { success: true, order: rpcResult.order };
+      return {
+        success: true,
+        order: {
+          ...(rpcResult.order || {}),
+          id: createdOrderId,
+          total: totalToUse,
+          type: type,
+          customer_name: client?.name || 'Client Anonyme',
+          created_at: new Date().toISOString(),
+        }
+      };
 
     } catch (error) {
       logger.error(`[useCreateOrder] [${transactionId}] ❌ Error:`, error);
