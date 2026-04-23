@@ -26,7 +26,6 @@ import { logger } from '@/lib/logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRestaurant } from '@/contexts/RestaurantContext';
 import { getValidatedRestaurantId } from '@/lib/restaurantValidation';
-import { DEFAULT_ADMIN_SETTINGS_ID } from '@/lib/adminSettingsUtils';
 
 const PLACEHOLDER_IMAGES = [
   "https://images.unsplash.com/photo-1701540747558-5513a8812dda",
@@ -42,11 +41,14 @@ export const MenuPage = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
   const { playSound } = useSound();
-  const { restaurantId } = useRestaurant();
+  const { restaurantId, settings: restaurantSettings } = useRestaurant();
   const cartCount = getItemCount();
 
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [restaurantLocation, setRestaurantLocation] = useState({ address: '', city: '' });
+  const restaurantLocation = {
+    address: restaurantSettings?.restaurant_address || '',
+    city: restaurantSettings?.restaurant_city || '',
+  };
   
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [reviewItem, setReviewItem] = useState(null);
@@ -162,29 +164,6 @@ export const MenuPage = () => {
     });
     return ratings;
   }, [reviews]);
-
-  // --- Settings Fetching ---
-  useEffect(() => {
-    let isMounted = true;
-    const fetchSettings = async () => {
-      try {
-        const validRestaurantId = getValidatedRestaurantId(restaurantId);
-
-        const { data, error } = await supabase
-          .from('admin_settings')
-          .select('restaurant_address, restaurant_city')
-          .eq('id', DEFAULT_ADMIN_SETTINGS_ID)
-          .maybeSingle();
-
-        if (error) throw error;
-        if (data && isMounted) setRestaurantLocation({ address: data.restaurant_address || '', city: data.restaurant_city || '' });
-      } catch (err) { 
-        logger.error("Error fetching restaurant settings Context: MenuPage", err); 
-      }
-    };
-    fetchSettings();
-    return () => { isMounted = false; };
-  }, [restaurantId]);
 
   // --- Handlers ---
   const getDiscountedPrice = useCallback((price, discount) => {
