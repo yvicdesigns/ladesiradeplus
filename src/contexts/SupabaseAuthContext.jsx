@@ -217,7 +217,8 @@ export const AuthProvider = ({ children }) => {
 
     if (result.data?.data?.session) {
       await handleSession(result.data.data.session);
-      await logAudit(AUDIT_ACTIONS.LOGIN, 'users', result.data.data.session.user.id, null, 'User context signed in');
+      // Fire-and-forget: logAudit has no timeout and can hang on mobile (no await)
+      logAudit(AUDIT_ACTIONS.LOGIN, 'users', result.data.data.session.user.id, null, 'User context signed in');
     }
     
     return result.data;
@@ -255,7 +256,8 @@ export const AuthProvider = ({ children }) => {
     try {
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       if (currentSession?.user) {
-          await logAudit(AUDIT_ACTIONS.LOGOUT, 'users', currentSession.user.id, null, 'User context signed out');
+          // Fire-and-forget to prevent hang on mobile
+          logAudit(AUDIT_ACTIONS.LOGOUT, 'users', currentSession.user.id, null, 'User context signed out');
       }
     } catch (e) {
       console.warn("Could not log audit on signout", e);
