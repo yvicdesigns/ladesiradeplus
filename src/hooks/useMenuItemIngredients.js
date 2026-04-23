@@ -72,6 +72,82 @@ export async function validateIngredientStock(cartItems) {
   return { valid: errors.length === 0, errors };
 }
 
+// Restore ingredient stock when an order is cancelled
+export async function restoreIngredientStock(cartItems, orderId) {
+  const itemIds = cartItems.map(i => i.id || i.menu_item_id);
+  const { data: links } = await supabase
+    .from('menu_item_ingredients')
+    .select('menu_item_id, quantity_per_serving, ingredient_id, ingredients(id, name, current_stock, unit)')
+    .in('menu_item_id', itemIds);
+
+  if (!links?.length) return;
+
+  const restorations = {};
+  for (const cartItem of cartItems) {
+    const itemId = cartItem.id || cartItem.menu_item_id;
+    const itemLinks = links.filter(l => l.menu_item_id === itemId);
+    for (const link of itemLinks) {
+      const ingId = link.ingredient_id;
+      if (!restorations[ingId]) restorations[ingId] = { ingredient: link.ingredients, total: 0 };
+      restorations[ingId].total += link.quantity_per_serving * cartItem.quantity;
+    }
+  }
+
+  for (const [ingId, { ingredient, total }] of Object.entries(restorations)) {
+    if (ingredient.current_stock === null) continue;
+    const newStock = ingredient.current_stock + total;
+    await supabase.from('ingredients').update({ current_stock: newStock }).eq('id', ingId);
+    await supabase.from('stock_movements').insert({
+      ingredient_id: ingId,
+      movement_type: 'order_cancelled',
+      quantity: total,
+      reference_id: orderId,
+      notes: 'Remise en stock - annulation commande',
+    });
+  }
+}
+
+// Restore all stock (menu items + ingredients) when an order is cancelled
+export async function restoreStockOnCancellation(ordersId) {
+  if (!ordersId) return;
+
+  const { data: items } = await supabase
+    .from('order_items')
+    .select('id, menu_item_id, quantity')
+    .eq('order_id', ordersId)
+    .eq('is_deleted', false);
+
+  if (!items?.length) return;
+
+  // Restore menu_items stock_quantity
+  const itemIds = items.map(i => i.menu_item_id);
+  const { data: stockData } = await supabase
+    .from('menu_items')
+    .select('id, stock_quantity')
+    .in('id', itemIds);
+
+  for (const item of items) {
+    const dbItem = stockData?.find(i => i.id === item.menu_item_id);
+    if (dbItem && dbItem.stock_quantity !== null) {
+      const newStock = dbItem.stock_quantity + item.quantity;
+      await supabase.from('menu_items').update({ stock_quantity: newStock }).eq('id', item.menu_item_id);
+      await supabase.from('item_stock_movements').insert({
+        menu_item_id: item.menu_item_id,
+        movement_type: 'order_cancelled',
+        quantity_changed: item.quantity,
+        previous_quantity: dbItem.stock_quantity,
+        new_quantity: newStock,
+        order_id: ordersId,
+        notes: 'Remise en stock - annulation commande',
+      });
+    }
+  }
+
+  // Restore ingredient stock
+  const cartItems = items.map(i => ({ menu_item_id: i.menu_item_id, quantity: i.quantity }));
+  await restoreIngredientStock(cartItems, ordersId);
+}
+
 // Deduct ingredient stock after order confirmation
 export async function deductIngredientStock(cartItems, orderId) {
   const itemIds = cartItems.map(i => i.id || i.menu_item_id);

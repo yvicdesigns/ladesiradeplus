@@ -54,6 +54,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { ClientFiltersPanel } from '@/components/clients/ClientFiltersPanel';
 import { ClientStatisticsPanel } from '@/components/clients/ClientStatisticsPanel';
 import { useClientExport } from '@/hooks/useClientExport';
+import { restoreStockOnCancellation } from '@/hooks/useMenuItemIngredients';
 
 export const AdminClientsContent = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -385,6 +386,18 @@ export const AdminClientsContent = () => {
   };
   
   const handleUpdateOrderStatus = async (id, newStatus, orderMethod, currentStatus) => {
+     const isCancellation = ['cancelled', 'rejected'].includes(newStatus);
+     if (isCancellation) {
+       const order = displayOrders.find(o => o.id === id);
+       const ordersId = order?.order_id;
+       if (ordersId) {
+         try {
+           await restoreStockOnCancellation(ordersId);
+         } catch (err) {
+           console.error('[handleUpdateOrderStatus] Stock restoration error:', err);
+         }
+       }
+     }
      const result = await updateStatus(id, newStatus);
      if (result.success) {
          toast({ title: "Statut mis à jour", description: `Commande passée à ${formatRestaurantOrderStatus(newStatus)}` });
