@@ -187,15 +187,46 @@ export const AdminRestaurantTab = () => {
       toast({ variant: 'destructive', description: 'Coordonnées invalides.' });
       return;
     }
-    try {
-      await supabase.from('admin_config').upsert({ config_key: 'restaurant_latitude', config_value: String(lat) }, { onConflict: 'config_key' });
-      await supabase.from('admin_config').upsert({ config_key: 'restaurant_longitude', config_value: String(lng) }, { onConflict: 'config_key' });
-      setCoordsSaved(true);
-      setTimeout(() => setCoordsSaved(false), 3000);
-      toast({ title: 'Position sauvegardée', description: `Lat: ${lat}, Lng: ${lng}` });
-    } catch (err) {
-      toast({ variant: 'destructive', description: 'Erreur lors de la sauvegarde.' });
+
+    const { error: errLat } = await supabase
+      .from('admin_config')
+      .upsert({ config_key: 'restaurant_latitude', config_value: String(lat) }, { onConflict: 'config_key' });
+
+    if (errLat) {
+      console.error('[GPS Save] Error saving latitude:', errLat);
+      toast({ variant: 'destructive', description: `Erreur sauvegarde latitude: ${errLat.message}` });
+      return;
     }
+
+    const { error: errLng } = await supabase
+      .from('admin_config')
+      .upsert({ config_key: 'restaurant_longitude', config_value: String(lng) }, { onConflict: 'config_key' });
+
+    if (errLng) {
+      console.error('[GPS Save] Error saving longitude:', errLng);
+      toast({ variant: 'destructive', description: `Erreur sauvegarde longitude: ${errLng.message}` });
+      return;
+    }
+
+    // Verify the save by re-fetching
+    const { data: verify, error: verifyErr } = await supabase
+      .from('admin_config')
+      .select('config_key, config_value')
+      .in('config_key', ['restaurant_latitude', 'restaurant_longitude']);
+
+    if (verifyErr || !verify?.length) {
+      console.error('[GPS Save] Verification failed:', verifyErr);
+      toast({ variant: 'destructive', description: 'Sauvegarde impossible — vérifiez les permissions de la table admin_config.' });
+      return;
+    }
+
+    const savedLat = verify.find(r => r.config_key === 'restaurant_latitude')?.config_value;
+    const savedLng = verify.find(r => r.config_key === 'restaurant_longitude')?.config_value;
+    setRestaurantCoords({ lat: savedLat || lat, lng: savedLng || lng });
+
+    setCoordsSaved(true);
+    setTimeout(() => setCoordsSaved(false), 3000);
+    toast({ title: 'Position sauvegardée ✓', description: `Lat: ${savedLat}, Lng: ${savedLng}` });
   };
 
   return (
