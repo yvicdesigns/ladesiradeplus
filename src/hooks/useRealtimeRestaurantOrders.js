@@ -42,11 +42,12 @@ export function useRealtimeRestaurantOrders({
 
       // Ensure we select all necessary columns, including restaurant_id
       let query = supabase.from('restaurant_orders').select(`
-        *, 
-        orders!inner ( 
+        *,
+        orders!inner (
           id, total, status, customer_name, table_id, type, created_at, is_deleted, order_method, restaurant_id,
-          tables ( table_number ), 
-          order_items ( id, quantity, price, notes, status, menu_item_id, menu_items ( name, image_url ) ) 
+          is_complimentary, complimentary_reason,
+          tables ( table_number ),
+          order_items ( id, quantity, price, notes, status, menu_item_id, menu_items ( name, image_url ) )
         )`, { count: 'exact' });
 
       // Apply critical filters
@@ -89,6 +90,8 @@ export function useRealtimeRestaurantOrders({
           type: ro?.orders?.type || 'dine_in',
           order_method: ro?.orders?.order_method || 'online',
           total: ro?.orders?.total || 0,
+          is_complimentary: ro?.orders?.is_complimentary || false,
+          complimentary_reason: ro?.orders?.complimentary_reason || null,
         }));
         
         if (!includeDeleted) {

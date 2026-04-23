@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, User, Check, MapPin, Phone, AlignLeft, AlertCircle, UserMinus, RefreshCw } from 'lucide-react';
+import { Loader2, User, Check, MapPin, Phone, AlignLeft, AlertCircle, UserMinus, RefreshCw, Gift } from 'lucide-react';
 import { OrderItemSelector } from './OrderItemSelector';
 import { OrderSummary } from './OrderSummary';
 import { useCreateOrder } from '@/hooks/useCreateOrder';
@@ -51,6 +51,10 @@ export const CreateOrderModal = ({ open, onClose, client, restaurant_id, onSucce
   // Customer selection
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
+
+  // Complimentary
+  const [isComplimentary, setIsComplimentary] = useState(false);
+  const [complimentaryReason, setComplimentaryReason] = useState('');
 
   useEffect(() => {
     if (open) {
@@ -133,7 +137,9 @@ export const CreateOrderModal = ({ open, onClose, client, restaurant_id, onSucce
       delivery_address: deliveryAddress,
       delivery_phone: deliveryPhone,
       delivery_notes: deliveryNotes,
-      restaurant_id: validation.restaurantId
+      restaurant_id: validation.restaurantId,
+      is_complimentary: isComplimentary,
+      complimentary_reason: isComplimentary ? complimentaryReason : null,
     };
 
     const result = await submitOrder(clientData, cart, orderDetails);
@@ -310,6 +316,35 @@ export const CreateOrderModal = ({ open, onClose, client, restaurant_id, onSucce
                 </div>
               )}
 
+              {/* Complimentary toggle */}
+              {isRestaurantValid && (
+                <div className={`space-y-3 p-4 rounded-xl border shadow-sm transition-colors ${isComplimentary ? 'bg-purple-50 border-purple-200' : 'bg-white border-gray-100'}`}>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="complimentary-mode-modal" className="text-sm font-bold text-slate-800 flex items-center gap-2 cursor-pointer">
+                      <Gift className={`w-4 h-4 ${isComplimentary ? 'text-purple-600' : 'text-slate-400'}`} />
+                      Offrir cette commande
+                    </Label>
+                    <Switch
+                      id="complimentary-mode-modal"
+                      checked={isComplimentary}
+                      onCheckedChange={(v) => { setIsComplimentary(v); if (!v) setComplimentaryReason(''); }}
+                    />
+                  </div>
+                  {isComplimentary && (
+                    <div className="pt-2 border-t border-purple-200 space-y-1">
+                      <Label className="text-xs font-semibold text-purple-700 uppercase tracking-wider">Pour qui ? (nom de la personne)</Label>
+                      <Input
+                        placeholder="ex: Jean Pierre, Famille Dupont, VIP..."
+                        value={complimentaryReason}
+                        onChange={e => setComplimentaryReason(e.target.value)}
+                        className="border-purple-200 focus:border-purple-400 bg-white"
+                      />
+                      <p className="text-xs text-purple-600 italic">Le stock sera déduit mais aucun paiement requis.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Cart Summary */}
               {isRestaurantValid && (
                 <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
@@ -320,17 +355,21 @@ export const CreateOrderModal = ({ open, onClose, client, restaurant_id, onSucce
             </div>
 
             <div className="p-4 md:p-6 bg-white border-t border-gray-200 mt-auto">
-              <Button 
-                onClick={handleSubmit} 
+              <Button
+                onClick={handleSubmit}
                 className={`w-full h-14 font-bold text-lg rounded-xl shadow-md transition-all active:scale-[0.98] ${
-                  orderType === 'delivery' 
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-100' 
+                  isComplimentary
+                    ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                    : orderType === 'delivery'
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-100'
                     : 'bg-green-600 hover:bg-green-700 text-white shadow-green-100'
                 }`}
                 disabled={cart.length === 0 || submitting || !isRestaurantValid}
               >
                 {submitting ? (
                   <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Création en cours...</>
+                ) : isComplimentary ? (
+                  <><Gift className="mr-2 h-6 w-6" /> Offrir la commande</>
                 ) : (
                   <><Check className="mr-2 h-6 w-6" /> Confirmer la Commande</>
                 )}

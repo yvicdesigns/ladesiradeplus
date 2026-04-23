@@ -778,7 +778,13 @@ export const AdminClientsContent = () => {
                                </div>
                             </TableCell>
                             <TableCell className="font-bold font-mono text-slate-700">
-                               {formatCurrency(order.orders?.total)}
+                              {order.is_complimentary ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-700 border border-purple-200">
+                                  🎁 Offert
+                                </span>
+                              ) : (
+                                formatCurrency(order.orders?.total)
+                              )}
                             </TableCell>
                             <TableCell>
                               <Badge className={`${getRestaurantOrderStatusColor(order.status)} px-2 py-0.5 whitespace-nowrap border shadow-sm`}>

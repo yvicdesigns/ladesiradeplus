@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { OrderItemSelector } from '@/components/clients/OrderItemSelector';
 import { OrderSummary } from '@/components/clients/OrderSummary';
-import { Loader2, Check, UserMinus, AlertCircle } from 'lucide-react';
+import { Loader2, Check, UserMinus, AlertCircle, Gift } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
 import { validateRestaurantIdBeforeOrderCreation } from '@/lib/restaurantValidation';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { TableNumberSelector } from '@/components/TableNumberSelector';
@@ -27,6 +28,8 @@ export const AdminCounterOrderForm = ({ customer, onSuccess }) => {
   const [selectedCustomerId, setSelectedCustomerId] = useState(customer?.id || '');
   const [selectedTableId, setSelectedTableId] = useState('');
   const [validationError, setValidationError] = useState(null);
+  const [isComplimentary, setIsComplimentary] = useState(false);
+  const [complimentaryReason, setComplimentaryReason] = useState('');
 
   useEffect(() => {
     const checkRestaurant = async () => {
@@ -84,7 +87,9 @@ export const AdminCounterOrderForm = ({ customer, onSuccess }) => {
       order_type: 'dine_in',
       order_method: 'counter',
       restaurant_id: validation.restaurantId,
-      table_id: selectedTableId || null
+      table_id: selectedTableId || null,
+      is_complimentary: isComplimentary,
+      complimentary_reason: isComplimentary ? complimentaryReason : null,
     };
 
     const result = await submitOrder(clientData, cart, orderDetails);
@@ -97,6 +102,8 @@ export const AdminCounterOrderForm = ({ customer, onSuccess }) => {
       setCart([]);
       setSelectedCustomerId('');
       setSelectedTableId('');
+      setIsComplimentary(false);
+      setComplimentaryReason('');
       if (onSuccess) onSuccess(result.order);
     } else {
       toast({
@@ -186,6 +193,33 @@ export const AdminCounterOrderForm = ({ customer, onSuccess }) => {
             )}
           </div>
 
+          {/* Complimentary toggle */}
+          <div className={`space-y-3 p-4 rounded-xl border shadow-sm transition-colors ${isComplimentary ? 'bg-purple-50 border-purple-200' : 'bg-white border-slate-100'}`}>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="complimentary-mode" className="text-sm font-bold text-slate-800 flex items-center gap-2 cursor-pointer">
+                <Gift className={`w-4 h-4 ${isComplimentary ? 'text-purple-600' : 'text-slate-400'}`} />
+                Offrir cette commande
+              </Label>
+              <Switch
+                id="complimentary-mode"
+                checked={isComplimentary}
+                onCheckedChange={(v) => { setIsComplimentary(v); if (!v) setComplimentaryReason(''); }}
+              />
+            </div>
+            {isComplimentary && (
+              <div className="pt-2 border-t border-purple-200 space-y-1">
+                <Label className="text-xs font-semibold text-purple-700 uppercase tracking-wider">Pour qui ? (nom de la personne)</Label>
+                <Input
+                  placeholder="ex: Jean Pierre, Famille Dupont, VIP..."
+                  value={complimentaryReason}
+                  onChange={e => setComplimentaryReason(e.target.value)}
+                  className="border-purple-200 focus:border-purple-400 bg-white"
+                />
+                <p className="text-xs text-purple-600 italic">Le stock sera déduit mais aucun paiement requis.</p>
+              </div>
+            )}
+          </div>
+
           <div className="space-y-4 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
              <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Table Associée (Optionnel)</Label>
              <TableNumberSelector 
@@ -201,13 +235,15 @@ export const AdminCounterOrderForm = ({ customer, onSuccess }) => {
         </CardContent>
 
         <div className="p-4 bg-white border-t border-slate-100 mt-auto">
-          <Button 
-            onClick={handleSubmit} 
-            className="w-full h-14 font-bold text-lg rounded-xl shadow-md bg-green-600 hover:bg-green-700 text-white"
+          <Button
+            onClick={handleSubmit}
+            className={`w-full h-14 font-bold text-lg rounded-xl shadow-md text-white ${isComplimentary ? 'bg-purple-600 hover:bg-purple-700' : 'bg-green-600 hover:bg-green-700'}`}
             disabled={cart.length === 0 || submitting || !!validationError}
           >
             {submitting ? (
               <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Création...</>
+            ) : isComplimentary ? (
+              <><Gift className="mr-2 h-6 w-6" /> Offrir la commande</>
             ) : (
               <><Check className="mr-2 h-6 w-6" /> Encaisser & Lancer</>
             )}

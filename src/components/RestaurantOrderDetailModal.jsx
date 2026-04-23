@@ -13,7 +13,7 @@ import {
   getValidActionsForOrderMethod
 } from '@/lib/formatters';
 import { getValidStatusTransitionsForOrderMethod } from '@/lib/orderStatusValidation';
-import { Utensils, Mail, Wallet, CheckCircle, XCircle, BellRing, Image, MapPin, Clock, CreditCard, User, WrapText as ReceiptText, Loader2, Bug, Store } from 'lucide-react';
+import { Utensils, Mail, Wallet, CheckCircle, XCircle, BellRing, Image, MapPin, Clock, CreditCard, User, WrapText as ReceiptText, Loader2, Bug, Store, Gift } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useDeliveryZones } from '@/hooks/useDeliveryZones';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -128,6 +128,19 @@ export const RestaurantOrderDetailModal = ({ order, open, onOpenChange, onUpdate
         <ScrollArea className="flex-1 p-6 bg-slate-50/50">
           <div className="space-y-6">
             
+            {/* Complimentary banner */}
+            {order.is_complimentary && (
+              <div className="flex items-center gap-3 bg-purple-50 border border-purple-200 rounded-xl p-4">
+                <Gift className="w-6 h-6 text-purple-600 shrink-0" />
+                <div>
+                  <p className="font-bold text-purple-800 text-sm">Commande offerte</p>
+                  {order.complimentary_reason && (
+                    <p className="text-sm text-purple-600">Pour : <span className="font-semibold">{order.complimentary_reason}</span></p>
+                  )}
+                </div>
+              </div>
+            )}
+
             {showDebug && (
               <div className="bg-slate-900 text-green-400 p-4 rounded-lg font-mono text-xs overflow-auto">
                  <p className="font-bold text-white mb-2 border-b border-slate-700 pb-1">=== DIAGNOSTIC DEBUG ===</p>
@@ -305,7 +318,13 @@ export const RestaurantOrderDetailModal = ({ order, open, onOpenChange, onUpdate
                 )}
                 <div className="flex justify-between items-center font-bold text-xl text-slate-900 pt-3 mt-1 border-t border-slate-200 border-dashed">
                   <span>Total à payer:</span>
-                  <span className="text-amber-600">{formatCurrency(order.total)}</span>
+                  {order.is_complimentary ? (
+                    <span className="flex items-center gap-1.5 text-purple-600">
+                      <Gift className="w-5 h-5" /> Offert
+                    </span>
+                  ) : (
+                    <span className="text-amber-600">{formatCurrency(order.total)}</span>
+                  )}
                 </div>
               </div>
             </div>

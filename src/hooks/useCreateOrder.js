@@ -90,10 +90,13 @@ export const useCreateOrder = () => {
       let deliveryPayload = null;
       let restaurantPayload = null;
 
+      const isComplimentary = orderDetails.is_complimentary || false;
+      const complimentaryStatus = isComplimentary ? 'complimentary' : null;
+
       if (type === 'delivery') {
         deliveryPayload = {
            customer_id: customerId,
-           payment_status: orderDetails.payment_status || 'unpaid',
+           payment_status: complimentaryStatus || orderDetails.payment_status || 'unpaid',
            payment_method: orderDetails.payment_method || null,
            mobile_money_type: orderDetails.mobile_money_type || null,
            payment_screenshot_url: orderDetails.payment_screenshot_url || null,
@@ -107,7 +110,7 @@ export const useCreateOrder = () => {
       } else {
         restaurantPayload = {
            customer_id: customerId,
-           payment_status: method === 'counter' ? 'paid' : (orderDetails.payment_status || 'unpaid'),
+           payment_status: complimentaryStatus || (method === 'counter' ? 'paid' : (orderDetails.payment_status || 'unpaid')),
            payment_method: orderDetails.payment_method || null,
            mobile_money_type: orderDetails.mobile_money_type || null,
            payment_screenshot_url: orderDetails.payment_screenshot_url || null
@@ -151,6 +154,14 @@ export const useCreateOrder = () => {
          } else {
              logger.info(`[useCreateOrder] [${transactionId}] Order ID properly synced: ${syncCheck.orderId} == ${syncCheck.recordedOrderId}`);
          }
+      }
+
+      // 3b. Mark order as complimentary if applicable
+      if (isComplimentary && createdOrderId) {
+        await supabase.from('orders').update({
+          is_complimentary: true,
+          complimentary_reason: orderDetails.complimentary_reason || null,
+        }).eq('id', createdOrderId);
       }
 
       // 4. Update Stock
