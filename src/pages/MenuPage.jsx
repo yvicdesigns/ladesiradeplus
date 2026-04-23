@@ -26,6 +26,7 @@ import { logger } from '@/lib/logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRestaurant } from '@/contexts/RestaurantContext';
 import { getValidatedRestaurantId } from '@/lib/restaurantValidation';
+import { DEFAULT_ADMIN_SETTINGS_ID } from '@/lib/adminSettingsUtils';
 
 const PLACEHOLDER_IMAGES = [
   "https://images.unsplash.com/photo-1701540747558-5513a8812dda",
@@ -172,8 +173,7 @@ export const MenuPage = () => {
         const { data, error } = await supabase
           .from('admin_settings')
           .select('restaurant_address, restaurant_city')
-          .eq('restaurant_id', validRestaurantId)
-          .limit(1)
+          .eq('id', DEFAULT_ADMIN_SETTINGS_ID)
           .maybeSingle();
 
         if (error) throw error;
