@@ -304,7 +304,21 @@ export default defineConfig({
 				'@babel/traverse',
 				'@babel/generator',
 				'@babel/types'
-			]
+			],
+			output: {
+				manualChunks: (id) => {
+					if (id.includes('node_modules/xlsx')) return 'vendor-xlsx';
+					if (id.includes('node_modules/jspdf')) return 'vendor-pdf';
+					if (id.includes('node_modules/recharts') || id.includes('node_modules/d3-') || id.includes('node_modules/victory-vendor')) return 'vendor-charts';
+					if (id.includes('node_modules/qrcode') || id.includes('node_modules/jsbarcode')) return 'vendor-qr';
+					if (id.includes('node_modules/html2canvas')) return 'vendor-html2canvas';
+					if (id.includes('node_modules/framer-motion')) return 'vendor-motion';
+					if (id.includes('node_modules/@radix-ui')) return 'vendor-radix';
+					if (id.includes('node_modules/leaflet') || id.includes('node_modules/react-leaflet')) return 'vendor-maps';
+					if (id.includes('node_modules/i18next') || id.includes('node_modules/react-i18next')) return 'vendor-i18n';
+					if (id.includes('node_modules/papaparse') || id.includes('node_modules/file-saver') || id.includes('node_modules/jszip')) return 'vendor-files';
+				}
+			}
 		}
 	}
 });
