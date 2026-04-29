@@ -12,7 +12,6 @@ function detectDevice() {
   return 'desktop';
 }
 
-// SVG share icon identical to the Safari share button
 const SafariShareIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline w-4 h-4 mx-0.5 align-middle text-blue-500">
     <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
@@ -21,44 +20,52 @@ const SafariShareIcon = () => (
   </svg>
 );
 
+// Mimics the "..." button visible in Safari's bottom bar
+const DotsButton = () => (
+  <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-gray-100 border border-gray-300 text-gray-700 font-bold text-sm leading-none mx-0.5 align-middle">
+    •••
+  </span>
+);
+
 const IOSGuide = () => (
-  <div className="space-y-3">
+  <div className="space-y-2">
     <p className="text-gray-700 text-sm font-semibold">
-      Ajoutez l'app à votre écran d'accueil en 2 étapes :
+      Ajoutez l'app à votre écran d'accueil en 3 étapes :
     </p>
 
-    {/* Steps */}
     <div className="space-y-2">
       {/* Step 1 */}
-      <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl px-3 py-3">
-        <span className="w-6 h-6 rounded-full bg-blue-500 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
-        <div>
-          <p className="text-gray-800 text-sm">
-            Appuyez sur le bouton <strong>Partager</strong> <SafariShareIcon /> en bas de Safari
-          </p>
-          {/* Arrow pointing down */}
-          <div className="flex justify-center mt-2">
-            <div className="flex flex-col items-center gap-0.5">
-              <div className="w-0.5 h-5 bg-blue-400 rounded" />
-              <div
-                className="w-0 h-0"
-                style={{ borderLeft: '6px solid transparent', borderRight: '6px solid transparent', borderTop: '8px solid #60a5fa' }}
-              />
-            </div>
-          </div>
-          <p className="text-center text-blue-400 text-xs mt-0.5 animate-bounce">en bas de l'écran</p>
-        </div>
+      <div className="flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2.5">
+        <span className="w-6 h-6 rounded-full bg-blue-500 text-white text-xs font-bold flex items-center justify-center shrink-0">1</span>
+        <p className="text-gray-800 text-sm">
+          Appuyez sur <DotsButton /> en bas à droite de Safari
+        </p>
       </div>
 
       {/* Step 2 */}
-      <div className="flex items-start gap-3 bg-green-50 border border-green-100 rounded-xl px-3 py-3">
-        <span className="w-6 h-6 rounded-full bg-green-500 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
-        <div className="text-sm text-gray-800">
-          Faites défiler et appuyez sur{' '}
-          <span className="inline-flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2 py-0.5 text-xs font-semibold text-gray-700">
-            <span className="text-base leading-none">+</span> Sur l'écran d'accueil
+      <div className="flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2.5">
+        <span className="w-6 h-6 rounded-full bg-blue-500 text-white text-xs font-bold flex items-center justify-center shrink-0">2</span>
+        <p className="text-gray-800 text-sm">
+          Appuyez sur <strong>Share</strong> <SafariShareIcon /> dans le menu
+        </p>
+      </div>
+
+      {/* Step 3 */}
+      <div className="flex items-center gap-3 bg-green-50 border border-green-100 rounded-xl px-3 py-2.5">
+        <span className="w-6 h-6 rounded-full bg-green-500 text-white text-xs font-bold flex items-center justify-center shrink-0">3</span>
+        <p className="text-sm text-gray-800">
+          Appuyez sur{' '}
+          <span className="inline-flex items-center gap-1 bg-white border border-gray-300 rounded-lg px-2 py-0.5 text-xs font-semibold text-gray-700">
+            <span className="text-sm leading-none">+</span> Sur l'écran d'accueil
           </span>
-        </div>
+        </p>
+      </div>
+    </div>
+
+    {/* Arrow pointing to bottom-right corner */}
+    <div className="flex justify-end pr-2 pt-1">
+      <div className="flex flex-col items-end gap-0.5">
+        <p className="text-blue-400 text-xs animate-bounce">↘ ici, en bas à droite</p>
       </div>
     </div>
 
