@@ -6,12 +6,18 @@ import { Utensils } from 'lucide-react';
 import { playNewOrderSound } from '@/lib/soundUtils';
 import { SoundSettingsService } from '@/lib/SoundSettingsService';
 
+const CHANNEL_ID = `badge-restaurant-${Math.random().toString(36).slice(2)}`;
+
 export const useNewRestaurantOrderNotificationBadge = ({ showToast = true } = {}) => {
   const [unreadCount, setUnreadCount] = useState(0);
-  const channelRef = useRef(null);
   const { toast } = useToast();
   const isMounted = useRef(true);
   const soundSettingsRef = useRef(null);
+  // Refs so the effect never needs them as deps
+  const toastRef = useRef(toast);
+  const showToastRef = useRef(showToast);
+  toastRef.current = toast;
+  showToastRef.current = showToast;
 
   useEffect(() => {
     SoundSettingsService.getAdminSoundSettings().then(s => {
@@ -28,82 +34,63 @@ export const useNewRestaurantOrderNotificationBadge = ({ showToast = true } = {}
         .eq('is_deleted', false);
 
       if (error) throw error;
-      if (isMounted.current && count !== null) {
-        setUnreadCount(count);
-      }
+      if (isMounted.current && count !== null) setUnreadCount(count);
     } catch (error) {
       debugLogger.log('useNewRestaurantOrderNotificationBadge', LOG_EVENTS.ERROR, error);
     }
   }, []);
 
+  const fetchRef = useRef(fetchBadgeCount);
+  fetchRef.current = fetchBadgeCount;
+
   useEffect(() => {
     isMounted.current = true;
-    return () => { isMounted.current = false; };
-  }, []);
+    fetchRef.current();
 
-  const subscribe = useCallback(() => {
-    if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-    }
-    
-    fetchBadgeCount();
+    // Remove any stale channel before subscribing
+    supabase.getChannels()
+      .filter(c => c.topic === `realtime:${CHANNEL_ID}`)
+      .forEach(c => supabase.removeChannel(c));
 
-    const channelName = `badge-restaurant-${Date.now()}`;
     const channel = supabase
-      .channel(channelName)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'restaurant_orders' },
-        (payload) => {
-          if (!isMounted.current) return;
-          fetchBadgeCount();
-
-          if (payload.eventType === 'INSERT' && showToast && payload.new.is_deleted === false) {
-            const s = soundSettingsRef.current;
-            playNewOrderSound(
-              s?.notification_volume ?? 0.8,
-              s?.admin_new_order_audio_url || null,
-              s?.admin_new_order_audio_enabled ?? false
-            );
-
-            toast({
-              title: "🍽️ Nouvelle commande salle !",
-              description: "Une nouvelle commande à table vient d'arriver.",
-              className: "bg-white border-l-4 border-amber-500 shadow-lg",
-              action: (
-                 <div className="h-10 w-10 bg-amber-100 rounded-full flex items-center justify-center">
-                    <Utensils className="h-5 w-5 text-amber-700 animate-pulse" />
-                 </div>
-              ),
-              duration: 6000,
-            });
-          }
-        }
-      )
-      .subscribe((status, err) => {
+      .channel(CHANNEL_ID)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'restaurant_orders' }, (payload) => {
         if (!isMounted.current) return;
+        fetchRef.current();
+
+        if (payload.eventType === 'INSERT' && showToastRef.current && payload.new?.is_deleted === false) {
+          const s = soundSettingsRef.current;
+          playNewOrderSound(
+            s?.notification_volume ?? 0.8,
+            s?.admin_new_order_audio_url || null,
+            s?.admin_new_order_audio_enabled ?? false
+          );
+          toastRef.current({
+            title: "🍽️ Nouvelle commande salle !",
+            description: "Une nouvelle commande à table vient d'arriver.",
+            className: "bg-white border-l-4 border-amber-500 shadow-lg",
+            action: (
+              <div className="h-10 w-10 bg-amber-100 rounded-full flex items-center justify-center">
+                <Utensils className="h-5 w-5 text-amber-700 animate-pulse" />
+              </div>
+            ),
+            duration: 6000,
+          });
+        }
+      })
+      .subscribe((status, err) => {
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-             debugLogger.log('useNewRestaurantOrderNotificationBadge', LOG_EVENTS.ERROR, { status, err });
+          debugLogger.log('useNewRestaurantOrderNotificationBadge', LOG_EVENTS.ERROR, { status, err });
         }
       });
 
-    channelRef.current = channel;
-  }, [fetchBadgeCount, showToast, toast]);
-
-  useEffect(() => {
-    subscribe();
     return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
+      isMounted.current = false;
+      supabase.removeChannel(channel);
     };
-  }, [subscribe]);
+  }, []); // empty deps — channel created once
 
-  const resetBadge = useCallback(() => {
-    setUnreadCount(0);
-  }, []);
+  const resetBadge = useCallback(() => setUnreadCount(0), []);
 
   return { unreadCount, resetBadge };
 };

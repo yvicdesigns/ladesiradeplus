@@ -4,12 +4,17 @@ import { useToast } from '@/components/ui/use-toast';
 import { playNewOrderSound } from '@/lib/soundUtils';
 import { SoundSettingsService } from '@/lib/SoundSettingsService';
 
+const CHANNEL_ID = `badge-reservations-${Math.random().toString(36).slice(2)}`;
+
 export const useNewReservationNotificationBadge = ({ showToast = true } = {}) => {
   const [unreadCount, setUnreadCount] = useState(0);
-  const channelRef = useRef(null);
   const { toast } = useToast();
   const isMounted = useRef(true);
   const soundSettingsRef = useRef(null);
+  const toastRef = useRef(toast);
+  const showToastRef = useRef(showToast);
+  toastRef.current = toast;
+  showToastRef.current = showToast;
 
   useEffect(() => {
     SoundSettingsService.getAdminSoundSettings().then(s => {
@@ -32,32 +37,31 @@ export const useNewReservationNotificationBadge = ({ showToast = true } = {}) =>
     }
   }, []);
 
+  const fetchRef = useRef(fetchCount);
+  fetchRef.current = fetchCount;
+
   useEffect(() => {
     isMounted.current = true;
-    fetchCount();
+    fetchRef.current();
 
-    if (channelRef.current) {
-      supabase.removeChannel(channelRef.current);
-      channelRef.current = null;
-    }
+    supabase.getChannels()
+      .filter(c => c.topic === `realtime:${CHANNEL_ID}`)
+      .forEach(c => supabase.removeChannel(c));
 
     const channel = supabase
-      .channel(`reservations-badge-${Date.now()}`)
+      .channel(CHANNEL_ID)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations' }, (payload) => {
         if (!isMounted.current) return;
-        fetchCount();
+        fetchRef.current();
 
-        console.log('[ReservationBadge] event:', payload.eventType, '| showToast:', showToast, '| is_deleted:', payload.new?.is_deleted);
-        if (payload.eventType === 'INSERT' && showToast && payload.new?.is_deleted !== true) {
-          console.log('[ReservationBadge] → firing toast + sound');
+        if (payload.eventType === 'INSERT' && showToastRef.current && payload.new?.is_deleted !== true) {
           const s = soundSettingsRef.current;
           playNewOrderSound(
             s?.notification_volume ?? 0.8,
             s?.admin_new_order_audio_url || null,
             s?.admin_new_order_audio_enabled ?? false
           );
-
-          toast({
+          toastRef.current({
             title: "📅 Nouvelle réservation !",
             description: `Réservation pour ${payload.new?.party_size || '?'} personne(s) en attente de confirmation.`,
             className: "bg-white border-l-4 border-blue-500 shadow-lg",
@@ -67,16 +71,11 @@ export const useNewReservationNotificationBadge = ({ showToast = true } = {}) =>
       })
       .subscribe();
 
-    channelRef.current = channel;
-
     return () => {
       isMounted.current = false;
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
+      supabase.removeChannel(channel);
     };
-  }, [fetchCount, showToast, toast]);
+  }, []); // empty deps — channel created once
 
   const resetBadge = useCallback(() => setUnreadCount(0), []);
 
