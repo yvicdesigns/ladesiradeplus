@@ -1,7 +1,8 @@
+import { RESTAURANT_ID } from '@/lib/adminSettingsUtils';
 import { useState, useEffect, useCallback } from 'react';
 import { menuService } from './menuService';
 
-export default function useMenu(restaurantId = '7eedf081-0268-4867-af38-61fa5932420a') {
+export default function useMenu(restaurantId = RESTAURANT_ID) {
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);

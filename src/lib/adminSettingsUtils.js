@@ -1,4 +1,5 @@
 export const DEFAULT_ADMIN_SETTINGS_ID = '7eedf081-0268-4867-af38-61fa5932420a';
+export const RESTAURANT_ID = DEFAULT_ADMIN_SETTINGS_ID;
 
 /**
  * Returns the valid default admin settings ID to use as a fallback.

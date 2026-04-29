@@ -1,7 +1,8 @@
+import { RESTAURANT_ID } from '@/lib/adminSettingsUtils';
 import { supabase } from '@/lib/customSupabaseClient';
 import { logger } from '@/lib/logger';
 
-export const VALID_RESTAURANT_ID = '7eedf081-0268-4867-af38-61fa5932420a';
+export const VALID_RESTAURANT_ID = RESTAURANT_ID;
 
 /**
  * Returns a guaranteed valid restaurant ID format.

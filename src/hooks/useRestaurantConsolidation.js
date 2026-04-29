@@ -1,9 +1,10 @@
+import { RESTAURANT_ID } from '@/lib/adminSettingsUtils';
 import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useToast } from '@/components/ui/use-toast';
 
 const OLD_ID = 'b6d4409c-d3bb-43b1-a27f-e63c64cbfa65';
-const NEW_ID = '7eedf081-0268-4867-af38-61fa5932420a';
+const NEW_ID = RESTAURANT_ID;
 
 export function useRestaurantConsolidation() {
   const [loading, setLoading] = useState(false);

@@ -1,3 +1,4 @@
+import { RESTAURANT_ID } from '@/lib/adminSettingsUtils';
 import { supabase } from '@/lib/customSupabaseClient';
 import { normalizeSupabaseError } from '@/lib/errorHandler';
 import { ORDER_STATUSES } from '@/constants/orderStatus';
@@ -5,7 +6,7 @@ import { logAudit } from '@/lib/auditLogUtils';
 import { AUDIT_ACTIONS } from '@/constants/AUDIT_ACTIONS';
 
 export const kitchenService = {
-  async getRestaurantOrders(restaurantId = '7eedf081-0268-4867-af38-61fa5932420a') {
+  async getRestaurantOrders(restaurantId = RESTAURANT_ID) {
     try {
       const { data, error } = await supabase
         .from('restaurant_orders')

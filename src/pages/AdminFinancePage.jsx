@@ -18,7 +18,7 @@ import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, end
 import { fr } from 'date-fns/locale';
 import { TrendingUp, TrendingDown, Wallet, Plus, Trash2, Download, FileText, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 
-const RESTAURANT_ID = '7eedf081-0268-4867-af38-61fa5932420a';
+import { RESTAURANT_ID } from '@/lib/adminSettingsUtils';
 
 const EXPENSE_CATEGORIES = [
   { value: 'supplies', label: 'Fournitures / Ingrédients' },

@@ -1,10 +1,11 @@
+import { RESTAURANT_ID } from '@/lib/adminSettingsUtils';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { logger } from '@/lib/logger';
 import { withTimeout, retryWithExponentialBackoff } from '@/lib/networkResilience';
 import { TIMEOUT_CONFIG } from '@/lib/timeoutConfig';
 
-const DEFAULT_RESTAURANT_ID = '7eedf081-0268-4867-af38-61fa5932420a';
+const DEFAULT_RESTAURANT_ID = RESTAURANT_ID;
 
 export function useClients(filters = {}, page = 1, limit = 50) {
   const [clients, setClients] = useState([]);

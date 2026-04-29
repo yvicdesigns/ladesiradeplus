@@ -3,7 +3,7 @@ import { supabase } from '@/lib/customSupabaseClient';
 import { useCache } from './useCache';
 import { isValidAdminSettingsId } from '@/lib/adminSettingsUtils';
 
-export const SINGLE_RESTAURANT_ID = '7eedf081-0268-4867-af38-61fa5932420a';
+export const SINGLE_RESTAURANT_ID = RESTAURANT_ID;
 
 export const useRestaurantSettings = () => {
   const [settings, setSettings] = useState(null);

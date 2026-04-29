@@ -1,3 +1,4 @@
+import { RESTAURANT_ID } from '@/lib/adminSettingsUtils';
 import { supabase } from '@/lib/customSupabaseClient';
 import { normalizeSupabaseError } from '@/lib/errorHandler';
 import { logAudit } from '@/lib/auditLogUtils';
@@ -52,7 +53,7 @@ export const deliveryService = {
     }
   },
 
-  async getDeliveryZones(restaurantId = '7eedf081-0268-4867-af38-61fa5932420a') {
+  async getDeliveryZones(restaurantId = RESTAURANT_ID) {
     try {
       const { data, error } = await supabase
         .from('delivery_zones')

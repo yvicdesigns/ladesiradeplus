@@ -1,3 +1,4 @@
+import { RESTAURANT_ID } from '@/lib/adminSettingsUtils';
 import React, { useMemo } from 'react';
 import { useRealtimeSubscription } from '@/hooks/useRealtimeSubscription';
 import { Star, MessageSquare, Loader2, User } from 'lucide-react';

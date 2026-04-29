@@ -47,7 +47,7 @@ export function useProductsWithRetry(options = {}) {
     channelName: `public-products-cats-${restaurantId}`,
     table: 'menu_items', // Listen to menu_items as primary trigger
     fetchData: fetchProductsAndCategories,
-    pollingInterval: 3000
+    pollingInterval: 300000
   });
 
   return { 

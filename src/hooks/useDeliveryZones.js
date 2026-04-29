@@ -1,8 +1,9 @@
+import { RESTAURANT_ID } from '@/lib/adminSettingsUtils';
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useToast } from '@/components/ui/use-toast';
 
-export const SINGLE_RESTAURANT_ID = '7eedf081-0268-4867-af38-61fa5932420a';
+export const SINGLE_RESTAURANT_ID = RESTAURANT_ID;
 
 export const useDeliveryZones = () => {
   const [zones, setZones] = useState([]);

@@ -35,7 +35,7 @@ export const useMenu = (options = {}) => {
     channelName: 'public-menu-items',
     table: 'menu_items',
     fetchData: fetchMenuData,
-    pollingInterval: 3000
+    pollingInterval: 300000
   });
 
   return { 

@@ -1,3 +1,4 @@
+import { RESTAURANT_ID } from '@/lib/adminSettingsUtils';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { fetchWithTimeout } from '@/lib/timeoutUtils';
@@ -7,7 +8,7 @@ import { useRealtimeWithFallback, CONNECTION_STATUS } from './useRealtimeWithFal
 
 export { CONNECTION_STATUS };
 
-const TARGET_RESTAURANT_ID = '7eedf081-0268-4867-af38-61fa5932420a';
+const TARGET_RESTAURANT_ID = RESTAURANT_ID;
 
 export function useRealtimeRestaurantOrders({
   page = 1, limit = 50, sortBy = 'created_at', sortOrder = 'desc', searchQuery = '', orderId = null, includeDeleted = false

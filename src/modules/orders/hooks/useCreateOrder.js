@@ -1,3 +1,4 @@
+import { RESTAURANT_ID } from '@/lib/adminSettingsUtils';
 import { useState } from 'react';
 import { ordersService } from '../services/ordersService';
 import { useToast } from '@/components/ui/use-toast';
@@ -22,7 +23,7 @@ export function useCreateOrder() {
         ...orderData,
         user_id: user?.id || null,
         // Fallback default restaurant if not provided
-        restaurant_id: orderData.restaurant_id || '7eedf081-0268-4867-af38-61fa5932420a',
+        restaurant_id: orderData.restaurant_id || RESTAURANT_ID,
       };
 
       const newOrderId = await ordersService.createOrderAtomic(payload);
