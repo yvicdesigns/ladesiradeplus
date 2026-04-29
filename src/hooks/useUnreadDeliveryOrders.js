@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/lib/customSupabaseClient';
 
+// Stable ID generated once per module load — never changes across re-renders
+const CHANNEL_ID = `unread-counts-${Math.random().toString(36).slice(2)}`;
+
 export const useUnreadDeliveryOrders = () => {
   const [counts, setCounts] = useState({
     deliveryUnread: 0,
@@ -9,6 +12,8 @@ export const useUnreadDeliveryOrders = () => {
   });
   const [loading, setLoading] = useState(true);
   const isMounted = useRef(true);
+  // Keep a ref to the fetch fn so the effect never needs it as a dep
+  const fetchRef = useRef(null);
 
   const fetchUnreadCounts = useCallback(async () => {
     if (!isMounted.current) return;
@@ -41,18 +46,24 @@ export const useUnreadDeliveryOrders = () => {
     }
   }, []);
 
+  fetchRef.current = fetchUnreadCounts;
+
   useEffect(() => {
     isMounted.current = true;
-    fetchUnreadCounts();
+    fetchRef.current?.();
 
-    // Use unique channel name to avoid conflicts with multiple sidebar instances
+    // Remove any stale channel with this ID before subscribing
+    supabase.getChannels()
+      .filter(c => c.topic === `realtime:${CHANNEL_ID}`)
+      .forEach(c => supabase.removeChannel(c));
+
     const channel = supabase
-      .channel(`unread-counts-sync-${Date.now()}`)
+      .channel(CHANNEL_ID)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'delivery_orders' }, () => {
-        fetchUnreadCounts();
+        fetchRef.current?.();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'restaurant_orders' }, () => {
-        fetchUnreadCounts();
+        fetchRef.current?.();
       })
       .subscribe();
 
@@ -60,7 +71,7 @@ export const useUnreadDeliveryOrders = () => {
       isMounted.current = false;
       supabase.removeChannel(channel);
     };
-  }, [fetchUnreadCounts]);
+  }, []); // empty deps — channel created once, never recreated
 
   return { ...counts, loading };
 };
