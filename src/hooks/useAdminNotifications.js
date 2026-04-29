@@ -38,25 +38,37 @@ export const useAdminNotifications = () => {
 
   useEffect(() => {
     if (!user) return;
-    
+
     fetchNotifications();
 
-    const channel = supabase
-      .channel('admin_notifications')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'notifications',
-        filter: `user_id=eq.${user.id}`
-      }, (payload) => {
-        fetchNotifications();
-      })
-      .subscribe();
+    // Unique name per user prevents "cannot add callbacks after subscribe()" error
+    // when React re-renders and the effect re-runs before cleanup finishes
+    const channelName = `admin_notifications_${user.id}`;
+    let channel;
+
+    try {
+      channel = supabase
+        .channel(channelName)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`
+        }, () => {
+          fetchNotifications();
+        })
+        .subscribe();
+    } catch (e) {
+      // Channel already exists from a previous render — remove and recreate
+      supabase.getChannels()
+        .filter(c => c.topic === `realtime:${channelName}`)
+        .forEach(c => supabase.removeChannel(c));
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user?.id]);
 
   return { notifications, unreadCount, markAsRead };
 };
