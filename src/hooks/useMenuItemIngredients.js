@@ -72,7 +72,7 @@ export async function validateIngredientStock(cartItems) {
   return { valid: errors.length === 0, errors };
 }
 
-// Restore ingredient stock when an order is cancelled
+// Restore ingredient stock when an order is cancelled (atomic RPC)
 export async function restoreIngredientStock(cartItems, orderId) {
   const itemIds = cartItems.map(i => i.id || i.menu_item_id);
   const { data: links } = await supabase
@@ -95,8 +95,7 @@ export async function restoreIngredientStock(cartItems, orderId) {
 
   for (const [ingId, { ingredient, total }] of Object.entries(restorations)) {
     if (ingredient.current_stock === null) continue;
-    const newStock = ingredient.current_stock + total;
-    await supabase.from('ingredients').update({ current_stock: newStock }).eq('id', ingId);
+    await supabase.rpc('restore_ingredient_stock', { p_id: ingId, p_qty: total });
     await supabase.from('stock_movements').insert({
       ingredient_id: ingId,
       movement_type: 'order_cancelled',
@@ -119,23 +118,18 @@ export async function restoreStockOnCancellation(ordersId) {
 
   if (!items?.length) return;
 
-  // Restore menu_items stock_quantity
-  const itemIds = items.map(i => i.menu_item_id);
-  const { data: stockData } = await supabase
-    .from('menu_items')
-    .select('id, stock_quantity')
-    .in('id', itemIds);
-
+  // Restore menu_items stock_quantity (atomic RPC)
   for (const item of items) {
-    const dbItem = stockData?.find(i => i.id === item.menu_item_id);
-    if (dbItem && dbItem.stock_quantity !== null) {
-      const newStock = dbItem.stock_quantity + item.quantity;
-      await supabase.from('menu_items').update({ stock_quantity: newStock }).eq('id', item.menu_item_id);
+    const { data: newStock } = await supabase.rpc('restore_menu_item_stock', {
+      p_id: item.menu_item_id,
+      p_qty: item.quantity,
+    });
+    if (newStock !== null) {
       await supabase.from('item_stock_movements').insert({
         menu_item_id: item.menu_item_id,
         movement_type: 'order_cancelled',
         quantity_changed: item.quantity,
-        previous_quantity: dbItem.stock_quantity,
+        previous_quantity: newStock - item.quantity,
         new_quantity: newStock,
         order_id: ordersId,
         notes: 'Remise en stock - annulation commande',
@@ -171,8 +165,8 @@ export async function deductIngredientStock(cartItems, orderId) {
 
   for (const [ingId, { ingredient, total }] of Object.entries(deductions)) {
     if (ingredient.current_stock === null) continue;
-    const newStock = Math.max(0, ingredient.current_stock - total);
-    await supabase.from('ingredients').update({ current_stock: newStock }).eq('id', ingId);
+    // Atomic RPC — no SELECT+UPDATE race condition
+    await supabase.rpc('deduct_ingredient_stock', { p_id: ingId, p_qty: total });
     await supabase.from('stock_movements').insert({
       ingredient_id: ingId,
       movement_type: 'usage',

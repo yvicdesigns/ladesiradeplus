@@ -128,7 +128,7 @@ export const AdminLayout = ({ children }) => {
               </div>
             )}
             
-            {role === 'admin' && <DebugPermissionsPanel />}
+            {role === 'admin' && import.meta.env.DEV && <DebugPermissionsPanel />}
             
             {children}
           </motion.div>

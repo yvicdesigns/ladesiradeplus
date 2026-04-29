@@ -1,1 +1,0 @@
-export { useNewOrderNotificationBadge } from './useNewOrderNotificationBadge.jsx';

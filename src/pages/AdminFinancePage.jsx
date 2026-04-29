@@ -95,6 +95,7 @@ export const AdminFinancePage = () => {
           .from('orders')
           .select('total, status, created_at')
           .not('status', 'in', '(cancelled,rejected)')
+          .neq('is_complimentary', true)
           .gte('created_at', startISO)
           .lte('created_at', endISO),
       ]);
