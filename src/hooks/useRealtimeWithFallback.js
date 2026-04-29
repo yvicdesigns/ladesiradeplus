@@ -14,6 +14,22 @@ export const CONNECTION_STATUS = {
 const INITIAL_RETRY_DELAY = 1000;
 const MAX_RETRY_DELAY = 4000;
 
+// Module-level cache shared across all hook instances and page navigations
+// key → { data, timestamp }
+const memoryCache = new Map();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+function getCached(key) {
+  const entry = memoryCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > CACHE_TTL) { memoryCache.delete(key); return null; }
+  return entry.data;
+}
+
+function setCache(key, data) {
+  memoryCache.set(key, { data, timestamp: Date.now() });
+}
+
 export function useRealtimeWithFallback({
   key,
   channelName,
@@ -22,17 +38,13 @@ export function useRealtimeWithFallback({
   filter,
   event = '*',
   fetchData,
-  // OPTIMIZATION RATIONALE: 
-  // Changed default polling interval to 2 minutes (120000ms).
-  // This drastically reduces server load and bandwidth when WebSocket Realtime fails,
-  // ensuring the fallback mechanism doesn't overwhelm the backend during outages.
-  // Realtime remains the primary and immediate sync method.
-  pollingInterval = 120000, 
-  maxRetries = 3, // Capped to 3 to prevent infinite loops
+  pollingInterval = 120000,
+  maxRetries = 3,
   enabled = true
 }) {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const cached = key ? getCached(key) : null;
+  const [data, setData] = useState(cached);
+  const [loading, setLoading] = useState(!cached); // no spinner if we have cache
   const [error, setError] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState(enabled ? CONNECTION_STATUS.CONNECTING : CONNECTION_STATUS.DISCONNECTED);
   
@@ -47,13 +59,14 @@ export function useRealtimeWithFallback({
     if (!fetchData || !isMounted.current) return;
     try {
       const now = Date.now();
-      if (now - lastUpdateRef.current < 1000) return; // Increased debounce to 1s
+      if (now - lastUpdateRef.current < 1000) return;
       lastUpdateRef.current = now;
 
       const result = await fetchData();
       if (isMounted.current && result !== undefined) {
         setData(result);
         setError(null);
+        if (key) setCache(key, result); // persist in module cache
       }
     } catch (err) {
       if (isMounted.current) {
@@ -63,7 +76,7 @@ export function useRealtimeWithFallback({
     } finally {
       if (isMounted.current) setLoading(false);
     }
-  }, [fetchData, channelName]);
+  }, [fetchData, channelName, key]);
 
   const startPollingFallback = useCallback(() => {
     if (!enabled || !isMounted.current) return;
@@ -146,8 +159,11 @@ export function useRealtimeWithFallback({
         }
       });
 
+      // Fetch data immediately — don't wait for WebSocket to connect
+      // WebSocket will trigger re-fetches on live changes
+      fetchCallback();
       connectRealtime();
-      
+
       return () => {
         isMounted.current = false;
         unsubHealth();
