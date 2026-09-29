@@ -7,9 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatCurrency, formatDateTime } from '@/lib/formatters';
 import { useSuperStock, useSuperStockMovements } from '@/hooks/useSuperStock';
+import { IngredientDetailModal } from '@/components/IngredientDetailModal';
+import { StockEntryModal } from '@/components/StockEntryModal';
+import { StockExitModal } from '@/components/StockExitModal';
 import {
   Warehouse, Search, RefreshCw, AlertTriangle, PackageX, CheckCircle2,
-  TrendingDown, TrendingUp, History, Wallet, Boxes
+  TrendingDown, TrendingUp, History, Wallet, Boxes, PackagePlus, PackageMinus
 } from 'lucide-react';
 
 const MOVEMENT_LABELS = {
@@ -216,6 +219,9 @@ function DashboardTab({ ingredientsWithStats, loading, onRefresh }) {
 function CurrentStockTab({ ingredientsWithStats, loading, onRefresh }) {
   const [search, setSearch] = useState('');
   const [filterAlert, setFilterAlert] = useState(false);
+  const [detailIngredient, setDetailIngredient] = useState(null);
+  const [entryModal, setEntryModal] = useState({ open: false, ingredient: null });
+  const [exitModal, setExitModal] = useState({ open: false, ingredient: null });
 
   const filtered = useMemo(() => {
     let r = ingredientsWithStats;
@@ -238,6 +244,8 @@ function CurrentStockTab({ ingredientsWithStats, loading, onRefresh }) {
           <AlertTriangle className="h-4 w-4" /> {filterAlert ? 'Voir tout' : 'Alertes uniquement'}
         </button>
         <Button variant="outline" size="sm" onClick={onRefresh} className="gap-2"><RefreshCw className="h-4 w-4" /></Button>
+        <Button size="sm" onClick={() => setEntryModal({ open: true, ingredient: null })} className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"><PackagePlus className="h-4 w-4" /> Entrée</Button>
+        <Button size="sm" onClick={() => setExitModal({ open: true, ingredient: null })} className="gap-2 bg-red-600 hover:bg-red-700 text-white"><PackageMinus className="h-4 w-4" /> Sortie</Button>
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
@@ -260,7 +268,7 @@ function CurrentStockTab({ ingredientsWithStats, loading, onRefresh }) {
             ) : filtered.length === 0 ? (
               <TableRow><TableCell colSpan={8} className="text-center py-8 text-slate-400">Aucun ingrédient trouvé.</TableCell></TableRow>
             ) : filtered.map(ing => (
-              <TableRow key={ing.id}>
+              <TableRow key={ing.id} className="cursor-pointer hover:bg-slate-50" onClick={() => setDetailIngredient(ing)}>
                 <TableCell className="font-medium text-slate-900">{ing.name}</TableCell>
                 <TableCell className="text-slate-500">{ing.category || '—'}</TableCell>
                 <TableCell className="text-slate-500">{ing.locationNames.length > 0 ? ing.locationNames.join(', ') : '—'}</TableCell>
@@ -274,6 +282,28 @@ function CurrentStockTab({ ingredientsWithStats, loading, onRefresh }) {
           </TableBody>
         </Table>
       </div>
+
+      <IngredientDetailModal
+        ingredient={detailIngredient}
+        open={!!detailIngredient}
+        onClose={() => setDetailIngredient(null)}
+        onRequestEntry={(ing) => { setDetailIngredient(null); setEntryModal({ open: true, ingredient: ing }); }}
+        onRequestExit={(ing) => { setDetailIngredient(null); setExitModal({ open: true, ingredient: ing }); }}
+      />
+      <StockEntryModal
+        open={entryModal.open}
+        ingredient={entryModal.ingredient}
+        ingredients={ingredientsWithStats}
+        onClose={() => setEntryModal({ open: false, ingredient: null })}
+        onSuccess={onRefresh}
+      />
+      <StockExitModal
+        open={exitModal.open}
+        ingredient={exitModal.ingredient}
+        ingredients={ingredientsWithStats}
+        onClose={() => setExitModal({ open: false, ingredient: null })}
+        onSuccess={onRefresh}
+      />
     </div>
   );
 }
