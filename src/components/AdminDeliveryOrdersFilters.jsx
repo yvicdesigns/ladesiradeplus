@@ -21,7 +21,11 @@ export const AdminDeliveryOrdersFilters = ({
   };
 
   const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...(prev || {}), [key]: value }));
+    // setFilters (from useRealtimeDeliveryOrders) merges a plain object into
+    // the previous state itself -- passing an updater function here spreads
+    // to nothing (functions have no enumerable own properties), silently
+    // no-opping every filter change including the "Corbeille" checkbox.
+    setFilters({ [key]: value });
   };
 
   const clearFilters = () => {
