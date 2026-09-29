@@ -6,13 +6,17 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatCurrency, formatDateTime } from '@/lib/formatters';
-import { useSuperStock, useSuperStockMovements } from '@/hooks/useSuperStock';
+import { useSuperStock, useSuperStockMovements, useInventoryCounts } from '@/hooks/useSuperStock';
 import { IngredientDetailModal } from '@/components/IngredientDetailModal';
 import { StockEntryModal } from '@/components/StockEntryModal';
 import { StockExitModal } from '@/components/StockExitModal';
+import { InventoryCountModal } from '@/components/InventoryCountModal';
+import { supabase } from '@/lib/customSupabaseClient';
+import { useToast } from '@/components/ui/use-toast';
 import {
   Warehouse, Search, RefreshCw, AlertTriangle, PackageX, CheckCircle2,
-  TrendingDown, TrendingUp, History, Wallet, Boxes, PackagePlus, PackageMinus
+  TrendingDown, TrendingUp, History, Wallet, Boxes, PackagePlus, PackageMinus,
+  ClipboardCheck, Plus, Loader2
 } from 'lucide-react';
 
 const MOVEMENT_LABELS = {
@@ -308,6 +312,82 @@ function CurrentStockTab({ ingredientsWithStats, loading, onRefresh }) {
   );
 }
 
+const INVENTORY_STATUS_BADGE = {
+  draft: <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200">Brouillon</Badge>,
+  in_progress: <Badge className="bg-amber-100 text-amber-800 border-amber-200">En cours</Badge>,
+  completed: <Badge className="bg-blue-100 text-blue-800 border-blue-200">Terminé</Badge>,
+  validated: <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200">Validé</Badge>,
+};
+
+function InventoryTab() {
+  const { toast } = useToast();
+  const { counts, loading, refetch } = useInventoryCounts();
+  const [creating, setCreating] = useState(false);
+  const [selectedCount, setSelectedCount] = useState(null);
+
+  const handleCreate = async () => {
+    setCreating(true);
+    const { data, error } = await supabase.rpc('create_inventory_count', { p_notes: null, p_location_id: null });
+    setCreating(false);
+    if (error) {
+      toast({ variant: 'destructive', title: 'Erreur', description: error.message });
+      return;
+    }
+    await refetch();
+    setSelectedCount({ id: data, status: 'draft' });
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <p className="text-sm text-slate-500">Comptages physiques — chaque écart validé devient un mouvement traçable, jamais un écrasement silencieux.</p>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={refetch} className="gap-2"><RefreshCw className="h-4 w-4" /></Button>
+          <Button size="sm" onClick={handleCreate} disabled={creating} className="gap-2 bg-amber-600 hover:bg-amber-700 text-white">
+            {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Nouvel inventaire
+          </Button>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Démarré le</TableHead>
+              <TableHead>Par</TableHead>
+              <TableHead>Statut</TableHead>
+              <TableHead>Validé le</TableHead>
+              <TableHead>Par</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow><TableCell colSpan={5} className="text-center py-8 text-slate-400">Chargement...</TableCell></TableRow>
+            ) : counts.length === 0 ? (
+              <TableRow><TableCell colSpan={5} className="text-center py-8 text-slate-400">Aucun inventaire pour l'instant.</TableCell></TableRow>
+            ) : counts.map(c => (
+              <TableRow key={c.id} className="cursor-pointer hover:bg-slate-50" onClick={() => setSelectedCount(c)}>
+                <TableCell>{formatDateTime(c.started_at)}</TableCell>
+                <TableCell className="text-slate-500">{c.startedByName || '—'}</TableCell>
+                <TableCell>{INVENTORY_STATUS_BADGE[c.status] || c.status}</TableCell>
+                <TableCell className="text-slate-500">{c.validated_at ? formatDateTime(c.validated_at) : '—'}</TableCell>
+                <TableCell className="text-slate-500">{c.validatedByName || '—'}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <InventoryCountModal
+        count={selectedCount}
+        open={!!selectedCount}
+        onClose={() => setSelectedCount(null)}
+        onValidated={refetch}
+      />
+    </div>
+  );
+}
+
 export const SuperStockPage = () => {
   const [tab, setTab] = useState('dashboard');
   const { ingredients, lots, locations, loading, refetch } = useSuperStock();
@@ -331,6 +411,9 @@ export const SuperStockPage = () => {
             <TabsTrigger value="current" className="gap-2 font-medium px-5 py-2 rounded-lg data-[state=active]:bg-purple-600 data-[state=active]:text-white">
               <CheckCircle2 className="h-4 w-4" /> Stock actuel
             </TabsTrigger>
+            <TabsTrigger value="inventory" className="gap-2 font-medium px-5 py-2 rounded-lg data-[state=active]:bg-slate-700 data-[state=active]:text-white">
+              <ClipboardCheck className="h-4 w-4" /> Inventaires
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="mt-5">
@@ -339,6 +422,10 @@ export const SuperStockPage = () => {
 
           <TabsContent value="current" className="mt-5">
             <CurrentStockTab ingredientsWithStats={ingredientsWithStats} loading={loading} onRefresh={refetch} />
+          </TabsContent>
+
+          <TabsContent value="inventory" className="mt-5">
+            <InventoryTab />
           </TabsContent>
         </Tabs>
       </div>
