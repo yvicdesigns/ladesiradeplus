@@ -14,6 +14,8 @@ export const StockEntryModal = ({ open, onClose, ingredients, ingredient, onSucc
   const [ingredientId, setIngredientId] = useState(ingredient?.id || '');
   const [qty, setQty] = useState('');
   const [unitCost, setUnitCost] = useState('');
+  const [supplierId, setSupplierId] = useState('');
+  const [suppliers, setSuppliers] = useState([]);
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -22,7 +24,9 @@ export const StockEntryModal = ({ open, onClose, ingredients, ingredient, onSucc
       setIngredientId(ingredient?.id || '');
       setQty('');
       setUnitCost('');
+      setSupplierId('');
       setNotes('');
+      supabase.from('suppliers').select('id, name').or('is_deleted.eq.false,is_deleted.is.null').order('name').then(({ data }) => setSuppliers(data || []));
     }
   }, [open, ingredient?.id]);
 
@@ -36,6 +40,7 @@ export const StockEntryModal = ({ open, onClose, ingredients, ingredient, onSucc
       p_ingredient_id: ingredientId,
       p_qty: Number(qty),
       p_unit_cost: Number(unitCost),
+      p_supplier_id: supplierId || null,
       p_notes: notes || null,
     });
     setSaving(false);
@@ -83,8 +88,18 @@ export const StockEntryModal = ({ open, onClose, ingredients, ingredient, onSucc
           </div>
 
           <div className="space-y-1.5">
+            <Label>Fournisseur (facultatif)</Label>
+            <Select value={supplierId} onValueChange={setSupplierId}>
+              <SelectTrigger><SelectValue placeholder="Aucun fournisseur précisé" /></SelectTrigger>
+              <SelectContent>
+                {suppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
             <Label>Observation (facultatif)</Label>
-            <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Fournisseur, numéro de facture..." rows={2} />
+            <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Numéro de facture, bon de livraison..." rows={2} />
           </div>
         </div>
 

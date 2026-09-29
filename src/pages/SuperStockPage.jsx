@@ -13,13 +13,14 @@ import { StockExitModal } from '@/components/StockExitModal';
 import { InventoryCountModal } from '@/components/InventoryCountModal';
 import { StockTransferModal } from '@/components/StockTransferModal';
 import { StockLocationsModal } from '@/components/StockLocationsModal';
+import { SuppliersModal } from '@/components/SuppliersModal';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useToast } from '@/components/ui/use-toast';
 import {
   Warehouse, Search, RefreshCw, AlertTriangle, PackageX, CheckCircle2,
   TrendingDown, TrendingUp, History, Wallet, Boxes, PackagePlus, PackageMinus,
   ClipboardCheck, Plus, Loader2, Scale, Info, Bell, Clock, TrendingUp as PriceUp,
-  MapPin, ArrowLeftRight
+  MapPin, ArrowLeftRight, Truck
 } from 'lucide-react';
 
 const MOVEMENT_LABELS = {
@@ -231,6 +232,7 @@ function CurrentStockTab({ ingredientsWithStats, locations, loading, onRefresh }
   const [exitModal, setExitModal] = useState({ open: false, ingredient: null });
   const [transferModal, setTransferModal] = useState({ open: false, ingredient: null });
   const [locationsModalOpen, setLocationsModalOpen] = useState(false);
+  const [suppliersModalOpen, setSuppliersModalOpen] = useState(false);
 
   const filtered = useMemo(() => {
     let r = ingredientsWithStats;
@@ -254,6 +256,7 @@ function CurrentStockTab({ ingredientsWithStats, locations, loading, onRefresh }
         </button>
         <Button variant="outline" size="sm" onClick={onRefresh} className="gap-2"><RefreshCw className="h-4 w-4" /></Button>
         <Button variant="outline" size="sm" onClick={() => setLocationsModalOpen(true)} className="gap-2"><MapPin className="h-4 w-4" /> Emplacements</Button>
+        <Button variant="outline" size="sm" onClick={() => setSuppliersModalOpen(true)} className="gap-2"><Truck className="h-4 w-4" /> Fournisseurs</Button>
         <Button size="sm" onClick={() => setEntryModal({ open: true, ingredient: null })} className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"><PackagePlus className="h-4 w-4" /> Entrée</Button>
         <Button size="sm" onClick={() => setExitModal({ open: true, ingredient: null })} className="gap-2 bg-red-600 hover:bg-red-700 text-white"><PackageMinus className="h-4 w-4" /> Sortie</Button>
         <Button size="sm" onClick={() => setTransferModal({ open: true, ingredient: null })} className="gap-2 bg-blue-600 hover:bg-blue-700 text-white"><ArrowLeftRight className="h-4 w-4" /> Transfert</Button>
@@ -328,6 +331,10 @@ function CurrentStockTab({ ingredientsWithStats, locations, loading, onRefresh }
         open={locationsModalOpen}
         onClose={() => setLocationsModalOpen(false)}
         onChange={onRefresh}
+      />
+      <SuppliersModal
+        open={suppliersModalOpen}
+        onClose={() => setSuppliersModalOpen(false)}
       />
     </div>
   );
