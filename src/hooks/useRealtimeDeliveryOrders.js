@@ -42,7 +42,7 @@ export const useRealtimeDeliveryOrders = (options = {}) => {
         .from('delivery_orders')
         .select(`
           *,
-          orders:order_id (
+          orders:order_id!inner (
             id, total, status, type, created_at, customer_name, customer_phone, delivery_address, is_deleted, user_id,
             order_items (
               id, quantity, price,
@@ -63,7 +63,12 @@ export const useRealtimeDeliveryOrders = (options = {}) => {
         }
 
         if (!filters.showDeleted) {
+          // Deleting from this page soft-deletes the underlying `orders` row
+          // (useSoftDelete('orders')), not delivery_orders itself when the
+          // user picks "delete only" over cascade -- so both flags must be
+          // checked, or a deleted order keeps showing up here forever.
           query = query.or('is_deleted.eq.false,is_deleted.is.null');
+          query = query.or('is_deleted.eq.false,is_deleted.is.null', { foreignTable: 'orders' });
         }
 
         if (filters.search) {
