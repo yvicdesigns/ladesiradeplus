@@ -169,13 +169,8 @@ export const useCreateOrder = () => {
         const itemId = cartItem.id || cartItem.menu_item_id;
         const dbItem = stockData?.find(i => i.id === itemId);
         if (dbItem && dbItem.stock_quantity !== null) {
-          const { data: newStock } = await supabase.rpc('deduct_menu_item_stock', { p_id: itemId, p_qty: cartItem.quantity });
-          if (newStock !== null) {
-            await supabase.from('item_stock_movements').insert({
-              menu_item_id: itemId, movement_type: 'order_confirmed', quantity_changed: -cartItem.quantity,
-              previous_quantity: newStock + cartItem.quantity, new_quantity: newStock, order_id: createdOrderId, notes: `Déduction`
-            });
-          }
+          // p_order_id binds the deduction to a real order and makes it idempotent (movement logged server-side)
+          await supabase.rpc('deduct_menu_item_stock', { p_id: itemId, p_qty: cartItem.quantity, p_order_id: createdOrderId });
         }
       }
 

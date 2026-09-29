@@ -95,14 +95,8 @@ export async function restoreIngredientStock(cartItems, orderId) {
 
   for (const [ingId, { ingredient, total }] of Object.entries(restorations)) {
     if (ingredient.current_stock === null) continue;
-    await supabase.rpc('restore_ingredient_stock', { p_id: ingId, p_qty: total });
-    await supabase.from('stock_movements').insert({
-      ingredient_id: ingId,
-      movement_type: 'order_cancelled',
-      quantity: total,
-      reference_id: orderId,
-      notes: 'Remise en stock - annulation commande',
-    });
+    // p_order_id binds the restore to a real order and makes it idempotent (movement logged server-side)
+    await supabase.rpc('restore_ingredient_stock', { p_id: ingId, p_qty: total, p_order_id: orderId });
   }
 }
 
@@ -118,23 +112,13 @@ export async function restoreStockOnCancellation(ordersId) {
 
   if (!items?.length) return;
 
-  // Restore menu_items stock_quantity (atomic RPC)
+  // Restore menu_items stock_quantity (atomic RPC, idempotent per order+item, movement logged server-side)
   for (const item of items) {
-    const { data: newStock } = await supabase.rpc('restore_menu_item_stock', {
+    await supabase.rpc('restore_menu_item_stock', {
       p_id: item.menu_item_id,
       p_qty: item.quantity,
+      p_order_id: ordersId,
     });
-    if (newStock !== null) {
-      await supabase.from('item_stock_movements').insert({
-        menu_item_id: item.menu_item_id,
-        movement_type: 'order_cancelled',
-        quantity_changed: item.quantity,
-        previous_quantity: newStock - item.quantity,
-        new_quantity: newStock,
-        order_id: ordersId,
-        notes: 'Remise en stock - annulation commande',
-      });
-    }
   }
 
   // Restore ingredient stock
@@ -165,14 +149,8 @@ export async function deductIngredientStock(cartItems, orderId) {
 
   for (const [ingId, { ingredient, total }] of Object.entries(deductions)) {
     if (ingredient.current_stock === null) continue;
-    // Atomic RPC — no SELECT+UPDATE race condition
-    await supabase.rpc('deduct_ingredient_stock', { p_id: ingId, p_qty: total });
-    await supabase.from('stock_movements').insert({
-      ingredient_id: ingId,
-      movement_type: 'usage',
-      quantity: -total,
-      reference_id: orderId,
-      notes: `Déduction commande`,
-    });
+    // Atomic RPC, idempotent per order+ingredient — p_order_id also blocks calling this
+    // RPC directly (e.g. via REST) for an order that doesn't actually exist.
+    await supabase.rpc('deduct_ingredient_stock', { p_id: ingId, p_qty: total, p_order_id: orderId });
   }
 }
