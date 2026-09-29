@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatCurrency, formatDateTime } from '@/lib/formatters';
-import { useSuperStock, useSuperStockMovements, useInventoryCounts, useTheoreticalVsReal } from '@/hooks/useSuperStock';
+import { useSuperStock, useSuperStockMovements, useInventoryCounts, useTheoreticalVsReal, useAlertSignals } from '@/hooks/useSuperStock';
 import { IngredientDetailModal } from '@/components/IngredientDetailModal';
 import { StockEntryModal } from '@/components/StockEntryModal';
 import { StockExitModal } from '@/components/StockExitModal';
@@ -16,7 +16,7 @@ import { useToast } from '@/components/ui/use-toast';
 import {
   Warehouse, Search, RefreshCw, AlertTriangle, PackageX, CheckCircle2,
   TrendingDown, TrendingUp, History, Wallet, Boxes, PackagePlus, PackageMinus,
-  ClipboardCheck, Plus, Loader2, Scale, Info
+  ClipboardCheck, Plus, Loader2, Scale, Info, Bell, Clock, TrendingUp as PriceUp
 } from 'lucide-react';
 
 const MOVEMENT_LABELS = {
@@ -453,6 +453,132 @@ function TheoreticalVsRealTab() {
   );
 }
 
+const STALE_DAYS = 60;
+const LOSS_VALUE_THRESHOLD = 0; // show any loss for now, sorted by value
+const PRICE_SPIKE_PCT = 15;
+const VARIANCE_PCT_THRESHOLD = 15;
+
+function AlertsTab({ ingredientsWithStats }) {
+  const { movements, variances, loading, refetch } = useAlertSignals();
+
+  const alerts = useMemo(() => {
+    const lowStock = ingredientsWithStats
+      .filter(i => i.status !== 'NORMAL')
+      .map(i => ({
+        type: i.status === 'RUPTURE' ? 'rupture' : 'faible',
+        ingredient: i.name,
+        detail: i.status === 'RUPTURE' ? 'Stock épuisé' : `Sous le minimum (${i.current_stock}/${i.min_stock} ${i.unit})`,
+      }));
+
+    const movementsByIngredient = {};
+    movements.forEach(m => {
+      const id = m.ingredient_id;
+      if (!movementsByIngredient[id]) movementsByIngredient[id] = [];
+      movementsByIngredient[id].push(m);
+    });
+
+    const staleCutoff = new Date();
+    staleCutoff.setDate(staleCutoff.getDate() - STALE_DAYS);
+    const stale = ingredientsWithStats
+      .filter(i => Number(i.current_stock) > 0)
+      .filter(i => {
+        const list = movementsByIngredient[i.id] || [];
+        return list.length === 0;
+      })
+      .map(i => ({ type: 'stale', ingredient: i.name, detail: `Aucun mouvement depuis au moins ${STALE_DAYS} jours` }));
+
+    const lossByIngredient = {};
+    movements.filter(m => ['waste', 'breakage', 'expiry'].includes(m.movement_type)).forEach(m => {
+      const id = m.ingredient_id;
+      if (!lossByIngredient[id]) lossByIngredient[id] = { name: m.ingredients?.name, unit: m.ingredients?.unit, qty: 0, value: 0 };
+      lossByIngredient[id].qty += Math.abs(Number(m.quantity));
+      lossByIngredient[id].value += Math.abs(Number(m.value) || 0);
+    });
+    const losses = Object.values(lossByIngredient)
+      .filter(l => l.value > LOSS_VALUE_THRESHOLD)
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 10)
+      .map(l => ({ type: 'perte', ingredient: l.name, detail: `${l.qty} ${l.unit || ''} perdus (${formatCurrency(l.value)}) sur ${STALE_DAYS} jours` }));
+
+    const priceSpikes = [];
+    Object.entries(movementsByIngredient).forEach(([, list]) => {
+      const entries = list.filter(m => m.movement_type === 'entry' && m.unit_cost != null).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+      if (entries.length < 2) return;
+      const prev = entries[entries.length - 2];
+      const last = entries[entries.length - 1];
+      const pct = prev.unit_cost > 0 ? ((last.unit_cost - prev.unit_cost) / prev.unit_cost) * 100 : 0;
+      if (pct >= PRICE_SPIKE_PCT) {
+        priceSpikes.push({ type: 'prix', ingredient: last.ingredients?.name, detail: `Prix d'achat +${pct.toFixed(0)}% (${formatCurrency(prev.unit_cost)} → ${formatCurrency(last.unit_cost)})` });
+      }
+    });
+
+    const bigVariances = variances
+      .filter(v => v.variance_qty != null && Number(v.variance_qty) !== 0)
+      .filter(v => {
+        const pct = v.theoretical_qty > 0 ? Math.abs(v.variance_qty / v.theoretical_qty) * 100 : 100;
+        return pct >= VARIANCE_PCT_THRESHOLD;
+      })
+      .slice(0, 10)
+      .map(v => ({
+        type: 'ecart',
+        ingredient: v.ingredients?.name,
+        detail: `Écart d'inventaire : ${v.variance_qty > 0 ? '+' : ''}${v.variance_qty} ${v.ingredients?.unit || ''} (théorique ${v.theoretical_qty})`,
+      }));
+
+    return { lowStock, stale, losses, priceSpikes, bigVariances };
+  }, [ingredientsWithStats, movements, variances]);
+
+  const COLOR_CLASSES = {
+    red: { title: 'text-red-700', icon: 'text-red-600', badge: 'bg-red-100 text-red-800 border-red-200' },
+    blue: { title: 'text-blue-700', icon: 'text-blue-600', badge: 'bg-blue-100 text-blue-800 border-blue-200' },
+    slate: { title: 'text-slate-700', icon: 'text-slate-600', badge: 'bg-slate-100 text-slate-800 border-slate-200' },
+    amber: { title: 'text-amber-700', icon: 'text-amber-600', badge: 'bg-amber-100 text-amber-800 border-amber-200' },
+  };
+
+  const sections = [
+    { key: 'lowStock', title: 'Stock faible / rupture', icon: AlertTriangle, color: 'red', items: alerts.lowStock },
+    { key: 'bigVariances', title: "Écarts d'inventaire importants", icon: Scale, color: 'blue', items: alerts.bigVariances },
+    { key: 'losses', title: `Pertes (${STALE_DAYS} derniers jours)`, icon: TrendingDown, color: 'red', items: alerts.losses },
+    { key: 'stale', title: 'Sans mouvement depuis longtemps', icon: Clock, color: 'slate', items: alerts.stale },
+    { key: 'priceSpikes', title: "Hausse importante du prix d'achat", icon: PriceUp, color: 'amber', items: alerts.priceSpikes },
+  ];
+
+  const totalAlerts = sections.reduce((s, sec) => s + sec.items.length, 0);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <p className="text-sm text-slate-500">{loading ? 'Chargement...' : `${totalAlerts} alerte(s) active(s)`} · Seuils par défaut (pas encore configurables par ingrédient).</p>
+        <Button variant="outline" size="sm" onClick={refetch} className="gap-2"><RefreshCw className="h-4 w-4" /></Button>
+      </div>
+
+      {sections.map(sec => {
+        const c = COLOR_CLASSES[sec.color];
+        return (
+        <div key={sec.key} className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+          <h3 className={`font-bold text-sm mb-3 flex items-center gap-2 ${c.title}`}>
+            <sec.icon className={`h-4 w-4 ${c.icon}`} /> {sec.title}
+            {sec.items.length > 0 && <Badge className={c.badge}>{sec.items.length}</Badge>}
+          </h3>
+          {sec.items.length === 0 ? (
+            <p className="text-sm text-slate-400 italic">Rien à signaler.</p>
+          ) : (
+            <div className="space-y-2">
+              {sec.items.map((item, i) => (
+                <div key={i} className="flex justify-between items-center text-sm border-b border-slate-50 pb-2 last:border-0">
+                  <span className="font-medium text-slate-800">{item.ingredient}</span>
+                  <span className="text-slate-500">{item.detail}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export const SuperStockPage = () => {
   const [tab, setTab] = useState('dashboard');
   const { ingredients, lots, locations, loading, refetch } = useSuperStock();
@@ -482,6 +608,9 @@ export const SuperStockPage = () => {
             <TabsTrigger value="variance" className="gap-2 font-medium px-5 py-2 rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <Scale className="h-4 w-4" /> Théorique vs Réel
             </TabsTrigger>
+            <TabsTrigger value="alerts" className="gap-2 font-medium px-5 py-2 rounded-lg data-[state=active]:bg-red-600 data-[state=active]:text-white">
+              <Bell className="h-4 w-4" /> Alertes
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="mt-5">
@@ -498,6 +627,10 @@ export const SuperStockPage = () => {
 
           <TabsContent value="variance" className="mt-5">
             <TheoreticalVsRealTab />
+          </TabsContent>
+
+          <TabsContent value="alerts" className="mt-5">
+            <AlertsTab ingredientsWithStats={ingredientsWithStats} />
           </TabsContent>
         </Tabs>
       </div>

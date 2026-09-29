@@ -160,6 +160,33 @@ export function useTheoreticalVsReal(fromISO, toISO) {
   return { rows, loading, refetch: load };
 }
 
+// 60-day movement window + recent validated inventory variances, used to derive
+// alerts (loss trends, stale stock, price spikes, big inventory variances).
+// Thresholds are sensible defaults for now, not yet per-restaurant configurable.
+export function useAlertSignals() {
+  const [movements, setMovements] = useState([]);
+  const [variances, setVariances] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const since = new Date();
+    since.setDate(since.getDate() - 60);
+
+    const [movRes, varRes] = await Promise.all([
+      supabase.from('stock_movements').select('*, ingredients(name, unit)').gte('created_at', since.toISOString()).order('created_at', { ascending: true }),
+      supabase.from('inventory_count_items').select('*, ingredients(name, unit), inventory_counts!inner(status, validated_at)').eq('inventory_counts.status', 'validated').order('created_at', { ascending: false }).limit(200),
+    ]);
+    setMovements(movRes.data || []);
+    setVariances(varRes.data || []);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  return { movements, variances, loading, refetch: load };
+}
+
 // Period-scoped movements for the dashboard KPIs (entrées/sorties/pertes du jour, etc.)
 export function useSuperStockMovements(fromISO, toISO) {
   const [movements, setMovements] = useState([]);
