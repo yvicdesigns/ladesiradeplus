@@ -50,6 +50,7 @@ const AdminDeliveryOrdersPage = lazy(() => import('./pages/AdminDeliveryOrdersPa
 const AdminRestaurantOrdersPage = lazy(() => import('./pages/AdminRestaurantOrdersPage'));
 const AdminClientsPage = lazy(() => import('./pages/AdminClientsPage'));
 const StockManagementPage = lazy(() => import('./pages/StockManagementPage'));
+const SuperStockPage = lazy(() => import('./pages/SuperStockPage'));
 const AdminPromoBannerPage = lazy(() => import('./pages/AdminPromoBannerPage'));
 
 // Secondary operational pages
@@ -139,6 +140,7 @@ function AppRoutes() {
           <Route path="/admin/restaurant-orders" element={<ProtectedRoute requireAdmin><SuspenseWrapper><AdminRestaurantOrdersPage /></SuspenseWrapper></ProtectedRoute>} />
           <Route path="/admin/clients" element={<ProtectedRoute requireAdmin><SuspenseWrapper><AdminClientsPage /></SuspenseWrapper></ProtectedRoute>} />
           <Route path="/admin/stock-management" element={<ProtectedRoute requireAdmin><SuspenseWrapper><StockManagementPage /></SuspenseWrapper></ProtectedRoute>} />
+          <Route path="/admin/super-stock" element={<ProtectedRoute requireAdmin><SuspenseWrapper><SuperStockPage /></SuspenseWrapper></ProtectedRoute>} />
           
           {/* Modules secondaires d'administration */}
           <Route path="/admin/promo-banner" element={<ProtectedRoute requireAdmin><SuspenseWrapper><AdminPromoBannerPage /></SuspenseWrapper></ProtectedRoute>} />

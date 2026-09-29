@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { LayoutDashboard, History, Utensils, Truck, CalendarDays, BarChart3, FileText, Database, Trash2, UtensilsCrossed, Grid3x3, Map, Calculator, Users, Star, Package, Send, Calendar, Bell, Settings, ChevronDown, ChevronRight, ChevronLeft, X, LogOut, ShieldCheck, Wrench, ShoppingBag, Store, Briefcase, Activity, FileImage as ImageIcon, FlaskConical, MessageSquare, Sparkles, Wallet } from 'lucide-react';
+import { LayoutDashboard, History, Utensils, Truck, CalendarDays, BarChart3, FileText, Database, Trash2, UtensilsCrossed, Grid3x3, Map, Calculator, Users, Star, Package, Send, Calendar, Bell, Settings, ChevronDown, ChevronRight, ChevronLeft, X, LogOut, ShieldCheck, Wrench, ShoppingBag, Store, Briefcase, Activity, FileImage as ImageIcon, FlaskConical, MessageSquare, Sparkles, Wallet, Warehouse } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -99,7 +99,8 @@ export const AdminSidebar = ({ className, mobile, onClose }) => {
   
   const isAdmin = role === 'admin';
   const isManager = role === 'manager';
-  const canManageStock = isAdmin || isManager; 
+  const canManageStock = isAdmin || isManager;
+  const canOperateStock = isAdmin || isManager || role === 'staff';
   
   const { deliveryUnread } = useUnreadDeliveryOrders();
   const { count: restaurantOrderCount } = useRestaurantOrdersCount();
@@ -141,7 +142,7 @@ export const AdminSidebar = ({ className, mobile, onClose }) => {
     if (['/admin/trash', '/admin/robustness-audit', '/admin/test/order-status'].some(p => path.startsWith(p))) {
       setSections(s => ({ ...s, maintenance: true }));
     }
-    if (['/admin/menu', '/admin/tables', '/admin/delivery', '/admin/calculateur-frais', '/admin/settings', '/admin/clients', '/admin/inventory', '/admin/stock-management', '/admin/promo-banner'].some(p => path.startsWith(p)) && !path.includes('delivery-orders')) {
+    if (['/admin/menu', '/admin/tables', '/admin/delivery', '/admin/calculateur-frais', '/admin/settings', '/admin/clients', '/admin/inventory', '/admin/stock-management', '/admin/super-stock', '/admin/promo-banner'].some(p => path.startsWith(p)) && !path.includes('delivery-orders')) {
       setSections(s => ({ ...s, restaurant: true }));
     }
     if (['/admin/customers', '/admin/reviews', '/admin/messagerie'].some(p => path.startsWith(p))) {
@@ -208,6 +209,7 @@ export const AdminSidebar = ({ className, mobile, onClose }) => {
         <SidebarGroup icon={Store} label={t('admin.sidebar.restaurant_mgmt', 'Gestion Restaurant')} collapsed={isCollapsed} expanded={sections.restaurant} onToggle={() => toggleSection('restaurant')}>
           <SidebarItem to="/admin/clients" icon={Users} label={t('admin.sidebar.customers', 'Clients CRM')} collapsed={isCollapsed} onClick={handleItemClick} />
           {canManageStock && <SidebarItem to="/admin/inventory" icon={Package} label={t('admin.sidebar.inventory', 'Inventaire')} collapsed={isCollapsed} onClick={handleItemClick} />}
+          {canOperateStock && <SidebarItem to="/admin/super-stock" icon={Warehouse} label={t('admin.sidebar.super_stock', 'Super Stock')} collapsed={isCollapsed} onClick={handleItemClick} className="font-bold text-primary" />}
           <SidebarItem to="/admin/menu" icon={UtensilsCrossed} label={t('admin.sidebar.menu', 'Menu')} collapsed={isCollapsed} onClick={handleItemClick} />
           <SidebarItem to="/admin/promo-banner" icon={ImageIcon} label={t('admin.sidebar.promotions', 'Bannières Promo')} collapsed={isCollapsed} onClick={handleItemClick} />
           <SidebarItem to="/admin/tables" icon={Grid3x3} label={t('admin.sidebar.tables', 'Tables')} collapsed={isCollapsed} onClick={handleItemClick} />
