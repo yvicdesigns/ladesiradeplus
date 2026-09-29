@@ -11,12 +11,15 @@ import { IngredientDetailModal } from '@/components/IngredientDetailModal';
 import { StockEntryModal } from '@/components/StockEntryModal';
 import { StockExitModal } from '@/components/StockExitModal';
 import { InventoryCountModal } from '@/components/InventoryCountModal';
+import { StockTransferModal } from '@/components/StockTransferModal';
+import { StockLocationsModal } from '@/components/StockLocationsModal';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useToast } from '@/components/ui/use-toast';
 import {
   Warehouse, Search, RefreshCw, AlertTriangle, PackageX, CheckCircle2,
   TrendingDown, TrendingUp, History, Wallet, Boxes, PackagePlus, PackageMinus,
-  ClipboardCheck, Plus, Loader2, Scale, Info, Bell, Clock, TrendingUp as PriceUp
+  ClipboardCheck, Plus, Loader2, Scale, Info, Bell, Clock, TrendingUp as PriceUp,
+  MapPin, ArrowLeftRight
 } from 'lucide-react';
 
 const MOVEMENT_LABELS = {
@@ -220,12 +223,14 @@ function DashboardTab({ ingredientsWithStats, loading, onRefresh }) {
   );
 }
 
-function CurrentStockTab({ ingredientsWithStats, loading, onRefresh }) {
+function CurrentStockTab({ ingredientsWithStats, locations, loading, onRefresh }) {
   const [search, setSearch] = useState('');
   const [filterAlert, setFilterAlert] = useState(false);
   const [detailIngredient, setDetailIngredient] = useState(null);
   const [entryModal, setEntryModal] = useState({ open: false, ingredient: null });
   const [exitModal, setExitModal] = useState({ open: false, ingredient: null });
+  const [transferModal, setTransferModal] = useState({ open: false, ingredient: null });
+  const [locationsModalOpen, setLocationsModalOpen] = useState(false);
 
   const filtered = useMemo(() => {
     let r = ingredientsWithStats;
@@ -248,8 +253,10 @@ function CurrentStockTab({ ingredientsWithStats, loading, onRefresh }) {
           <AlertTriangle className="h-4 w-4" /> {filterAlert ? 'Voir tout' : 'Alertes uniquement'}
         </button>
         <Button variant="outline" size="sm" onClick={onRefresh} className="gap-2"><RefreshCw className="h-4 w-4" /></Button>
+        <Button variant="outline" size="sm" onClick={() => setLocationsModalOpen(true)} className="gap-2"><MapPin className="h-4 w-4" /> Emplacements</Button>
         <Button size="sm" onClick={() => setEntryModal({ open: true, ingredient: null })} className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"><PackagePlus className="h-4 w-4" /> Entrée</Button>
         <Button size="sm" onClick={() => setExitModal({ open: true, ingredient: null })} className="gap-2 bg-red-600 hover:bg-red-700 text-white"><PackageMinus className="h-4 w-4" /> Sortie</Button>
+        <Button size="sm" onClick={() => setTransferModal({ open: true, ingredient: null })} className="gap-2 bg-blue-600 hover:bg-blue-700 text-white"><ArrowLeftRight className="h-4 w-4" /> Transfert</Button>
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
@@ -293,6 +300,7 @@ function CurrentStockTab({ ingredientsWithStats, loading, onRefresh }) {
         onClose={() => setDetailIngredient(null)}
         onRequestEntry={(ing) => { setDetailIngredient(null); setEntryModal({ open: true, ingredient: ing }); }}
         onRequestExit={(ing) => { setDetailIngredient(null); setExitModal({ open: true, ingredient: ing }); }}
+        onRequestTransfer={(ing) => { setDetailIngredient(null); setTransferModal({ open: true, ingredient: ing }); }}
       />
       <StockEntryModal
         open={entryModal.open}
@@ -307,6 +315,19 @@ function CurrentStockTab({ ingredientsWithStats, loading, onRefresh }) {
         ingredients={ingredientsWithStats}
         onClose={() => setExitModal({ open: false, ingredient: null })}
         onSuccess={onRefresh}
+      />
+      <StockTransferModal
+        open={transferModal.open}
+        ingredient={transferModal.ingredient}
+        ingredients={ingredientsWithStats}
+        locations={locations}
+        onClose={() => setTransferModal({ open: false, ingredient: null })}
+        onSuccess={onRefresh}
+      />
+      <StockLocationsModal
+        open={locationsModalOpen}
+        onClose={() => setLocationsModalOpen(false)}
+        onChange={onRefresh}
       />
     </div>
   );
@@ -618,7 +639,7 @@ export const SuperStockPage = () => {
           </TabsContent>
 
           <TabsContent value="current" className="mt-5">
-            <CurrentStockTab ingredientsWithStats={ingredientsWithStats} loading={loading} onRefresh={refetch} />
+            <CurrentStockTab ingredientsWithStats={ingredientsWithStats} locations={locations} loading={loading} onRefresh={refetch} />
           </TabsContent>
 
           <TabsContent value="inventory" className="mt-5">

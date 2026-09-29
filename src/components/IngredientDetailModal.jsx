@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/lib/customSupabaseClient';
 import { formatCurrency, formatDateTime } from '@/lib/formatters';
-import { History, MapPin, User, Hash, PackagePlus, PackageMinus } from 'lucide-react';
+import { History, MapPin, User, Hash, PackagePlus, PackageMinus, ArrowLeftRight } from 'lucide-react';
 
 const MOVEMENT_LABELS = {
   entry: 'Entrée', usage: 'Sortie (vente)', return: 'Retour', waste: 'Perte',
@@ -21,7 +21,7 @@ function StatusBadge({ status }) {
   return <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-xs">Normal</Badge>;
 }
 
-export const IngredientDetailModal = ({ ingredient, open, onClose, onRequestEntry, onRequestExit }) => {
+export const IngredientDetailModal = ({ ingredient, open, onClose, onRequestEntry, onRequestExit, onRequestTransfer }) => {
   const [movements, setMovements] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -139,8 +139,13 @@ export const IngredientDetailModal = ({ ingredient, open, onClose, onRequestEntr
           </div>
         </ScrollArea>
 
-        {(onRequestEntry || onRequestExit) && (
+        {(onRequestEntry || onRequestExit || onRequestTransfer) && (
           <DialogFooter className="p-4 bg-slate-50 border-t flex-row justify-end gap-2">
+            {onRequestTransfer && (
+              <Button variant="outline" onClick={() => onRequestTransfer(ingredient)} className="gap-2 border-blue-200 text-blue-700 hover:bg-blue-50">
+                <ArrowLeftRight className="h-4 w-4" /> Transfert
+              </Button>
+            )}
             {onRequestExit && (
               <Button variant="outline" onClick={() => onRequestExit(ingredient)} className="gap-2 border-red-200 text-red-700 hover:bg-red-50">
                 <PackageMinus className="h-4 w-4" /> Sortie
