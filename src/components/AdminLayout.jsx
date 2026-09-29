@@ -15,6 +15,7 @@ import { usePersistentReservationAlert } from '@/hooks/usePersistentReservationA
 import { usePersistentRestaurantOrderAlert } from '@/hooks/usePersistentRestaurantOrderAlert';
 import { useOrderAutoProgression } from '@/hooks/useOrderAutoProgression';
 import { useAdminWakeLock } from '@/hooks/useAdminWakeLock';
+import { useAdminOrientationLock } from '@/hooks/useAdminOrientationLock';
 
 class SidebarErrorBoundary extends React.Component {
   constructor(props) {
@@ -57,6 +58,8 @@ export const AdminLayout = ({ children }) => {
   useOrderAutoProgression();
   // Garde l'écran allumé sur les routes admin (tablette de cuisine/caisse)
   useAdminWakeLock();
+  // Force le mode paysage sur les routes admin (tablette de cuisine/caisse)
+  useAdminOrientationLock();
 
   return (
     <div className="flex h-[100dvh] bg-background overflow-hidden font-sans text-foreground landscape:flex-row">
