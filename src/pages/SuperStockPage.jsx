@@ -6,7 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatCurrency, formatDateTime } from '@/lib/formatters';
-import { useSuperStock, useSuperStockMovements, useInventoryCounts, useTheoreticalVsReal, useAlertSignals } from '@/hooks/useSuperStock';
+import { useSuperStock, useSuperStockMovements, useInventoryCounts, useTheoreticalVsReal, useAlertSignals, useAlertSettings } from '@/hooks/useSuperStock';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { IngredientDetailModal } from '@/components/IngredientDetailModal';
 import { StockEntryModal } from '@/components/StockEntryModal';
 import { StockExitModal } from '@/components/StockExitModal';
@@ -20,7 +23,7 @@ import {
   Warehouse, Search, RefreshCw, AlertTriangle, PackageX, CheckCircle2,
   TrendingDown, TrendingUp, History, Wallet, Boxes, PackagePlus, PackageMinus,
   ClipboardCheck, Plus, Loader2, Scale, Info, Bell, Clock, TrendingUp as PriceUp,
-  MapPin, ArrowLeftRight, Truck
+  MapPin, ArrowLeftRight, Truck, Settings
 } from 'lucide-react';
 
 const MOVEMENT_LABELS = {
@@ -481,13 +484,72 @@ function TheoreticalVsRealTab() {
   );
 }
 
-const STALE_DAYS = 60;
-const LOSS_VALUE_THRESHOLD = 0; // show any loss for now, sorted by value
-const PRICE_SPIKE_PCT = 15;
-const VARIANCE_PCT_THRESHOLD = 15;
+const LOSS_WINDOW_DAYS = 30;
+
+function AlertSettingsModal({ open, onClose, settings, onSave }) {
+  const [form, setForm] = useState(settings);
+  const [saving, setSaving] = useState(false);
+
+  React.useEffect(() => { if (open) setForm(settings); }, [open, settings]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    const { error } = await onSave({
+      stale_days: Number(form.stale_days),
+      price_spike_pct: Number(form.price_spike_pct),
+      variance_pct_threshold: Number(form.variance_pct_threshold),
+      loss_value_threshold: Number(form.loss_value_threshold),
+    });
+    setSaving(false);
+    if (!error) onClose();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
+      <DialogContent className="max-w-sm bg-white">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><Settings className="h-5 w-5 text-slate-600" /> Seuils d'alerte</DialogTitle>
+          <DialogDescription>S'appliquent à tous les ingrédients pour l'instant.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label>Sans mouvement depuis (jours)</Label>
+            <Input type="number" min="1" value={form.stale_days} onChange={e => setForm(f => ({ ...f, stale_days: e.target.value }))} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Hausse de prix jugée importante (%)</Label>
+            <Input type="number" min="0" value={form.price_spike_pct} onChange={e => setForm(f => ({ ...f, price_spike_pct: e.target.value }))} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Écart d'inventaire jugé important (%)</Label>
+            <Input type="number" min="0" value={form.variance_pct_threshold} onChange={e => setForm(f => ({ ...f, variance_pct_threshold: e.target.value }))} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Valeur de perte minimum à signaler</Label>
+            <Input type="number" min="0" value={form.loss_value_threshold} onChange={e => setForm(f => ({ ...f, loss_value_threshold: e.target.value }))} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={saving}>Annuler</Button>
+          <Button onClick={handleSave} disabled={saving} className="bg-slate-700 hover:bg-slate-800 text-white">
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Enregistrer'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 function AlertsTab({ ingredientsWithStats }) {
+  const { role } = useAuth();
+  const canConfigure = role === 'admin' || role === 'manager';
   const { movements, variances, loading, refetch } = useAlertSignals();
+  const { settings, save: saveSettings } = useAlertSettings();
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const STALE_DAYS = settings.stale_days;
+  const LOSS_VALUE_THRESHOLD = settings.loss_value_threshold;
+  const PRICE_SPIKE_PCT = settings.price_spike_pct;
+  const VARIANCE_PCT_THRESHOLD = settings.variance_pct_threshold;
 
   const alerts = useMemo(() => {
     const lowStock = ingredientsWithStats
@@ -511,22 +573,28 @@ function AlertsTab({ ingredientsWithStats }) {
       .filter(i => Number(i.current_stock) > 0)
       .filter(i => {
         const list = movementsByIngredient[i.id] || [];
-        return list.length === 0;
+        if (list.length === 0) return true; // no movement at all in the fetched window
+        const latest = list.reduce((max, m) => new Date(m.created_at) > max ? new Date(m.created_at) : max, new Date(0));
+        return latest < staleCutoff;
       })
       .map(i => ({ type: 'stale', ingredient: i.name, detail: `Aucun mouvement depuis au moins ${STALE_DAYS} jours` }));
 
+    const lossCutoff = new Date();
+    lossCutoff.setDate(lossCutoff.getDate() - LOSS_WINDOW_DAYS);
     const lossByIngredient = {};
-    movements.filter(m => ['waste', 'breakage', 'expiry'].includes(m.movement_type)).forEach(m => {
-      const id = m.ingredient_id;
-      if (!lossByIngredient[id]) lossByIngredient[id] = { name: m.ingredients?.name, unit: m.ingredients?.unit, qty: 0, value: 0 };
-      lossByIngredient[id].qty += Math.abs(Number(m.quantity));
-      lossByIngredient[id].value += Math.abs(Number(m.value) || 0);
-    });
+    movements
+      .filter(m => ['waste', 'breakage', 'expiry'].includes(m.movement_type) && new Date(m.created_at) >= lossCutoff)
+      .forEach(m => {
+        const id = m.ingredient_id;
+        if (!lossByIngredient[id]) lossByIngredient[id] = { name: m.ingredients?.name, unit: m.ingredients?.unit, qty: 0, value: 0 };
+        lossByIngredient[id].qty += Math.abs(Number(m.quantity));
+        lossByIngredient[id].value += Math.abs(Number(m.value) || 0);
+      });
     const losses = Object.values(lossByIngredient)
       .filter(l => l.value > LOSS_VALUE_THRESHOLD)
       .sort((a, b) => b.value - a.value)
       .slice(0, 10)
-      .map(l => ({ type: 'perte', ingredient: l.name, detail: `${l.qty} ${l.unit || ''} perdus (${formatCurrency(l.value)}) sur ${STALE_DAYS} jours` }));
+      .map(l => ({ type: 'perte', ingredient: l.name, detail: `${l.qty} ${l.unit || ''} perdus (${formatCurrency(l.value)}) sur ${LOSS_WINDOW_DAYS} jours` }));
 
     const priceSpikes = [];
     Object.entries(movementsByIngredient).forEach(([, list]) => {
@@ -554,7 +622,7 @@ function AlertsTab({ ingredientsWithStats }) {
       }));
 
     return { lowStock, stale, losses, priceSpikes, bigVariances };
-  }, [ingredientsWithStats, movements, variances]);
+  }, [ingredientsWithStats, movements, variances, STALE_DAYS, LOSS_VALUE_THRESHOLD, PRICE_SPIKE_PCT, VARIANCE_PCT_THRESHOLD]);
 
   const COLOR_CLASSES = {
     red: { title: 'text-red-700', icon: 'text-red-600', badge: 'bg-red-100 text-red-800 border-red-200' },
@@ -566,7 +634,7 @@ function AlertsTab({ ingredientsWithStats }) {
   const sections = [
     { key: 'lowStock', title: 'Stock faible / rupture', icon: AlertTriangle, color: 'red', items: alerts.lowStock },
     { key: 'bigVariances', title: "Écarts d'inventaire importants", icon: Scale, color: 'blue', items: alerts.bigVariances },
-    { key: 'losses', title: `Pertes (${STALE_DAYS} derniers jours)`, icon: TrendingDown, color: 'red', items: alerts.losses },
+    { key: 'losses', title: `Pertes (${LOSS_WINDOW_DAYS} derniers jours)`, icon: TrendingDown, color: 'red', items: alerts.losses },
     { key: 'stale', title: 'Sans mouvement depuis longtemps', icon: Clock, color: 'slate', items: alerts.stale },
     { key: 'priceSpikes', title: "Hausse importante du prix d'achat", icon: PriceUp, color: 'amber', items: alerts.priceSpikes },
   ];
@@ -576,8 +644,11 @@ function AlertsTab({ ingredientsWithStats }) {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <p className="text-sm text-slate-500">{loading ? 'Chargement...' : `${totalAlerts} alerte(s) active(s)`} · Seuils par défaut (pas encore configurables par ingrédient).</p>
-        <Button variant="outline" size="sm" onClick={refetch} className="gap-2"><RefreshCw className="h-4 w-4" /></Button>
+        <p className="text-sm text-slate-500">{loading ? 'Chargement...' : `${totalAlerts} alerte(s) active(s)`}</p>
+        <div className="flex gap-2">
+          {canConfigure && <Button variant="outline" size="sm" onClick={() => setSettingsOpen(true)} className="gap-2"><Settings className="h-4 w-4" /> Seuils</Button>}
+          <Button variant="outline" size="sm" onClick={refetch} className="gap-2"><RefreshCw className="h-4 w-4" /></Button>
+        </div>
       </div>
 
       {sections.map(sec => {
@@ -603,6 +674,13 @@ function AlertsTab({ ingredientsWithStats }) {
         </div>
         );
       })}
+
+      <AlertSettingsModal
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        settings={settings}
+        onSave={saveSettings}
+      />
     </div>
   );
 }

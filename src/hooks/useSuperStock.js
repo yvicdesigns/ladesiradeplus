@@ -160,6 +160,34 @@ export function useTheoreticalVsReal(fromISO, toISO) {
   return { rows, loading, refetch: load };
 }
 
+const DEFAULT_ALERT_SETTINGS = { stale_days: 60, price_spike_pct: 15, variance_pct_threshold: 15, loss_value_threshold: 0 };
+
+export function useAlertSettings() {
+  const [settings, setSettings] = useState(DEFAULT_ALERT_SETTINGS);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const { data } = await supabase.from('stock_alert_settings').select('*').limit(1).maybeSingle();
+    if (data) setSettings(data);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const save = async (patch) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    const { error } = await supabase
+      .from('stock_alert_settings')
+      .update({ ...patch, updated_by: user?.id || null, updated_at: new Date().toISOString() })
+      .eq('id', settings.id);
+    if (!error) await load();
+    return { error };
+  };
+
+  return { settings, loading, save, refetch: load };
+}
+
 // 60-day movement window + recent validated inventory variances, used to derive
 // alerts (loss trends, stale stock, price spikes, big inventory variances).
 // Thresholds are sensible defaults for now, not yet per-restaurant configurable.
@@ -171,7 +199,7 @@ export function useAlertSignals() {
   const load = useCallback(async () => {
     setLoading(true);
     const since = new Date();
-    since.setDate(since.getDate() - 60);
+    since.setDate(since.getDate() - 180); // wide enough to cover any realistic configured "stale" threshold
 
     const [movRes, varRes] = await Promise.all([
       supabase.from('stock_movements').select('*, ingredients(name, unit)').gte('created_at', since.toISOString()).order('created_at', { ascending: true }),
