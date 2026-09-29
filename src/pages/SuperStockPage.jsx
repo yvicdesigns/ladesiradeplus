@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatCurrency, formatDateTime } from '@/lib/formatters';
-import { useSuperStock, useSuperStockMovements, useInventoryCounts } from '@/hooks/useSuperStock';
+import { useSuperStock, useSuperStockMovements, useInventoryCounts, useTheoreticalVsReal } from '@/hooks/useSuperStock';
 import { IngredientDetailModal } from '@/components/IngredientDetailModal';
 import { StockEntryModal } from '@/components/StockEntryModal';
 import { StockExitModal } from '@/components/StockExitModal';
@@ -16,7 +16,7 @@ import { useToast } from '@/components/ui/use-toast';
 import {
   Warehouse, Search, RefreshCw, AlertTriangle, PackageX, CheckCircle2,
   TrendingDown, TrendingUp, History, Wallet, Boxes, PackagePlus, PackageMinus,
-  ClipboardCheck, Plus, Loader2
+  ClipboardCheck, Plus, Loader2, Scale, Info
 } from 'lucide-react';
 
 const MOVEMENT_LABELS = {
@@ -388,6 +388,71 @@ function InventoryTab() {
   );
 }
 
+function TheoreticalVsRealTab() {
+  const [period, setPeriod] = useState('week');
+  const { fromISO, toISO } = useMemo(() => getPeriodRange(period), [period]);
+  const { rows, loading, refetch } = useTheoreticalVsReal(fromISO, toISO);
+
+  const significant = rows.filter(r => Math.abs(r.variance) > 0.001);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row justify-between gap-3">
+        <div className="flex gap-2">
+          {PERIODS.map(p => (
+            <button
+              key={p.key}
+              onClick={() => setPeriod(p.key)}
+              className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${period === p.key ? 'bg-amber-500 border-amber-500 text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+        <Button variant="outline" size="sm" onClick={refetch} className="gap-2 self-start sm:self-auto"><RefreshCw className="h-4 w-4" /> Actualiser</Button>
+      </div>
+
+      <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 flex items-start gap-2 text-sm text-blue-800">
+        <Info className="h-4 w-4 mt-0.5 shrink-0" />
+        <p>Théorique = ce que les recettes prédisent pour les ventes de la période. Réel = tout ce qui a réellement quitté le stock (ventes, sorties manuelles, pertes...). Un écart n'est pas automatiquement une erreur ou un vol — il peut venir d'une recette imprécise, d'une portion différente, d'une perte non déclarée ou d'un comptage à faire.</p>
+      </div>
+
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Ingrédient</TableHead>
+              <TableHead className="text-right">Théorique</TableHead>
+              <TableHead className="text-right">Réel</TableHead>
+              <TableHead className="text-right">Écart</TableHead>
+              <TableHead className="text-right">Taux d'écart</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow><TableCell colSpan={5} className="text-center py-8 text-slate-400">Chargement...</TableCell></TableRow>
+            ) : significant.length === 0 ? (
+              <TableRow><TableCell colSpan={5} className="text-center py-8 text-slate-400">Aucun écart significatif sur cette période.</TableCell></TableRow>
+            ) : significant.map(row => (
+              <TableRow key={row.ingredientId}>
+                <TableCell className="font-medium text-slate-900">{row.name}</TableCell>
+                <TableCell className="text-right tabular-nums">{row.theoretical.toFixed(2)} {row.unit}</TableCell>
+                <TableCell className="text-right tabular-nums">{row.real.toFixed(2)} {row.unit}</TableCell>
+                <TableCell className={`text-right font-bold tabular-nums ${row.variance > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                  {row.variance > 0 ? '+' : ''}{row.variance.toFixed(2)} {row.unit}
+                </TableCell>
+                <TableCell className="text-right tabular-nums text-slate-500">
+                  {row.variancePct === null ? '—' : `${row.variancePct > 0 ? '+' : ''}${row.variancePct.toFixed(1)}%`}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+}
+
 export const SuperStockPage = () => {
   const [tab, setTab] = useState('dashboard');
   const { ingredients, lots, locations, loading, refetch } = useSuperStock();
@@ -414,6 +479,9 @@ export const SuperStockPage = () => {
             <TabsTrigger value="inventory" className="gap-2 font-medium px-5 py-2 rounded-lg data-[state=active]:bg-slate-700 data-[state=active]:text-white">
               <ClipboardCheck className="h-4 w-4" /> Inventaires
             </TabsTrigger>
+            <TabsTrigger value="variance" className="gap-2 font-medium px-5 py-2 rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+              <Scale className="h-4 w-4" /> Théorique vs Réel
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="mt-5">
@@ -426,6 +494,10 @@ export const SuperStockPage = () => {
 
           <TabsContent value="inventory" className="mt-5">
             <InventoryTab />
+          </TabsContent>
+
+          <TabsContent value="variance" className="mt-5">
+            <TheoreticalVsRealTab />
           </TabsContent>
         </Tabs>
       </div>
