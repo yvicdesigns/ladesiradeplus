@@ -338,6 +338,7 @@ export const LoginPage = () => {
 
         <motion.button
           onClick={() => navigate(-1)}
+          aria-label="Retour"
           className="absolute top-4 left-4 md:top-6 md:left-6 transition-all duration-300 z-10 hover:bg-white/10 p-1.5 rounded-full text-white/90 hover:text-white"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -439,7 +440,7 @@ export const LoginPage = () => {
                             name="email"
                             placeholder="nom.prenom@exemple.com"
                             className={cn(
-                              "pl-9 h-9 bg-gray-50 border-gray-200 focus:border-amber-500 focus:ring-amber-500 text-gray-900 text-sm rounded-lg",
+                              "pl-9 h-11bg-gray-50 border-gray-200 focus:border-amber-500 focus:ring-amber-500 text-gray-900 text-sm rounded-lg",
                               errors.email && "border-red-500"
                             )}
                             value={formData.email}
@@ -453,7 +454,7 @@ export const LoginPage = () => {
 
                       <Button
                         type="submit"
-                        className="w-full h-9 text-sm font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-lg shadow-md transition-all"
+                        className="w-full h-11text-sm font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-lg shadow-md transition-all"
                         disabled={loading}
                       >
                         {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Envoi en cours...</> : "Envoyer le lien de réinitialisation"}
@@ -488,7 +489,7 @@ export const LoginPage = () => {
                         name="email"
                         placeholder="nom.prenom@exemple.com"
                         className={cn(
-                          "pl-9 h-9 bg-gray-50 border-gray-200 focus:border-green-500 focus:ring-green-500 text-gray-900 text-sm rounded-lg transition-all",
+                          "pl-9 h-11bg-gray-50 border-gray-200 focus:border-green-500 focus:ring-green-500 text-gray-900 text-sm rounded-lg transition-all",
                           errors.email && "border-red-500 focus:ring-red-500"
                         )}
                         value={formData.email}
@@ -508,7 +509,7 @@ export const LoginPage = () => {
                         type={showPassword ? "text" : "password"}
                         name="password"
                         placeholder="••••••••"
-                        className="pl-9 pr-9 h-9 bg-gray-50 border-gray-200 focus:border-green-500 focus:ring-green-500 text-gray-900 text-sm rounded-lg transition-all"
+                        className="pl-9 pr-9 h-11bg-gray-50 border-gray-200 focus:border-green-500 focus:ring-green-500 text-gray-900 text-sm rounded-lg transition-all"
                         value={formData.password}
                         onChange={handleInputChange}
                         required
@@ -539,7 +540,7 @@ export const LoginPage = () => {
 
                   <Button
                     type="submit"
-                    className="w-full h-9 text-sm font-bold bg-green-600 hover:bg-green-700 text-white rounded-lg shadow-md shadow-green-200 hover:shadow-green-300 transition-all duration-200 transform hover:-translate-y-0.5 mt-2"
+                    className="w-full h-11text-sm font-bold bg-green-600 hover:bg-green-700 text-white rounded-lg shadow-md shadow-green-200 hover:shadow-green-300 transition-all duration-200 transform hover:-translate-y-0.5 mt-2"
                     disabled={loading}
                   >
                     {loading ? (
@@ -571,7 +572,7 @@ export const LoginPage = () => {
                         name="fullName"
                         placeholder="Ex: Jean Dupont"
                         className={cn(
-                           "pl-9 h-9 bg-gray-50 border-gray-200 focus:border-green-500 focus:ring-green-500 text-gray-900 text-sm rounded-lg transition-all",
+                           "pl-9 h-11bg-gray-50 border-gray-200 focus:border-green-500 focus:ring-green-500 text-gray-900 text-sm rounded-lg transition-all",
                            errors.fullName && "border-red-500 focus:ring-red-500"
                         )}
                         value={formData.fullName}
@@ -592,7 +593,7 @@ export const LoginPage = () => {
                         name="email"
                         placeholder="votre.email@domaine.com"
                         className={cn(
-                           "pl-9 h-9 bg-gray-50 border-gray-200 focus:border-green-500 focus:ring-green-500 text-gray-900 text-sm rounded-lg transition-all",
+                           "pl-9 h-11bg-gray-50 border-gray-200 focus:border-green-500 focus:ring-green-500 text-gray-900 text-sm rounded-lg transition-all",
                            errors.email && "border-red-500 focus:ring-red-500"
                         )}
                         value={formData.email}
@@ -612,7 +613,7 @@ export const LoginPage = () => {
                            type="tel"
                            name="phone"
                            placeholder="Ex: +242 06 123 4567"
-                           className="pl-9 h-9 bg-gray-50 border-gray-200 focus:border-green-500 focus:ring-green-500 text-gray-900 text-sm rounded-lg transition-all"
+                           className="pl-9 h-11bg-gray-50 border-gray-200 focus:border-green-500 focus:ring-green-500 text-gray-900 text-sm rounded-lg transition-all"
                            value={formData.phone}
                            onChange={handleInputChange}
                            disabled={loading}
@@ -629,7 +630,7 @@ export const LoginPage = () => {
                         name="password"
                         placeholder="8 caractères minimum requis"
                         className={cn(
-                           "pl-9 pr-9 h-9 bg-gray-50 border-gray-200 focus:border-green-500 focus:ring-green-500 text-gray-900 text-sm rounded-lg transition-all",
+                           "pl-9 pr-9 h-11bg-gray-50 border-gray-200 focus:border-green-500 focus:ring-green-500 text-gray-900 text-sm rounded-lg transition-all",
                            errors.password && "border-red-500 focus:ring-red-500"
                         )}
                         value={formData.password}
@@ -675,7 +676,7 @@ export const LoginPage = () => {
                         name="confirmPassword"
                         placeholder="Veuillez répéter le mot de passe"
                         className={cn(
-                           "pl-9 pr-9 h-9 bg-gray-50 border-gray-200 focus:border-green-500 focus:ring-green-500 text-gray-900 text-sm rounded-lg transition-all",
+                           "pl-9 pr-9 h-11bg-gray-50 border-gray-200 focus:border-green-500 focus:ring-green-500 text-gray-900 text-sm rounded-lg transition-all",
                            errors.confirmPassword && "border-red-500 focus:ring-red-500",
                            !errors.confirmPassword && formData.confirmPassword && "border-green-500 focus:ring-green-500"
                         )}
@@ -702,7 +703,7 @@ export const LoginPage = () => {
 
                   <Button
                     type="submit"
-                    className="w-full h-9 text-sm font-bold bg-green-600 hover:bg-green-700 text-white rounded-lg shadow-md shadow-green-200 hover:shadow-green-300 transition-all duration-200 transform hover:-translate-y-0.5 mt-2"
+                    className="w-full h-11text-sm font-bold bg-green-600 hover:bg-green-700 text-white rounded-lg shadow-md shadow-green-200 hover:shadow-green-300 transition-all duration-200 transform hover:-translate-y-0.5 mt-2"
                     disabled={loading}
                   >
                     {loading ? (

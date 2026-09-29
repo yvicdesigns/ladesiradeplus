@@ -500,16 +500,18 @@ export const MenuPage = () => {
                               <div className="flex gap-2">
                                 <button
                                   onClick={(e) => openReviewModal(e, item)}
-                                  className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center hover:bg-gray-200 transition-colors shadow-sm"
+                                  className="w-11 h-11 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center hover:bg-gray-200 transition-colors shadow-sm"
                                   title="Avis et Commentaires"
+                                  aria-label="Avis et Commentaires"
                                 >
                                   <MessageSquarePlus className="w-4 h-4" />
                                 </button>
-                                
+
                                 <button
                                   onClick={(e) => handleAddToCart(e, item)}
                                   disabled={cannotOrder || item.price === null}
-                                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-sm ${cannotOrder || item.price === null ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-[#D97706] text-white hover:bg-[#FCD34D]'}`}
+                                  aria-label={`Ajouter ${item.name} au panier`}
+                                  className={`w-11 h-11 rounded-full flex items-center justify-center transition-colors shadow-sm ${cannotOrder || item.price === null ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-[#D97706] text-white hover:bg-[#FCD34D]'}`}
                                 >
                                   <Plus className="w-5 h-5" />
                                 </button>

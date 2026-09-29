@@ -164,17 +164,18 @@ export const useCreateOrder = () => {
         }).eq('id', createdOrderId);
       }
 
-      // 4. Update Stock
+      // 4. Update Stock (atomic RPC — avoids SELECT+UPDATE race condition on concurrent orders)
       for (const cartItem of cart) {
         const itemId = cartItem.id || cartItem.menu_item_id;
         const dbItem = stockData?.find(i => i.id === itemId);
         if (dbItem && dbItem.stock_quantity !== null) {
-          const newStock = dbItem.stock_quantity - cartItem.quantity;
-          await supabase.from('menu_items').update({ stock_quantity: newStock }).eq('id', itemId);
-          await supabase.from('item_stock_movements').insert({
-            menu_item_id: itemId, movement_type: 'order_confirmed', quantity_changed: -cartItem.quantity,
-            previous_quantity: dbItem.stock_quantity, new_quantity: newStock, order_id: createdOrderId, notes: `Déduction`
-          });
+          const { data: newStock } = await supabase.rpc('deduct_menu_item_stock', { p_id: itemId, p_qty: cartItem.quantity });
+          if (newStock !== null) {
+            await supabase.from('item_stock_movements').insert({
+              menu_item_id: itemId, movement_type: 'order_confirmed', quantity_changed: -cartItem.quantity,
+              previous_quantity: newStock + cartItem.quantity, new_quantity: newStock, order_id: createdOrderId, notes: `Déduction`
+            });
+          }
         }
       }
 

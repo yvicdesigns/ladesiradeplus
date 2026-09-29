@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { extractTableIdFromQrCode } from '@/lib/qrCodeUtils';
 import { CameraPermissionModal } from '@/components/CameraPermissionModal';
+import { formatCurrency } from '@/lib/formatters';
 
 export const QRMenuPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -93,7 +94,7 @@ export const QRMenuPage = () => {
         // Fallback: create a temporary object
         const fallback = { table_number: identifier, id: null }; 
         setTableInfoState(fallback);
-        setDineIn(fallback);
+        setTableInfo(fallback);
       }
     } catch (err) {
       console.error('Error fetching table:', err);
@@ -245,7 +246,7 @@ export const QRMenuPage = () => {
   };
 
   const resetScanner = () => {
-    setDelivery(); // Reset to delivery/default mode
+    setTableInfo(null); // Reset to delivery/default mode
     setTableInfoState(null);
     setSearchParams({});
     setManualTableId('');
@@ -297,7 +298,7 @@ export const QRMenuPage = () => {
               className="absolute inset-0 z-50 flex flex-col bg-black text-white"
             >
               <header className="absolute top-0 left-0 right-0 z-20 px-4 py-6 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent">
-                <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 rounded-full" onClick={() => navigate('/')}>
+                <Button variant="ghost" size="icon" aria-label="Retour" className="text-white hover:bg-white/20 rounded-full" onClick={() => navigate('/')}>
                   <ArrowRight className="w-6 h-6 rotate-180" />
                 </Button>
                 <h1 className="text-lg font-bold drop-shadow-md">
@@ -400,7 +401,7 @@ export const QRMenuPage = () => {
               className="pb-24 min-h-screen"
             >
               <header className="sticky top-0 z-40 bg-white px-4 py-4 flex items-center justify-between shadow-sm">
-                <Button variant="ghost" size="icon" className="text-[#111827] -ml-2" onClick={() => navigate('/')}>
+                <Button variant="ghost" size="icon" aria-label="Retour" className="text-[#111827] -ml-2" onClick={() => navigate('/')}>
                    <ArrowRight className="w-6 h-6 rotate-180" />
                 </Button>
                 <div className="flex flex-col items-center">
@@ -409,12 +410,12 @@ export const QRMenuPage = () => {
                      <ScanLine className="w-3 h-3 group-hover:rotate-90 transition-transform" /> Scanner à nouveau
                    </button>
                 </div>
-                <div className="relative" onClick={() => navigate('/cart')}>
-                  <Button variant="ghost" size="icon" className="text-[#111827] -mr-2">
+                <div className="relative">
+                  <Button variant="ghost" size="icon" aria-label="Voir le panier" className="text-[#111827] -mr-2" onClick={() => navigate('/cart')}>
                     <ShoppingCart className="w-6 h-6" />
                   </Button>
                   {cartItemCount > 0 && (
-                    <span className="absolute top-1 right-1 bg-[#D97706] text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center ring-2 ring-white">
+                    <span className="absolute top-1 right-1 bg-[#D97706] text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center ring-2 ring-white pointer-events-none">
                       {cartItemCount}
                     </span>
                   )}
@@ -445,8 +446,8 @@ export const QRMenuPage = () => {
                                  <p className="text-xs text-[#4b5563] mt-1 line-clamp-2">{item.description}</p>
                               </div>
                               <div className="flex items-center justify-between mt-2">
-                                <span className="font-bold text-[#D97706] text-base">{item.price} FCFA</span>
-                                <Button size="sm" className="rounded-full h-8 w-8 p-0 bg-[#D97706] hover:bg-[#FCD34D] text-white" onClick={() => handleAddToCart(item)}>
+                                <span className="font-bold text-[#D97706] text-base">{formatCurrency(item.price)}</span>
+                                <Button size="icon" aria-label={`Ajouter ${item.name}`} className="rounded-full bg-[#D97706] hover:bg-[#FCD34D] text-white" onClick={() => handleAddToCart(item)}>
                                   <Plus className="h-5 w-5" />
                                 </Button>
                               </div>

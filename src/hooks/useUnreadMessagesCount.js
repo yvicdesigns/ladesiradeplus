@@ -1,6 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/customSupabaseClient';
 
+// Stable ID generated once per module load — Date.now() could collide when
+// multiple instances mount within the same millisecond
+const CHANNEL_ID = `messages-count-sidebar-${Math.random().toString(36).slice(2)}`;
+
 export const useUnreadMessagesCount = () => {
   const [count, setCount] = useState(0);
 
@@ -22,8 +26,13 @@ export const useUnreadMessagesCount = () => {
   useEffect(() => {
     fetchCount();
 
+    // Remove any stale channel with this ID before subscribing
+    supabase.getChannels()
+      .filter(c => c.topic === `realtime:${CHANNEL_ID}`)
+      .forEach(c => supabase.removeChannel(c));
+
     const channel = supabase
-      .channel(`messages-count-sidebar-${Date.now()}`)
+      .channel(CHANNEL_ID)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'user_notifications' }, () => {
         fetchCount();
       })

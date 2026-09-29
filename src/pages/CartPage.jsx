@@ -213,9 +213,10 @@ export const CartPage = () => {
                 <div className="flex-1 flex flex-col justify-between">
                   <div className="flex justify-between items-start">
                     <h3 className="font-bold text-base text-[#111827] line-clamp-1">{item.name}</h3>
-                    <button 
+                    <button
                       onClick={() => handleRemove(item.itemId)}
-                      className="text-[#4b5563] hover:text-red-500 hover:bg-red-50 rounded-full p-1 transition-colors"
+                      aria-label={`Retirer ${item.name} du panier`}
+                      className="text-[#4b5563] hover:text-red-500 hover:bg-red-50 rounded-full p-2 -m-1 transition-colors"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -239,16 +240,18 @@ export const CartPage = () => {
                   
                   <div className="flex items-center justify-between mt-2">
                     <div className="flex items-center bg-gray-50 rounded-lg p-1">
-                      <button 
+                      <button
                         onClick={() => handleUpdateQuantity(item.itemId, item.quantity - 1)}
-                        className="w-7 h-7 flex items-center justify-center bg-white rounded-md shadow-sm text-[#111827] hover:text-[#D97706] border border-gray-200"
+                        aria-label={`Diminuer la quantité de ${item.name}`}
+                        className="w-10 h-10 flex items-center justify-center bg-white rounded-md shadow-sm text-[#111827] hover:text-[#D97706] border border-gray-200"
                       >
                         <Minus className="h-3 w-3" />
                       </button>
                       <span className="w-8 text-center text-sm font-bold text-[#111827]">{item.quantity}</span>
-                      <button 
+                      <button
                         onClick={() => handleUpdateQuantity(item.itemId, item.quantity + 1)}
-                        className="w-7 h-7 flex items-center justify-center bg-[#D97706] text-white rounded-md shadow-sm hover:bg-[#FCD34D]"
+                        aria-label={`Augmenter la quantité de ${item.name}`}
+                        className="w-10 h-10 flex items-center justify-center bg-[#D97706] text-white rounded-md shadow-sm hover:bg-[#FCD34D]"
                       >
                         <Plus className="h-3 w-3" />
                       </button>

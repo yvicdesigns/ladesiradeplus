@@ -167,7 +167,6 @@ export const OrderDetailModal = ({ order, open, onClose }) => {
               </div>
             </div>
 
-          </div>
         </ScrollArea>
         
         <div className="p-4 bg-slate-50 border-t flex justify-end">

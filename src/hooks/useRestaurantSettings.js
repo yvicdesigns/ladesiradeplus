@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useCache } from './useCache';
-import { isValidAdminSettingsId } from '@/lib/adminSettingsUtils';
+import { isValidAdminSettingsId, RESTAURANT_ID } from '@/lib/adminSettingsUtils';
 
 export const SINGLE_RESTAURANT_ID = RESTAURANT_ID;
 

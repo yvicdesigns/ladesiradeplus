@@ -8,6 +8,10 @@ const REPEAT_INTERVAL_MS = 30_000;
 const MAX_DURATION_MS = 10 * 60_000;
 const VOICE_DELAY_MS = 2600;
 
+// Stable ID generated once per module load — Date.now() could collide when
+// multiple instances mount within the same millisecond
+const CHANNEL_ID = `persistent-restaurant-alert-${Math.random().toString(36).slice(2)}`;
+
 export const usePersistentRestaurantOrderAlert = () => {
   const [pendingOrders, setPendingOrders] = useState([]);
   const intervalRef = useRef(null);
@@ -98,8 +102,13 @@ export const usePersistentRestaurantOrderAlert = () => {
   }, [stopRepeating]);
 
   useEffect(() => {
+    // Remove any stale channel with this ID before subscribing
+    supabase.getChannels()
+      .filter(c => c.topic === `realtime:${CHANNEL_ID}`)
+      .forEach(c => supabase.removeChannel(c));
+
     const channel = supabase
-      .channel(`persistent-restaurant-alert-${Date.now()}`)
+      .channel(CHANNEL_ID)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'restaurant_orders' },

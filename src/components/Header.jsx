@@ -41,11 +41,24 @@ export const Header = () => {
       setUnreadCount(count || 0);
     };
     fetch();
-    const channel = supabase.channel('header_notifs')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_notifications' }, fetch)
-      .subscribe();
-    return () => supabase.removeChannel(channel);
-  }, [user]);
+
+    // Unique name per user prevents "cannot add callbacks after subscribe()" error
+    // when React re-renders and the effect re-runs before cleanup finishes
+    const channelName = `header_notifs_${user.id}`;
+    let channel;
+    try {
+      channel = supabase.channel(channelName)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'user_notifications' }, fetch)
+        .subscribe();
+    } catch (e) {
+      // Channel already exists from a previous render — remove and recreate
+      supabase.getChannels()
+        .filter(c => c.topic === `realtime:${channelName}`)
+        .forEach(c => supabase.removeChannel(c));
+    }
+
+    return () => { if (channel) supabase.removeChannel(channel); };
+  }, [user?.id]);
 
   useEffect(() => { setIsMobileMenuOpen(false); }, [location.pathname]);
 

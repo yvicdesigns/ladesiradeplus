@@ -13,6 +13,16 @@ import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@/components/ui/alert-dialog';
 import { useTranslation } from 'react-i18next';
 
 export const ReservationsPage = () => {
@@ -22,10 +32,12 @@ export const ReservationsPage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   
-  const [view, setView] = useState('list'); 
+  const [view, setView] = useState('list');
   const [reservations, setReservations] = useState([]);
   const [loadingList, setLoadingList] = useState(true);
   const [loadingSubmit, setLoadingSubmit] = useState(false);
+  const [reservationToCancel, setReservationToCancel] = useState(null);
+  const [cancelling, setCancelling] = useState(false);
   
   const [formData, setFormData] = useState({
     date: '',
@@ -82,7 +94,7 @@ export const ReservationsPage = () => {
         clearInterval(interval);
       };
     }
-  }, [user, view, toast]);
+  }, [user?.id, view]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -147,14 +159,14 @@ export const ReservationsPage = () => {
         restaurant_id: restaurantId // Dynamically acquired from context
       };
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('reservations')
         .insert(reservationData)
         .select()
         .single();
-      
+
       if (error) throw error;
-      
+
       toast({
         title: t('reservations.submitted'),
         description: t('reservations.submitted_desc'),
@@ -163,6 +175,21 @@ export const ReservationsPage = () => {
 
       setFormData({ date: '', time: '', partySize: '2', name: '', phone: '', notes: '' });
       setView('list');
+
+      if (data?.id) {
+        navigate(`/reservation-confirmation/${data.id}`, {
+          state: {
+            reservation: {
+              id: data.id,
+              date: formData.date,
+              time: formData.time,
+              partySize: formData.partySize,
+              name: formData.name,
+              phone: formData.phone,
+            }
+          }
+        });
+      }
 
     } catch (e) {
       console.error('[ReservationsPage] Error:', e);
@@ -188,20 +215,24 @@ export const ReservationsPage = () => {
   };
 
   const handleCancelReservation = async (id) => {
+    setCancelling(true);
     try {
       const { error } = await supabase
         .from('reservations')
         .update({ status: 'cancelled' })
         .eq('id', id)
         .eq('user_id', user.id);
-        
+
       if (error) throw error;
-      
+
       setReservations(reservations.map(r => r.id === id ? { ...r, status: 'cancelled' } : r));
       toast({ title: t('reservations.cancelled_title'), description: t('reservations.cancelled_desc') });
     } catch (err) {
       console.error("Error cancelling:", err);
       toast({ variant: 'destructive', title: t('reservations.error_title'), description: t('reservations.cancel_error') });
+    } finally {
+      setCancelling(false);
+      setReservationToCancel(null);
     }
   };
 
@@ -282,7 +313,7 @@ export const ReservationsPage = () => {
                             variant="outline" 
                             size="sm" 
                             className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                            onClick={() => handleCancelReservation(res.id)}
+                            onClick={() => setReservationToCancel(res.id)}
                           >
                             {t('reservations.cancel_btn')}
                           </Button>
@@ -387,6 +418,30 @@ export const ReservationsPage = () => {
           )}
         </div>
       </div>
+
+      <AlertDialog open={!!reservationToCancel} onOpenChange={(open) => !open && setReservationToCancel(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('reservations.cancel_confirm_title', 'Annuler cette réservation ?')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('reservations.cancel_confirm_desc', 'Cette action est irréversible. La réservation sera définitivement annulée.')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelling}>{t('reservations.cancel_confirm_back', 'Retour')}</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={cancelling}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={(e) => {
+                e.preventDefault();
+                handleCancelReservation(reservationToCancel);
+              }}
+            >
+              {cancelling ? <Loader2 className="h-4 w-4 animate-spin" /> : t('reservations.cancel_confirm_action', "Confirmer l'annulation")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

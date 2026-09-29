@@ -1,24 +1,68 @@
-import React, { useEffect } from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate, useParams, Link } from 'react-router-dom';
 import { CheckCircle, Calendar, Users, Clock, Home, User, Phone } from 'lucide-react';
 import { Helmet } from 'react-helmet';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { supabase } from '@/lib/customSupabaseClient';
+import LoadingFallback from '@/components/LoadingFallback';
 
 export const ReservationConfirmationPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { reservation } = location.state || {};
+  const { id } = useParams();
+  const { reservation: stateReservation } = location.state || {};
+
+  const [reservation, setReservation] = useState(stateReservation);
+  const [loading, setLoading] = useState(!stateReservation && !!id);
 
   useEffect(() => {
-    if (!reservation) {
-      // Redirect if accessed directly without state
+    if (reservation || !id) return;
+
+    const fetchReservation = async () => {
+      try {
+        const { data } = await supabase
+          .from('reservations')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle();
+
+        if (data) {
+          setReservation({
+            date: data.reservation_date,
+            time: data.reservation_time?.substring(0, 5),
+            partySize: data.party_size,
+            name: data.customer_name,
+            phone: data.customer_phone,
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching reservation confirmation:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReservation();
+  }, [id, reservation]);
+
+  useEffect(() => {
+    if (!reservation && !loading) {
+      // Redirect if accessed directly without state and no matching reservation
       const timer = setTimeout(() => {
         navigate('/');
       }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [reservation, navigate]);
+  }, [reservation, loading, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
+        <LoadingFallback />
+      </div>
+    );
+  }
 
   if (!reservation) {
     return (

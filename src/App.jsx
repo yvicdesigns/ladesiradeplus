@@ -73,9 +73,12 @@ const AdminFinancePage = lazy(() => import('./pages/AdminFinancePage'));
 
 // QA / Tests
 const AdminManualTestsPage = lazy(() => import('./pages/AdminManualTestsPage'));
+const AdminOrderStatusTestPage = lazy(() => import('./pages/AdminOrderStatusTestPage'));
+const AdminRobustnessAuditPage = lazy(() => import('./pages/AdminRobustnessAuditPage'));
 
 // Maintenance routes
 const AdminTrashPage = lazy(() => import('./pages/AdminTrashPage'));
+const AdminNotificationsPage = lazy(() => import('./pages/AdminNotificationsPage'));
 
 // Suspense Wrapper
 const SuspenseWrapper = ({ children }) => (
@@ -99,6 +102,7 @@ function AppRoutes() {
           <Route path="/checkout" element={<SuspenseWrapper><CheckoutPage /></SuspenseWrapper>} />
           <Route path="/order-confirmation/:id" element={<SuspenseWrapper><OrderConfirmationPage /></SuspenseWrapper>} />
           <Route path="/reservation-confirmation" element={<SuspenseWrapper><ReservationConfirmationPage /></SuspenseWrapper>} />
+          <Route path="/reservation-confirmation/:id" element={<SuspenseWrapper><ReservationConfirmationPage /></SuspenseWrapper>} />
           
           <Route path="/track-order/:id" element={<SuspenseWrapper><OrderTrackingPage /></SuspenseWrapper>} />
           <Route path="/track-restaurant-order/:id" element={<SuspenseWrapper><RestaurantOrderTrackingPage /></SuspenseWrapper>} />
@@ -158,9 +162,12 @@ function AppRoutes() {
           
           {/* QA / Tests manuels */}
           <Route path="/admin/tests" element={<ProtectedRoute requireAdmin><SuspenseWrapper><AdminManualTestsPage /></SuspenseWrapper></ProtectedRoute>} />
+          <Route path="/admin/test/order-status" element={<ProtectedRoute requireAdmin><SuspenseWrapper><AdminOrderStatusTestPage /></SuspenseWrapper></ProtectedRoute>} />
+          <Route path="/admin/robustness-audit" element={<ProtectedRoute requireAdmin><SuspenseWrapper><AdminRobustnessAuditPage /></SuspenseWrapper></ProtectedRoute>} />
 
           {/* Maintenance */}
           <Route path="/admin/trash" element={<ProtectedRoute requireAdmin><SuspenseWrapper><AdminTrashPage /></SuspenseWrapper></ProtectedRoute>} />
+          <Route path="/admin/notifications" element={<ProtectedRoute requireAdmin><SuspenseWrapper><AdminNotificationsPage /></SuspenseWrapper></ProtectedRoute>} />
 
           {/* Alias pour correspondre exactement à la demande si accédé sans /admin */}
           <Route path="/delivery-orders" element={<Navigate to="/admin/delivery-orders" replace />} />

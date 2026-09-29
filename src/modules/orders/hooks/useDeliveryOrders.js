@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { ordersService } from '../services/ordersService';
 import { useToast } from '@/components/ui/use-toast';
@@ -22,19 +22,29 @@ export function useDeliveryOrders(initialFilters = {}) {
     }
   }, [filters.status]);
 
+  // Refetch whenever the filter changes
   useEffect(() => {
     fetchOrders();
+  }, [fetchOrders]);
 
+  // Keep a ref to the latest fetch fn so the channel effect never needs it as
+  // a dependency — fetchOrders changes whenever filters.status changes, which
+  // would otherwise tear down and recreate the subscription unnecessarily.
+  const fetchOrdersRef = useRef(fetchOrders);
+  fetchOrdersRef.current = fetchOrders;
+
+  // Realtime subscription — created once
+  useEffect(() => {
     const channel = supabase.channel('public:delivery_orders')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'delivery_orders' }, () => {
-        fetchOrders();
+        fetchOrdersRef.current();
       })
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchOrders]);
+  }, []);
 
   const updateStatus = async (orderId, status) => {
     try {

@@ -108,8 +108,8 @@ export const ordersService = {
         p_order_method: orderData.order_method || 'online',
         p_items: orderData.items,
         p_total: orderData.total,
-        p_discount_breakdown: null,
-        p_promo_code_id: null,
+        p_discount_breakdown: orderData.discount_breakdown || null,
+        p_promo_code_id: orderData.promo_code_id || null,
         p_delivery_data: orderData.delivery_data || null,
         p_restaurant_data: orderData.restaurant_data || null
       });

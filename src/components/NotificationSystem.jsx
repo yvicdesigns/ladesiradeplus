@@ -10,39 +10,51 @@ export const NotificationSystem = () => {
   useEffect(() => {
     if (!user) return;
 
-    const channel = supabase
-      .channel('notifications_system')
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // Listen to INSERT and UPDATE
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${user.id}`
-        },
-        (payload) => {
-          const notification = payload.new;
-          
-          // Only show toast for new notifications or unread updates
-          if (payload.eventType === 'INSERT' || (payload.eventType === 'UPDATE' && !notification.read_at && payload.old.read_at !== notification.read_at)) {
-             toast({
-              title: notification.title,
-              description: notification.message,
-              duration: 5000,
-              className: "bg-white border-l-4 border-green-500", // Styling for better visibility
-            });
+    // Unique name per user prevents "cannot add callbacks after subscribe()" error
+    // when React re-renders and the effect re-runs before cleanup finishes
+    const channelName = `notifications_system_${user.id}`;
+    let channel;
 
-            // Optionally mark as read immediately if it's a popup
-            // Or let the user click it to mark as read in a notifications center
+    try {
+      channel = supabase
+        .channel(channelName)
+        .on(
+          'postgres_changes',
+          {
+            event: '*', // Listen to INSERT and UPDATE
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            const notification = payload.new;
+
+            // Only show toast for new notifications or unread updates
+            if (payload.eventType === 'INSERT' || (payload.eventType === 'UPDATE' && !notification.read_at && payload.old.read_at !== notification.read_at)) {
+               toast({
+                title: notification.title,
+                description: notification.message,
+                duration: 5000,
+                className: "bg-white border-l-4 border-green-500", // Styling for better visibility
+              });
+
+              // Optionally mark as read immediately if it's a popup
+              // Or let the user click it to mark as read in a notifications center
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
+    } catch (e) {
+      // Channel already exists from a previous render — remove and recreate
+      supabase.getChannels()
+        .filter(c => c.topic === `realtime:${channelName}`)
+        .forEach(c => supabase.removeChannel(c));
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) supabase.removeChannel(channel);
     };
-  }, [user, toast]);
+  }, [user?.id]);
 
   return null;
 };

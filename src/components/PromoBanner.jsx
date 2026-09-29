@@ -39,7 +39,7 @@ export const PromoBanner = () => {
 
     fetchBanners();
 
-    const subscription = supabase
+    const channel = supabase
       .channel('public:promo_banners_component')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'promo_banners' }, () => {
         fetchBanners();
@@ -48,7 +48,7 @@ export const PromoBanner = () => {
 
     return () => {
       mounted = false;
-      subscription.unsubscribe();
+      supabase.removeChannel(channel);
     };
   }, []);
 

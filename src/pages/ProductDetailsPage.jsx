@@ -146,17 +146,18 @@ export const ProductDetailsPage = () => {
         
         {/* Header Section */}
         <header className="flex items-center justify-between px-6 py-6 sticky top-0 bg-[#F5F5F5] z-50">
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => navigate(-1)}
+            aria-label="Retour"
             className="hover:bg-gray-200/50 rounded-full w-10 h-10 -ml-2"
           >
             <ArrowLeft className="h-6 w-6 text-[#111827]" />
           </Button>
           <h1 className="text-xl font-bold text-[#111827]">{t('product.details_title')}</h1>
-          <div className="relative" onClick={() => navigate('/cart')}>
-            <Button variant="ghost" size="icon" className="hover:bg-gray-200/50 rounded-full w-10 h-10 -mr-2">
+          <div className="relative">
+            <Button variant="ghost" size="icon" aria-label="Voir le panier" onClick={() => navigate('/cart')} className="hover:bg-gray-200/50 rounded-full w-10 h-10 -mr-2">
               <ShoppingCart className="h-6 w-6 text-[#111827]" />
             </Button>
             {cartItemCount > 0 && (

@@ -9,6 +9,10 @@ const MAX_DURATION_MS = 10 * 60_000; // 10 minutes maximum
 // Délai entre la fin des sonneries (~2.3s) et le début de la voix
 const VOICE_DELAY_MS = 2600;
 
+// Stable ID generated once per module load — Date.now() could collide when
+// multiple instances mount within the same millisecond
+const CHANNEL_ID = `persistent-alert-${Math.random().toString(36).slice(2)}`;
+
 export const usePersistentOrderAlert = () => {
   const [pendingOrders, setPendingOrders] = useState([]);
   const intervalRef = useRef(null);
@@ -109,9 +113,13 @@ export const usePersistentOrderAlert = () => {
 
   // Souscription Supabase realtime
   useEffect(() => {
-    const channelName = `persistent-alert-${Date.now()}`;
+    // Remove any stale channel with this ID before subscribing
+    supabase.getChannels()
+      .filter(c => c.topic === `realtime:${CHANNEL_ID}`)
+      .forEach(c => supabase.removeChannel(c));
+
     const channel = supabase
-      .channel(channelName)
+      .channel(CHANNEL_ID)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'delivery_orders' },

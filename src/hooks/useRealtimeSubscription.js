@@ -118,7 +118,9 @@ export const useRealtimeSubscription = (tableName, options = {}, selectQuery = '
         supabase.removeChannel(channelRef.current);
     }
 
-    const channelName = `public:${tableName}-${Date.now()}`;
+    // Random suffix (not Date.now()) avoids collisions when multiple instances
+    // for the same table mount within the same millisecond
+    const channelName = `public:${tableName}-${Math.random().toString(36).slice(2)}`;
     
     const channel = supabase
       .channel(channelName)

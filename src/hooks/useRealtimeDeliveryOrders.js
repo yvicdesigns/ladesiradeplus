@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { useToast } from '@/components/ui/use-toast';
 import { useRestaurant } from '@/contexts/RestaurantContext';
@@ -123,6 +123,12 @@ export const useRealtimeDeliveryOrders = (options = {}) => {
     fetchOrders();
   }, [fetchOrders]);
 
+  // Keep a ref to the latest fetch fn so the channel effect never needs it as
+  // a dependency — fetchOrders changes whenever filters/pagination change,
+  // which would otherwise tear down and recreate the subscription unnecessarily.
+  const fetchOrdersRef = useRef(fetchOrders);
+  fetchOrdersRef.current = fetchOrders;
+
   useEffect(() => {
     if (!orderId && !restaurantId) return;
 
@@ -139,7 +145,7 @@ export const useRealtimeDeliveryOrders = (options = {}) => {
           table: 'delivery_orders',
           filter: channelFilter
         },
-        () => { fetchOrders(); }
+        () => { fetchOrdersRef.current(); }
       )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') setConnectionStatus('realtime');
@@ -150,7 +156,7 @@ export const useRealtimeDeliveryOrders = (options = {}) => {
     let pollInterval = null;
     if (orderId) {
       pollInterval = setInterval(() => {
-        fetchOrders();
+        fetchOrdersRef.current();
       }, 10000);
     }
 
@@ -158,7 +164,7 @@ export const useRealtimeDeliveryOrders = (options = {}) => {
       supabase.removeChannel(channel);
       if (pollInterval) clearInterval(pollInterval);
     };
-  }, [restaurantId, orderId, fetchOrders]);
+  }, [restaurantId, orderId]);
 
   return {
     orders,

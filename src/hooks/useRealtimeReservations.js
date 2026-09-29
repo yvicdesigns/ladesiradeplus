@@ -85,17 +85,23 @@ export const useRealtimeReservations = (
     fetchReservations();
   }, [fetchReservations]);
 
-  // Realtime subscription
+  // Keep a ref to the latest fetch fn so the channel effect below never needs
+  // it as a dependency — fetchReservations changes on every filter/pagination
+  // change, which would otherwise tear down and recreate the subscription.
+  const fetchReservationsRef = useRef(fetchReservations);
+  fetchReservationsRef.current = fetchReservations;
+
+  // Realtime subscription — created once
   useEffect(() => {
     const channel = supabase
       .channel('reservations-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations' }, () => {
-        fetchReservations();
+        fetchReservationsRef.current();
       })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [fetchReservations]);
+  }, []);
 
   const updateReservationStatus = async (id, status) => {
     const { error: updateError } = await supabase.from('reservations').update({ status }).eq('id', id);
