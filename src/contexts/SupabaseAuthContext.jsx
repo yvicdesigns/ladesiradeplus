@@ -34,6 +34,12 @@ export const AuthProvider = ({ children }) => {
   
   const isMountedRef = useRef(true);
   const authInitAttemptedRef = useRef(false);
+  // Only the user id for which fetchUserProfile got a REAL (non-fallback)
+  // answer. Deliberately separate from `user?.id`: if the last attempt fell
+  // back to {role:'customer'} after a timeout, this stays unset so the next
+  // handleSession call (next token refresh, next mount) retries instead of
+  // trusting a guess forever.
+  const resolvedProfileUserIdRef = useRef(null);
   
   const navigate = useNavigate();
 
@@ -44,6 +50,11 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUserProfile = useCallback(async (userId) => {
     try {
+      // fallbackValue is a sentinel (null), not {role:'customer', isAdmin:false} --
+      // a timeout must stay distinguishable from a genuine "this user is a
+      // customer" answer. Confusing the two used to let a slow-network hiccup
+      // permanently mislabel an admin as a customer for the rest of the
+      // session (see the `resolved` flag below and its use in handleSession).
       const data = await executeWithResilience(
         async () => {
           const { data: profile } = await supabase
@@ -70,12 +81,19 @@ export const AuthProvider = ({ children }) => {
             isAdmin: userIsAdmin
           };
         },
-        { maxRetries: 2, timeout: 3000, context: 'fetchUserProfile', fallbackValue: { role: 'customer', isAdmin: false } }
+        // No timeout/retry override here anymore -- this used to be 3000ms/2
+        // retries, well below the app's own documented 10s policy
+        // (TIMEOUT_CONFIG), so a merely-slow (not dead) connection could
+        // trip the fallback below.
+        { context: 'fetchUserProfile', fallbackValue: null }
       );
-      return data || { role: 'customer', isAdmin: false };
+      if (data === null) {
+        return { role: 'customer', isAdmin: false, resolved: false };
+      }
+      return { ...data, resolved: true };
     } catch (err) {
       globalCircuitBreaker.logErrorDeduped('fetchUserProfile', err);
-      return { role: 'customer', isAdmin: false };
+      return { role: 'customer', isAdmin: false, resolved: false };
     }
   }, []);
 
@@ -101,29 +119,35 @@ export const AuthProvider = ({ children }) => {
     let currentUser = currentSession?.user ?? null;
 
     if (currentUser) {
-      // Prevent redundant fetches if user ID hasn't changed
-      if (user?.id !== currentUser.id) {
+      // Prevent redundant fetches, but only once we actually have a resolved
+      // answer for this user -- a fallback from a timed-out fetch must not
+      // block retrying on the next session event.
+      if (resolvedProfileUserIdRef.current !== currentUser.id) {
         const profileData = await fetchUserProfile(currentUser.id);
         if (!isMountedRef.current) return;
-        
+
         currentUser = {
           ...currentUser,
           photo_url: profileData?.photo_url,
           role: profileData?.role || 'customer'
         };
-        
+
         setUser(currentUser);
         setRole(currentUser.role);
         setIsAdmin(profileData?.isAdmin || false);
+        if (profileData?.resolved) {
+          resolvedProfileUserIdRef.current = currentUser.id;
+        }
         initPushNotifications(currentUser.id);
       }
     } else {
+      resolvedProfileUserIdRef.current = null;
       clearAuthState();
     }
 
     setLoading(false);
     setAuthError(null);
-  }, [clearAuthState, fetchUserProfile, user?.id]);
+  }, [clearAuthState, fetchUserProfile]);
 
   const initAuth = useCallback(async () => {
     if (!isMountedRef.current) return;

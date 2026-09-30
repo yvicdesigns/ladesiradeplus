@@ -181,7 +181,12 @@ export const AdminLoginPage = () => {
         <title>Portail d'Administration - Connexion - La Desirade Plus</title>
       </Helmet>
 
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-purple-600 px-4 py-16 font-sans relative overflow-hidden">
+      <div className="min-h-screen flex items-start sm:items-center justify-center bg-gradient-to-br from-blue-600 to-purple-600 px-4 py-8 sm:py-16 font-sans relative overflow-y-auto">
+        {/* items-start + overflow-y-auto (was items-center + overflow-hidden): on
+            a phone, the on-screen keyboard shrinks the viewport and used to push
+            the top of this centered, non-scrollable card off-screen with no way
+            to reach it (title/email field became unreachable while typing the
+            password). */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
           <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] bg-blue-500/30 rounded-full blur-3xl" />
           <div className="absolute top-[60%] -right-[10%] w-[40%] h-[60%] bg-purple-500/30 rounded-full blur-3xl" />
