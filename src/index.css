@@ -83,3 +83,14 @@
 .leaflet-control-container .leaflet-bottom {
   z-index: 999;
 }
+
+/* min-h-screen (100vh) is the *unshrunk* layout viewport height -- on
+   Android it does not track the on-screen keyboard, so a keyboard-open
+   focus event scrolls the page to satisfy a min-height the visible area
+   no longer matches, producing a visible jump. 100dvh tracks the real
+   visible (keyboard-aware) viewport; vh stays as the fallback for
+   browsers that don't support dvh. */
+.min-h-app-screen {
+  min-height: 100vh;
+  min-height: 100dvh;
+}

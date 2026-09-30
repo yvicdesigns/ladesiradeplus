@@ -330,10 +330,13 @@ export const LoginPage = () => {
         <title>{mode === 'login' ? 'Connexion à votre compte' : 'Créer un nouveau compte'} - La Desirade Plus</title>
       </Helmet>
 
-      <div className="min-h-screen flex flex-col items-start sm:items-center justify-center px-4 py-4 bg-gradient-to-br from-green-600 via-green-700 to-amber-800 font-sans relative overflow-y-auto">
+      <div className="min-h-app-screen flex flex-col items-start sm:items-center justify-center px-4 py-4 bg-gradient-to-br from-green-600 via-green-700 to-amber-800 font-sans relative overflow-y-auto">
         {/* items-start + overflow-y-auto (was items-center + overflow-hidden): keeps
             the form reachable when the on-screen keyboard shrinks the viewport on
-            a phone, instead of clipping the top of a centered, non-scrollable card. */}
+            a phone, instead of clipping the top of a centered, non-scrollable card.
+            min-h-app-screen (was min-h-screen): 100vh stays fixed to the keyboard-open
+            layout height on Android, so it no longer matches the visible viewport and
+            makes the browser's scroll-into-view jump the page; 100dvh tracks it. */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-10">
            <div className="absolute -top-24 -left-24 w-96 h-96 bg-white rounded-full blur-3xl"></div>
            <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-green-300 rounded-full blur-3xl"></div>
