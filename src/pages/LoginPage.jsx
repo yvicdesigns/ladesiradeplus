@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils';
 import { handleTokenRefreshError } from '@/lib/tokenRefreshHandler';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { handleError, ErrorTypes } from '@/lib/errorHandler';
+import { useVirtualKeyboardOpen } from '@/hooks/useVirtualKeyboardOpen';
 
 export const LoginPage = () => {
   const navigate = useNavigate();
@@ -53,6 +54,7 @@ export const LoginPage = () => {
 
   const [errors, setErrors] = useState({});
   const [passwordStrength, setPasswordStrength] = useState(0);
+  const keyboardOpen = useVirtualKeyboardOpen();
 
   useEffect(() => {
     if (location.state?.email) {
@@ -359,21 +361,25 @@ export const LoginPage = () => {
           transition={{ duration: 0.5 }}
           className="w-full max-w-sm md:max-w-[400px] lg:max-w-[450px] z-20"
         >
-          <div className="text-center mb-4">
-            <motion.div 
-              className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-xl shadow-black/20 mx-auto mb-4 border-2 border-white/20"
-              whileHover={{ rotate: 10, scale: 1.05 }}
-            >
-              <ChefHat className="h-8 w-8 text-amber-600" />
-            </motion.div>
-            <h1 className="text-xl font-bold text-white mb-1 drop-shadow-md">
+          <div className={cn("text-center", keyboardOpen ? "mb-1" : "mb-4")}>
+            {!keyboardOpen && (
+              <motion.div
+                className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-xl shadow-black/20 mx-auto mb-4 border-2 border-white/20"
+                whileHover={{ rotate: 10, scale: 1.05 }}
+              >
+                <ChefHat className="h-8 w-8 text-amber-600" />
+              </motion.div>
+            )}
+            <h1 className={cn("font-bold text-white drop-shadow-md", keyboardOpen ? "text-sm" : "text-xl mb-1")}>
               {mode === 'login' ? 'Connectez-vous' : 'Ouvrir un Nouveau Compte'}
             </h1>
-            <p className="text-amber-100 text-sm font-medium">
-              {mode === 'login' 
-                ? 'Identifiez-vous pour passer votre commande' 
-                : 'Rejoignez la communauté pour découvrir nos délices'}
-            </p>
+            {!keyboardOpen && (
+              <p className="text-amber-100 text-sm font-medium">
+                {mode === 'login'
+                  ? 'Identifiez-vous pour passer votre commande'
+                  : 'Rejoignez la communauté pour découvrir nos délices'}
+              </p>
+            )}
           </div>
 
           <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl shadow-black/20 p-4">

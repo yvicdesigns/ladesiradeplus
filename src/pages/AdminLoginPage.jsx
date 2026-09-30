@@ -11,6 +11,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { SoundLink } from "@/components/SoundLink";
 import { handleTokenRefreshError } from "@/lib/tokenRefreshHandler";
 import { globalCircuitBreaker } from "@/lib/CircuitBreaker";
+import { useVirtualKeyboardOpen } from "@/hooks/useVirtualKeyboardOpen";
+import { cn } from "@/lib/utils";
 
 export const AdminLoginPage = () => {
   const navigate = useNavigate();
@@ -27,6 +29,8 @@ export const AdminLoginPage = () => {
     email: "",
     password: "",
   });
+
+  const keyboardOpen = useVirtualKeyboardOpen();
 
   // Auto-redirect if already authenticated as admin
   useEffect(() => {
@@ -181,7 +185,10 @@ export const AdminLoginPage = () => {
         <title>Portail d'Administration - Connexion - La Desirade Plus</title>
       </Helmet>
 
-      <div className="min-h-app-screen flex items-start sm:items-center justify-center bg-gradient-to-br from-blue-600 to-purple-600 px-4 py-8 sm:py-16 font-sans relative overflow-y-auto">
+      <div className={cn(
+        "min-h-app-screen flex items-start sm:items-center justify-center bg-gradient-to-br from-blue-600 to-purple-600 px-4 font-sans relative overflow-y-auto transition-[padding] duration-200",
+        keyboardOpen ? "py-4" : "py-8 sm:py-16"
+      )}>
         {/* items-start + overflow-y-auto (was items-center + overflow-hidden): on
             a phone, the on-screen keyboard shrinks the viewport and used to push
             the top of this centered, non-scrollable card off-screen with no way
@@ -189,7 +196,10 @@ export const AdminLoginPage = () => {
             password). min-h-app-screen (was min-h-screen): 100vh doesn't shrink
             with the keyboard on Android, so the browser's own scroll-into-view
             was jumping the page against a height that no longer matched the
-            visible area. */}
+            visible area. Even so, the card is taller than the keyboard-open
+            viewport, so the browser still auto-scrolls the focused field to the
+            top -- keyboardOpen shrinks the header instead of letting that scroll
+            carry it off-screen. */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
           <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] bg-blue-500/30 rounded-full blur-3xl" />
           <div className="absolute top-[60%] -right-[10%] w-[40%] h-[60%] bg-purple-500/30 rounded-full blur-3xl" />
@@ -201,20 +211,24 @@ export const AdminLoginPage = () => {
           transition={{ duration: 0.5, ease: "easeOut" }}
           className="w-full max-w-md z-10"
         >
-          <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl p-8 border border-white/50">
-            <div className="text-center mb-8">
-              <motion.div 
-                className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-600/20"
-                whileHover={{ rotate: 5, scale: 1.05 }}
-              >
-                <ShieldCheck className="h-8 w-8 text-white" />
-              </motion.div>
-              <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+          <div className={cn("bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl border border-white/50 transition-[padding] duration-200", keyboardOpen ? "p-5" : "p-8")}>
+            <div className={cn("text-center transition-[margin] duration-200", keyboardOpen ? "mb-3" : "mb-8")}>
+              {!keyboardOpen && (
+                <motion.div
+                  className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-600/20"
+                  whileHover={{ rotate: 5, scale: 1.05 }}
+                >
+                  <ShieldCheck className="h-8 w-8 text-white" />
+                </motion.div>
+              )}
+              <h1 className={cn("font-bold text-gray-900 tracking-tight", keyboardOpen ? "text-base" : "text-2xl")}>
                 Portail Administrateur
               </h1>
-              <p className="text-sm text-gray-500 mt-2 font-medium">
-                Accès exclusif réservé à l'équipe de gestion
-              </p>
+              {!keyboardOpen && (
+                <p className="text-sm text-gray-500 mt-2 font-medium">
+                  Accès exclusif réservé à l'équipe de gestion
+                </p>
+              )}
             </div>
 
             {errorState && (
@@ -224,7 +238,7 @@ export const AdminLoginPage = () => {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className={cn(keyboardOpen ? "space-y-3" : "space-y-6")}>
               <div className="space-y-2">
                 <label className="text-sm font-bold text-gray-700 ml-1">
                   Adresse Email Professionnelle
@@ -275,20 +289,24 @@ export const AdminLoginPage = () => {
               </Button>
             </form>
 
-            <div className="mt-8 pt-6 border-t border-gray-100 text-center">
-              <SoundLink
-                to="/"
-                className="inline-flex items-center text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors group"
-              >
-                <ArrowLeft className="mr-1 w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                Retour au Site Principal
-              </SoundLink>
-            </div>
+            {!keyboardOpen && (
+              <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+                <SoundLink
+                  to="/"
+                  className="inline-flex items-center text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors group"
+                >
+                  <ArrowLeft className="mr-1 w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                  Retour au Site Principal
+                </SoundLink>
+              </div>
+            )}
           </div>
-          
-          <p className="text-center text-white/60 text-xs mt-6 font-medium">
-            &copy; {new Date().getFullYear()} La Desirade Plus. Système d'Information Protégé.
-          </p>
+
+          {!keyboardOpen && (
+            <p className="text-center text-white/60 text-xs mt-6 font-medium">
+              &copy; {new Date().getFullYear()} La Desirade Plus. Système d'Information Protégé.
+            </p>
+          )}
         </motion.div>
       </div>
     </>
