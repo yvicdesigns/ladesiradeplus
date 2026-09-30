@@ -15,7 +15,8 @@ export function useVirtualKeyboardOpen() {
 
     const layoutHeight = window.innerHeight;
     const handleResize = () => {
-      setIsOpen(layoutHeight - viewport.height > SHRINK_THRESHOLD_PX);
+      const delta = layoutHeight - viewport.height;
+      setIsOpen(delta > SHRINK_THRESHOLD_PX);
     };
 
     viewport.addEventListener('resize', handleResize);
