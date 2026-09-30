@@ -20,7 +20,7 @@ export const CrashesTab = ({ crashes, acknowledgeCrash, markCrashFixed, deleteCr
     return (
         <div className="space-y-4">
             <div className="flex items-center"><Input placeholder="Search error message..." className="w-64" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} icon={Search} /></div>
-            <Card>
+            <Card className="overflow-x-auto">
                 <Table>
                     <TableHeader><TableRow><TableHead>Error</TableHead><TableHead>Version</TableHead><TableHead>Status</TableHead><TableHead>Date</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
                     <TableBody>

@@ -118,7 +118,7 @@ function PlatStockTab() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
         <Table>
           <TableHeader className="bg-slate-50">
             <TableRow>
@@ -378,7 +378,7 @@ function SharedIngredientsTab() {
         <p className="text-xs text-slate-400 italic">{unlinkedCount} ingrédient{unlinkedCount > 1 ? 's' : ''} créé{unlinkedCount > 1 ? 's' : ''} mais pas encore liés à un plat.</p>
       )}
 
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
         <Table>
           <TableHeader className="bg-slate-50">
             <TableRow>

@@ -129,7 +129,7 @@ export const AdminMobileMoneyPaymentsTab = () => {
         </div>
       </div>
 
-      <div className="rounded-md border bg-white">
+      <div className="rounded-md border bg-white overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

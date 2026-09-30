@@ -13,7 +13,7 @@ export const FeatureFlagsTab = ({ flags, createFlag, updateFlag, deleteFlag }) =
     return (
         <div className="space-y-4">
              <div className="flex justify-end"><Button onClick={() => setModal({ type: 'create' })}><Plus className="w-4 h-4 mr-2" /> Create Flag</Button></div>
-             <Card>
+             <Card className="overflow-x-auto">
                  <Table>
                      <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Description</TableHead><TableHead>Platforms</TableHead><TableHead>Rollout</TableHead><TableHead>Enabled</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
                      <TableBody>

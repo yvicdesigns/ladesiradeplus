@@ -29,7 +29,7 @@ export const PromotionDetailsModal = ({ open, onClose, promotion, usage }) => {
                 <div className="col-span-2"><strong>Description:</strong> {promotion.description}</div>
              </div>
           </TabsContent>
-          <TabsContent value="usage" className="space-y-4 py-4">
+          <TabsContent value="usage" className="space-y-4 py-4 overflow-x-auto">
              <Table>
                 <TableHeader><TableRow><TableHead>Customer</TableHead><TableHead>Date</TableHead><TableHead>Amount</TableHead></TableRow></TableHeader>
                 <TableBody>
@@ -74,7 +74,7 @@ export const PromoCodeDetailsModal = ({ open, onClose, code, usage }) => {
                 <div><strong>Uses:</strong> {code.usage_count} / {code.max_uses || '∞'}</div>
              </div>
           </TabsContent>
-          <TabsContent value="usage" className="space-y-4 py-4">
+          <TabsContent value="usage" className="space-y-4 py-4 overflow-x-auto">
              <Table>
                 <TableHeader><TableRow><TableHead>Customer</TableHead><TableHead>Date</TableHead><TableHead>Amount</TableHead></TableRow></TableHeader>
                 <TableBody>

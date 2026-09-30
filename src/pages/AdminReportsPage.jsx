@@ -142,7 +142,7 @@ export const AdminReportsPage = () => {
                 </Card>
                 <Card className="col-span-1">
                    <CardHeader><CardTitle>Dernières Données</CardTitle><CardDescription>Aperçu des 5 dernières entrées</CardDescription></CardHeader>
-                   <CardContent>
+                   <CardContent className="overflow-x-auto">
                       <Table>
                          <TableHeader>
                             <TableRow>

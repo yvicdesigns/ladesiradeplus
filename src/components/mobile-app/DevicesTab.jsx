@@ -17,7 +17,7 @@ export const DevicesTab = ({ devices, updateDeviceStatus, deleteDevice }) => {
     return (
         <div className="space-y-4">
              <div className="flex items-center"><Input placeholder="Search devices..." className="w-64" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} icon={Search} /></div>
-             <Card>
+             <Card className="overflow-x-auto">
                  <Table>
                      <TableHeader><TableRow><TableHead>Device Name</TableHead><TableHead>Platform</TableHead><TableHead>OS</TableHead><TableHead>App Version</TableHead><TableHead>Status</TableHead><TableHead>Last Active</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
                      <TableBody>

@@ -71,7 +71,7 @@ export const InventoryCountModal = ({ count, open, onClose, onValidated }) => {
         </DialogHeader>
 
         <ScrollArea className="max-h-[60vh]">
-          <div className="p-4">
+          <div className="p-4 overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>

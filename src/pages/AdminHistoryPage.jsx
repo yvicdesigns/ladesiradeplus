@@ -285,7 +285,7 @@ export const AdminHistoryPage = () => {
         </div>
 
         {/* Orders Table */}
-        <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm border overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50/50">
@@ -450,7 +450,7 @@ export const AdminHistoryPage = () => {
                 {/* Order Items */}
                 <div>
                   <h3 className="font-semibold mb-3">Articles ({orderDetails.order_items?.length || 0})</h3>
-                  <div className="border rounded-lg overflow-hidden">
+                  <div className="border rounded-lg overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-gray-50/50">

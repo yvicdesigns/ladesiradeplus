@@ -26,7 +26,7 @@ export const SurveysTab = ({ surveys, onCreate, onEdit, onDelete, onStatusChange
       </div>
 
       <Card className="rounded-xl shadow-sm border-0 bg-white/50 backdrop-blur-sm">
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">

@@ -42,7 +42,7 @@ export const VersionsTab = ({ versions, createVersion, updateVersion, publishVer
          <Button onClick={() => setModal({ type: 'create' })}><Plus className="w-4 h-4 mr-2" /> Create Version</Button>
       </div>
 
-      <Card>
+      <Card className="overflow-x-auto">
         <Table>
             <TableHeader><TableRow><TableHead>Version</TableHead><TableHead>Platform</TableHead><TableHead>Status</TableHead><TableHead>Release Date</TableHead><TableHead>Min OS</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
             <TableBody>

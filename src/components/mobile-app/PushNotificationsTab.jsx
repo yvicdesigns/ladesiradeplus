@@ -27,7 +27,7 @@ export const PushNotificationsTab = ({ pushes, createPush, updatePush, sendPush,
                  <Input placeholder="Search push..." className="w-64" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} icon={Search} />
                  <Button onClick={() => setModal({ type: 'create' })}><Plus className="w-4 h-4 mr-2" /> Create Push</Button>
              </div>
-             <Card>
+             <Card className="overflow-x-auto">
                  <Table>
                      <TableHeader><TableRow><TableHead>Title</TableHead><TableHead>Target</TableHead><TableHead>Status</TableHead><TableHead>Sent/Scheduled</TableHead><TableHead>Stats</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
                      <TableBody>

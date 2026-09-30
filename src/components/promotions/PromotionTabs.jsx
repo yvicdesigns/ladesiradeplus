@@ -35,7 +35,7 @@ export const PromotionsTab = ({ promotions, usage, createPromotion, updatePromot
                 <Input placeholder="Search promotions..." className="w-64" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} icon={Search} />
                 <Button onClick={() => setModal({ type: 'create' })}><Plus className="w-4 h-4 mr-2" /> Create Promotion</Button>
             </div>
-            <Card>
+            <Card className="overflow-x-auto">
                 <Table>
                     <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead>Discount</TableHead><TableHead>Date Range</TableHead><TableHead>Status</TableHead><TableHead>Usage</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
                     <TableBody>
@@ -98,7 +98,7 @@ export const PromoCodesTab = ({ promoCodes, promotions, usage, createPromoCode, 
                 <Input placeholder="Search codes..." className="w-64" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} icon={Search} />
                 <Button onClick={() => setModal({ type: 'create' })}><Plus className="w-4 h-4 mr-2" /> Create Code</Button>
             </div>
-            <Card>
+            <Card className="overflow-x-auto">
                 <Table>
                     <TableHeader><TableRow><TableHead>Code</TableHead><TableHead>Promotion</TableHead><TableHead>Discount</TableHead><TableHead>Status</TableHead><TableHead>Usage</TableHead><TableHead>Expiry</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
                     <TableBody>
@@ -160,7 +160,7 @@ export const SpecialOffersTab = ({ specialOffers, createSpecialOffer, updateSpec
                 <Input placeholder="Search offers..." className="w-64" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} icon={Search} />
                 <Button onClick={() => setModal({ type: 'create' })}><Plus className="w-4 h-4 mr-2" /> Create Offer</Button>
             </div>
-            <Card>
+            <Card className="overflow-x-auto">
                 <Table>
                     <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead>Priority</TableHead><TableHead>Status</TableHead><TableHead>Dates</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
                     <TableBody>
@@ -218,7 +218,7 @@ export const UsageTab = ({ usage }) => {
                  <Input placeholder="Search customer or code..." className="w-64" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} icon={Search} />
                  <Button variant="outline">Export CSV</Button>
             </div>
-            <Card>
+            <Card className="overflow-x-auto">
                 <Table>
                     <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Customer</TableHead><TableHead>Code/Promo</TableHead><TableHead>Discount Amount</TableHead></TableRow></TableHeader>
                     <TableBody>
@@ -251,7 +251,7 @@ export const RulesTab = ({ rules, promotions, createRule, updateRule, deleteRule
             <div className="flex justify-end">
                 <Button onClick={() => setModal({ type: 'create' })}><Plus className="w-4 h-4 mr-2" /> Add Rule</Button>
             </div>
-            <Card>
+            <Card className="overflow-x-auto">
                 <Table>
                     <TableHeader><TableRow><TableHead>Promotion</TableHead><TableHead>Rule Type</TableHead><TableHead>Value</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
                     <TableBody>

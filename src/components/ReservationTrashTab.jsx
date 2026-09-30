@@ -110,7 +110,7 @@ export const ReservationTrashTab = ({ deletedReservations, loading: fetching }) 
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border overflow-hidden min-h-[400px]">
+      <div className="bg-white rounded-xl shadow-sm border overflow-x-auto min-h-[400px]">
         <Table>
           <TableHeader className="bg-gray-50">
             <TableRow>

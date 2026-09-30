@@ -162,7 +162,7 @@ export const AdminNotificationsPage = () => {
                    <Button variant="outline" size="sm" onClick={archiveAll}>Tout archiver</Button>
                  </div>
                </div>
-               <Card>
+               <Card className="overflow-x-auto">
                  <Table>
                    <TableHeader><TableRow><TableHead>Type</TableHead><TableHead>Titre</TableHead><TableHead>Priorité</TableHead><TableHead>Date</TableHead><TableHead>Statut</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
                    <TableBody>
@@ -190,7 +190,7 @@ export const AdminNotificationsPage = () => {
 
              {/* SYSTEM ALERTS */}
              <TabsContent value="alerts" className="space-y-4">
-                <Card>
+                <Card className="overflow-x-auto">
                   <Table>
                     <TableHeader><TableRow><TableHead>Sévérité</TableHead><TableHead>Titre</TableHead><TableHead>Module</TableHead><TableHead>Statut</TableHead><TableHead>Date</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
                     <TableBody>
@@ -252,7 +252,7 @@ export const AdminNotificationsPage = () => {
              {/* TEMPLATES */}
              <TabsContent value="templates">
                <div className="flex justify-end mb-4"><Button onClick={() => { setSelectedTemplate(null); setModals({...modals, template: true}); }}>Créer Modèle</Button></div>
-               <Card>
+               <Card className="overflow-x-auto">
                  <Table>
                    <TableHeader><TableRow><TableHead>Nom</TableHead><TableHead>Sujet</TableHead><TableHead>Variables</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
                    <TableBody>
@@ -275,7 +275,7 @@ export const AdminNotificationsPage = () => {
 
              {/* HISTORY */}
              <TabsContent value="history">
-               <Card>
+               <Card className="overflow-x-auto">
                  <Table>
                     <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Alert ID</TableHead><TableHead>Action</TableHead><TableHead>Notes</TableHead></TableRow></TableHeader>
                     <TableBody>

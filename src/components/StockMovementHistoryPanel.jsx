@@ -95,7 +95,7 @@ export const StockMovementHistoryPanel = ({ menuItemId = null }) => {
           </AlertDescription>
         </Alert>
       ) : (
-        <div className="bg-white rounded-xl border overflow-hidden shadow-sm">
+        <div className="bg-white rounded-xl border overflow-x-auto shadow-sm">
           <Table>
             <TableHeader className="bg-gray-50/80">
               <TableRow>

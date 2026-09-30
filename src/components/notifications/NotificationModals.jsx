@@ -169,6 +169,7 @@ export const AlertHistoryModal = ({ open, onClose, history }) => {
       <DialogContent className="sm:max-w-[700px]">
         <DialogHeader><DialogTitle>Alert History</DialogTitle></DialogHeader>
         <ScrollArea className="h-[400px]">
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -189,6 +190,7 @@ export const AlertHistoryModal = ({ open, onClose, history }) => {
               )}
             </TableBody>
           </Table>
+          </div>
         </ScrollArea>
         <DialogFooter>
            <Button onClick={onClose}>Close</Button>

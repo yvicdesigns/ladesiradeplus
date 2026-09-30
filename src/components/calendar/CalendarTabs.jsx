@@ -28,7 +28,7 @@ export const EventsTab = ({ events, createEvent, updateEvent, deleteEvent, dupli
                  <Input placeholder="Search events..." className="w-64" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} icon={Search} />
                  <Button onClick={() => setModal({ type: 'create' })}><Plus className="w-4 h-4 mr-2" /> New Event</Button>
             </div>
-            <Card>
+            <Card className="overflow-x-auto">
                 <Table>
                     <TableHeader><TableRow><TableHead>Title</TableHead><TableHead>Type</TableHead><TableHead>Start</TableHead><TableHead>End</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
                     <TableBody>
@@ -83,7 +83,7 @@ export const BusinessHoursTab = ({ hours, updateHours }) => {
 
     return (
         <div className="space-y-4">
-             <Card>
+             <Card className="overflow-x-auto">
                 <Table>
                     <TableHeader><TableRow><TableHead>Jour</TableHead><TableHead>Statut</TableHead><TableHead>Horaires</TableHead><TableHead>Pause</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
                     <TableBody>
@@ -122,7 +122,7 @@ export const ClosuresTab = ({ closures, createClosure, updateClosure, deleteClos
             <div className="flex justify-end">
                  <Button onClick={() => setModal({ type: 'create' })}><Plus className="w-4 h-4 mr-2" /> Ajouter une fermeture</Button>
             </div>
-            <Card>
+            <Card className="overflow-x-auto">
                 <Table>
                     <TableHeader><TableRow><TableHead>Motif</TableHead><TableHead>Type</TableHead><TableHead>Date début</TableHead><TableHead>Date fin</TableHead><TableHead>Statut</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
                     <TableBody>
